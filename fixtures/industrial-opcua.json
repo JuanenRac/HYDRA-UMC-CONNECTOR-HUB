@@ -1,0 +1,32 @@
+{
+  "adapterId": "industrial-opcua",
+  "schemaVersion": "1.0",
+  "protocol": "opc-ua",
+  "targetKinds": ["plc", "cnc-controller", "scada"],
+  "endpointSchema": {
+    "type": "object",
+    "properties": {
+      "endpointUrl": { "type": "string", "pattern": "^opc\\.tcp://" },
+      "securityPolicy": { "type": "string" }
+    },
+    "required": ["endpointUrl"]
+  },
+  "authenticationRef": "env:OPCUA_CLIENT_CERT_PATH",
+  "capabilities": [
+    {
+      "name": "readNodeValue",
+      "mode": "read",
+      "risk": "low"
+    }
+  ],
+  "requiredSafetyGates": [],
+  "healthCheck": { "type": "opcua-read", "node": "Server_ServerStatus_State" },
+  "timeoutMs": 3000,
+  "idempotency": "idempotent",
+  "evidenceSchema": {
+    "type": "object",
+    "properties": { "nodeId": { "type": "string" }, "value": {}, "sourceTimestamp": { "type": "string" } }
+  },
+  "sdkCompatibility": ">=0.1.0",
+  "ownerProject": "HYDRA-UMC-OPCUA-SERVER"
+}

@@ -1,0 +1,32 @@
+{
+  "adapterId": "manufacturing-mtconnect",
+  "schemaVersion": "1.0",
+  "protocol": "mtconnect",
+  "targetKinds": ["cnc-controller", "machine-tool"],
+  "endpointSchema": {
+    "type": "object",
+    "properties": {
+      "probeUrl": { "type": "string" },
+      "currentUrl": { "type": "string" }
+    },
+    "required": ["probeUrl", "currentUrl"]
+  },
+  "authenticationRef": "none:unauthenticated-read-only",
+  "capabilities": [
+    {
+      "name": "currentStatus",
+      "mode": "read",
+      "risk": "low"
+    }
+  ],
+  "requiredSafetyGates": [],
+  "healthCheck": { "type": "http-get", "path": "/probe" },
+  "timeoutMs": 4000,
+  "idempotency": "idempotent",
+  "evidenceSchema": {
+    "type": "object",
+    "properties": { "xml": { "type": "string" }, "degradedMode": { "type": "boolean" } }
+  },
+  "sdkCompatibility": ">=0.0.8",
+  "ownerProject": "HYDRA-UMC-MTCONNECT-ADAPTER"
+}

@@ -1,0 +1,42 @@
+{
+  "adapterId": "industrial-mqtt",
+  "schemaVersion": "1.0",
+  "protocol": "mqtt",
+  "targetKinds": ["sensor", "actuator", "gateway"],
+  "endpointSchema": {
+    "type": "object",
+    "properties": {
+      "brokerHost": { "type": "string" },
+      "brokerPort": { "type": "integer" },
+      "topicPrefix": { "type": "string" }
+    },
+    "required": ["brokerHost", "brokerPort"]
+  },
+  "authenticationRef": "secret-store:mqtt/client-credentials",
+  "capabilities": [
+    {
+      "name": "subscribeTopic",
+      "mode": "read",
+      "risk": "low"
+    },
+    {
+      "name": "publishCommandTopic",
+      "mode": "write",
+      "risk": "medium",
+      "requiredPermission": "mqtt.publish.command",
+      "requiredCellState": "operational",
+      "requiresHumanConfirmation": false,
+      "timeoutMs": 2000
+    }
+  ],
+  "requiredSafetyGates": ["cell.estop.clear"],
+  "healthCheck": { "type": "mqtt-ping", "topic": "$SYS/broker/uptime" },
+  "timeoutMs": 5000,
+  "idempotency": "at-least-once",
+  "evidenceSchema": {
+    "type": "object",
+    "properties": { "topic": { "type": "string" }, "payload": {}, "qos": { "type": "integer" } }
+  },
+  "sdkCompatibility": ">=0.0.9",
+  "ownerProject": "HYDRA-UMC-MQTT-BROKER"
+}

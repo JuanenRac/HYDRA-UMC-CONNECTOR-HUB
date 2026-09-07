@@ -1,0 +1,42 @@
+{
+  "adapterId": "mobile-vda5050",
+  "schemaVersion": "1.0",
+  "protocol": "vda5050-mqtt",
+  "targetKinds": ["agv", "amr"],
+  "endpointSchema": {
+    "type": "object",
+    "properties": {
+      "brokerHost": { "type": "string" },
+      "manufacturer": { "type": "string" },
+      "serialNumber": { "type": "string" }
+    },
+    "required": ["brokerHost", "manufacturer", "serialNumber"]
+  },
+  "authenticationRef": "secret-store:vda5050/fleet-credentials",
+  "capabilities": [
+    {
+      "name": "fleetState",
+      "mode": "read",
+      "risk": "low"
+    },
+    {
+      "name": "dispatchOrder",
+      "mode": "write",
+      "risk": "medium",
+      "requiredPermission": "amr.order.dispatch",
+      "requiredCellState": "operational",
+      "requiresHumanConfirmation": false,
+      "timeoutMs": 5000
+    }
+  ],
+  "requiredSafetyGates": ["cell.zone.clear"],
+  "healthCheck": { "type": "mqtt-topic-recent", "topic": "state" },
+  "timeoutMs": 4000,
+  "idempotency": "at-least-once",
+  "evidenceSchema": {
+    "type": "object",
+    "properties": { "orderId": { "type": "string" }, "lastNodeId": { "type": "string" }, "batteryPercent": { "type": "number" } }
+  },
+  "sdkCompatibility": ">=0.0.5",
+  "ownerProject": "HYDRA-UMC-BRIDGE-AMR"
+}

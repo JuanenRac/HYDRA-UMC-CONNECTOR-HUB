@@ -1,0 +1,18 @@
+{
+  "adapterId": "broken-idempotency",
+  "schemaVersion": "1.0",
+  "protocol": "opc-ua",
+  "targetKinds": ["plc"],
+  "endpointSchema": { "type": "object", "properties": { "endpointUrl": { "type": "string" } } },
+  "authenticationRef": "env:OPCUA_CLIENT_CERT_PATH",
+  "capabilities": [
+    { "name": "readNodeValue", "mode": "read", "risk": "low" }
+  ],
+  "requiredSafetyGates": [],
+  "healthCheck": { "type": "opcua-read" },
+  "timeoutMs": 3000,
+  "idempotency": "sometimes",
+  "evidenceSchema": { "type": "object", "properties": { "value": {} } },
+  "sdkCompatibility": ">=0.1.0",
+  "ownerProject": "HYDRA-UMC-OPCUA-SERVER"
+}

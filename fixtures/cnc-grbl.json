@@ -1,0 +1,41 @@
+{
+  "adapterId": "cnc-grbl",
+  "schemaVersion": "1.0",
+  "protocol": "grbl-serial",
+  "targetKinds": ["cnc-controller"],
+  "endpointSchema": {
+    "type": "object",
+    "properties": {
+      "serialPort": { "type": "string" },
+      "baudRate": { "type": "integer" }
+    },
+    "required": ["serialPort", "baudRate"]
+  },
+  "authenticationRef": "none:local-serial-port",
+  "capabilities": [
+    {
+      "name": "grblStatus",
+      "mode": "read",
+      "risk": "low"
+    },
+    {
+      "name": "sendControlByte",
+      "mode": "write",
+      "risk": "high",
+      "requiredPermission": "cnc.control.send",
+      "requiredCellState": "supervised",
+      "requiresHumanConfirmation": true,
+      "timeoutMs": 1500
+    }
+  ],
+  "requiredSafetyGates": ["cell.estop.clear", "cell.enclosure.closed"],
+  "healthCheck": { "type": "serial-probe", "expect": "Grbl" },
+  "timeoutMs": 3000,
+  "idempotency": "none",
+  "evidenceSchema": {
+    "type": "object",
+    "properties": { "status": { "type": "string" }, "machinePosition": { "type": "array" } }
+  },
+  "sdkCompatibility": ">=0.0.8",
+  "ownerProject": "HYDRA-UMC-BRIDGE-CNC"
+}
