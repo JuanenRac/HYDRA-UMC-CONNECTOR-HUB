@@ -1,0 +1,18 @@
+{
+  "adapterId": "broken-ungated-write",
+  "schemaVersion": "1.0",
+  "protocol": "grbl-serial",
+  "targetKinds": ["cnc-controller"],
+  "endpointSchema": { "type": "object", "properties": { "serialPort": { "type": "string" } } },
+  "authenticationRef": "none:local-serial-port",
+  "capabilities": [
+    { "name": "sendControlByte", "mode": "write", "risk": "high" }
+  ],
+  "requiredSafetyGates": [],
+  "healthCheck": { "type": "serial-probe" },
+  "timeoutMs": 3000,
+  "idempotency": "none",
+  "evidenceSchema": { "type": "object", "properties": { "status": { "type": "string" } } },
+  "sdkCompatibility": ">=0.0.8",
+  "ownerProject": "HYDRA-UMC-BRIDGE-CNC"
+}

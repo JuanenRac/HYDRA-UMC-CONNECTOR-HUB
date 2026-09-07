@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hydra-umc-connector-hub"
+version = "0.0.5"
+description = "Declarative adapter-manifest registry, read-only catalog, SDK safety-gate integration and certification records for external-machine connectors in the HYDRA-UMC/URTC ecosystem."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE.md" }
+authors = [
+    { name = "JuanenRac (Electro Hobby 3D)", email = "electrohobby3d@gmail.com" },
+]
+keywords = ["hydra-umc", "urtc", "connector-hub", "adapter-manifest", "industrial-integration", "schema-validation"]
+# Deliberately stdlib-only for the core (`validate`/`catalog`/
+# `serve-catalog`/`certify`/`certifications`): json.loads(), a
+# hand-written structural validator, and http.server. Only `gate` on a
+# write/abort capability needs the optional `[sdk]` extra above.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+# Delivery 3 only - `gate` on a write/abort capability needs HYDRA-UMC-SDK's
+# own real bridge_contract.py, never a second implementation of that gate.
+# A git dependency (not on PyPI), same pattern every bridge project already
+# uses. `validate`/`catalog`/`serve-catalog`/`certify` need none of this.
+sdk = ["hydra-umc-sdk @ git+https://github.com/JuanenRac/HYDRA-UMC-SDK.git@main#subdirectory=clients/python"]
+
+[project.urls]
+Homepage = "https://github.com/JuanenRac/HYDRA-UMC-CONNECTOR-HUB"
+
+[project.scripts]
+hydra-umc-connector-hub = "hydra_umc_connector_hub.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+hydra_umc_connector_hub = []

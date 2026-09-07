@@ -1,0 +1,50 @@
+{
+  "adapterId": "printer-moonraker",
+  "schemaVersion": "1.0",
+  "protocol": "moonraker-http",
+  "targetKinds": ["printer-3d"],
+  "endpointSchema": {
+    "type": "object",
+    "properties": {
+      "baseUrl": { "type": "string" },
+      "slicerProfile": { "type": "string" }
+    },
+    "required": ["baseUrl"]
+  },
+  "authenticationRef": "env:MOONRAKER_API_KEY",
+  "capabilities": [
+    {
+      "name": "printStatus",
+      "mode": "read",
+      "risk": "low"
+    },
+    {
+      "name": "startPrintJob",
+      "mode": "write",
+      "risk": "medium",
+      "requiredPermission": "printer3d.job.start",
+      "requiredCellState": "idle",
+      "requiresHumanConfirmation": true,
+      "timeoutMs": 5000
+    },
+    {
+      "name": "cancelPrintJob",
+      "mode": "abort",
+      "risk": "low",
+      "requiredPermission": "printer3d.job.cancel",
+      "requiredCellState": "any",
+      "requiresHumanConfirmation": false,
+      "timeoutMs": 3000
+    }
+  ],
+  "requiredSafetyGates": [],
+  "healthCheck": { "type": "http-get", "path": "/server/info" },
+  "timeoutMs": 4000,
+  "idempotency": "none",
+  "evidenceSchema": {
+    "type": "object",
+    "properties": { "state": { "type": "string" }, "progress": { "type": "number" } }
+  },
+  "sdkCompatibility": ">=0.1.0",
+  "ownerProject": "HYDRA-UMC-BRIDGE-PRINTER3D"
+}

@@ -1,0 +1,33 @@
+{
+  "adapterId": "laser-safety",
+  "schemaVersion": "1.0",
+  "protocol": "gpio",
+  "targetKinds": ["laser-cell"],
+  "endpointSchema": {
+    "type": "object",
+    "properties": {
+      "keySwitchPin": { "type": "integer" },
+      "enclosurePin": { "type": "integer" },
+      "interlockPin": { "type": "integer" }
+    },
+    "required": ["keySwitchPin", "enclosurePin", "interlockPin"]
+  },
+  "authenticationRef": "none:local-gpio",
+  "capabilities": [
+    {
+      "name": "safetyInterlockStatus",
+      "mode": "read",
+      "risk": "low"
+    }
+  ],
+  "requiredSafetyGates": [],
+  "healthCheck": { "type": "gpio-read", "pin": "interlockPin" },
+  "timeoutMs": 1000,
+  "idempotency": "idempotent",
+  "evidenceSchema": {
+    "type": "object",
+    "properties": { "keySwitch": { "type": "boolean" }, "enclosureClosed": { "type": "boolean" }, "interlockOk": { "type": "boolean" } }
+  },
+  "sdkCompatibility": ">=0.0.8",
+  "ownerProject": "HYDRA-UMC-BRIDGE-LASER"
+}

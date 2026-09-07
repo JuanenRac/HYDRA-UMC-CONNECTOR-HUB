@@ -1,0 +1,50 @@
+{
+  "adapterId": "pnp-openpnp",
+  "schemaVersion": "1.0",
+  "protocol": "openpnp-rpc",
+  "targetKinds": ["pick-and-place"],
+  "endpointSchema": {
+    "type": "object",
+    "properties": {
+      "rpcHost": { "type": "string" },
+      "rpcPort": { "type": "integer" }
+    },
+    "required": ["rpcHost", "rpcPort"]
+  },
+  "authenticationRef": "env:OPENPNP_RPC_TOKEN",
+  "capabilities": [
+    {
+      "name": "jobStatus",
+      "mode": "read",
+      "risk": "low"
+    },
+    {
+      "name": "startJob",
+      "mode": "write",
+      "risk": "medium",
+      "requiredPermission": "pnp.job.start",
+      "requiredCellState": "ready",
+      "requiresHumanConfirmation": true,
+      "timeoutMs": 5000
+    },
+    {
+      "name": "abortJob",
+      "mode": "abort",
+      "risk": "medium",
+      "requiredPermission": "pnp.job.abort",
+      "requiredCellState": "any",
+      "requiresHumanConfirmation": false,
+      "timeoutMs": 2000
+    }
+  ],
+  "requiredSafetyGates": ["cell.estop.clear"],
+  "healthCheck": { "type": "rpc-ping" },
+  "timeoutMs": 4000,
+  "idempotency": "none",
+  "evidenceSchema": {
+    "type": "object",
+    "properties": { "jobId": { "type": "string" }, "boardsPlaced": { "type": "integer" }, "state": { "type": "string" } }
+  },
+  "sdkCompatibility": ">=0.1.0",
+  "ownerProject": "HYDRA-UMC-BRIDGE-OPENPNP"
+}

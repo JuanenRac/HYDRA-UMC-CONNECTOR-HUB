@@ -1,0 +1,50 @@
+{
+  "adapterId": "uav-mavlink",
+  "schemaVersion": "1.0",
+  "protocol": "mavlink",
+  "targetKinds": ["uav"],
+  "endpointSchema": {
+    "type": "object",
+    "properties": {
+      "connectionString": { "type": "string" },
+      "systemId": { "type": "integer" }
+    },
+    "required": ["connectionString"]
+  },
+  "authenticationRef": "none:local-radio-link",
+  "capabilities": [
+    {
+      "name": "telemetry",
+      "mode": "read",
+      "risk": "low"
+    },
+    {
+      "name": "sendWaypoint",
+      "mode": "write",
+      "risk": "high",
+      "requiredPermission": "uav.mission.write",
+      "requiredCellState": "supervised",
+      "requiresHumanConfirmation": true,
+      "timeoutMs": 3000
+    },
+    {
+      "name": "returnToLaunch",
+      "mode": "abort",
+      "risk": "high",
+      "requiredPermission": "uav.mission.abort",
+      "requiredCellState": "any",
+      "requiresHumanConfirmation": false,
+      "timeoutMs": 1000
+    }
+  ],
+  "requiredSafetyGates": ["airspace.clear"],
+  "healthCheck": { "type": "mavlink-heartbeat" },
+  "timeoutMs": 2000,
+  "idempotency": "none",
+  "evidenceSchema": {
+    "type": "object",
+    "properties": { "lat": { "type": "number" }, "lon": { "type": "number" }, "altitudeM": { "type": "number" } }
+  },
+  "sdkCompatibility": ">=0.0.5",
+  "ownerProject": "HYDRA-UMC-BRIDGE-UAV"
+}

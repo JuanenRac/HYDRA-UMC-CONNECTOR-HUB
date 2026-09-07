@@ -1,0 +1,41 @@
+{
+  "adapterId": "robotics-ros2",
+  "schemaVersion": "1.0",
+  "protocol": "ros2-rclpy",
+  "targetKinds": ["mobile-robot", "manipulator"],
+  "endpointSchema": {
+    "type": "object",
+    "properties": {
+      "namespace": { "type": "string" },
+      "domainId": { "type": "integer" }
+    },
+    "required": ["namespace"]
+  },
+  "authenticationRef": "none:ros2-dds-domain",
+  "capabilities": [
+    {
+      "name": "subscribeTopic",
+      "mode": "read",
+      "risk": "low"
+    },
+    {
+      "name": "publishTwistCommand",
+      "mode": "write",
+      "risk": "high",
+      "requiredPermission": "ros2.cmd_vel.publish",
+      "requiredCellState": "supervised",
+      "requiresHumanConfirmation": true,
+      "timeoutMs": 500
+    }
+  ],
+  "requiredSafetyGates": ["cell.estop.clear"],
+  "healthCheck": { "type": "ros2-node-alive" },
+  "timeoutMs": 2000,
+  "idempotency": "none",
+  "evidenceSchema": {
+    "type": "object",
+    "properties": { "topic": { "type": "string" }, "messageType": { "type": "string" } }
+  },
+  "sdkCompatibility": ">=0.0.6",
+  "ownerProject": "HYDRA-UMC-BRIDGE-ROS2"
+}

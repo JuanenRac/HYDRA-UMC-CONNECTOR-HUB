@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "ecosystem": "HYDRA-UMC",
+  "name": "HYDRA-UMC-CONNECTOR-HUB",
+  "version": "0.0.5",
+  "role": "tool",
+  "stack": "python",
+  "technologies": [
+    "Python 3.11+",
+    "JSON Schema (hand-written structural validator, no jsonschema dependency)",
+    "http.server (stdlib-only real read-only catalog endpoint)",
+    "HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job())"
+  ],
+  "deployment_target": "user-pc",
+  "maturity": "scaffolding",
+  "family": "Platform Foundation & Contracts",
+  "parent": null,
+  "native_version": {
+    "file": "pyproject.toml",
+    "pattern": "^version\\s*=\\s*\"(\\d+)\\.(\\d+)\\.(\\d+)\""
+  },
+  "build": "A real, hand-written structural validator (schema.py, now also exposing a small JSON-Schema-subset checker for evidence/config payloads) for the ecosystem-wide software-improvements audit's own \"adapter-manifest\" contract; a real CLI (`hydra-umc-connector-hub validate/catalog/serve-catalog/gate/certify/certifications`); ten real fixtures, one per already-existing bridge/protocol project this hub registers; a real, GET-only http.server catalog endpoint (registry.py + catalog_server.py); a real integration with HYDRA-UMC-SDK's own evaluate_job() safety gate (sdk_gate.py, optional `[sdk]` extra); and a real, append-only certification-record log (certification.py). Still never touches CAN/SPI/UART or a real machine directly - the catalog only serves manifests already on disk, and certification records a human's own attested evidence rather than independently probing hardware. Real build: python -m build (see pyproject.toml).",
+  "notes": "v0.0.4 - a second independent revalidation audit found and fixed 4 more real issues: the capability gate now enforces a write/abort capability's own declared requiredPermission/requiredCellState/requiresHumanConfirmation and the manifest's own requiredSafetyGates (previously ignored - a call was gate-allowed on the generic SDK motion check alone, zero policy enforced); adapterId is now restricted to a safe charset and save_certification_record() independently verifies its resolved path stays inside the target directory (previously a path-traversal adapterId could write outside it); the certification store now creates records with real atomic O_CREAT|O_EXCL semantics, refusing to silently overwrite a different record under the same id (previously not actually append-only despite documenting it as such); the JSON-Schema-subset validator no longer accepts a bool as a number or raises on an invalid regex pattern/non-string required entry (previously it could crash or silently accept wrong-typed evidence). Deliveries 1-4 of the 4-delivery plan (\"Esquema JSON, CLI validate y diez fixtures\" / \"Registro ... y endpoint read-only de catalogo\" / \"Integracion con SDK: validacion de capability + safety gate + evidencia\" [P0] / \"Certificar adaptadores uno a uno sobre sus maquinas\" [P1][HARDWARE]) from the ecosystem-wide software-improvements audit's own recommended-new-project proposal. Complementary to the proposal's other recommended project, HYDRA-UMC-OPS-AGENT (maintenance-incident lifecycle for the ecosystem's OWN components) - this one is about discovering, validating and safely invoking what an EXTERNAL machine/adapter can do, never about CAN/SPI/UART access or motor control directly (those stay owned by HYDRA-UMC-SERVER/SDK/MCU). Explicitly does not replace HYDRA-UMC-GATEWAY-INDUSTRIAL, HYDRA-UMC-OPCUA-SERVER, HYDRA-UMC-MQTT-BROKER or HYDRA-UMC-MTCONNECT-ADAPTER - it is a declarative registry/validator/gate ABOVE them, not a second protocol implementation. The ten fixtures reference those real projects (and the real bridge repos) as their own ownerProject, never an invented one. A capability whose mode is write/abort is rejected by the validator unless it also declares risk, requiredPermission, requiredCellState and timeoutMs - the audit proposal's own explicit rule (\"las acciones write nunca son seleccionables si falta una de esas condiciones\"), enforced as a real, tested check. Delivery 3's own gate never reimplements HYDRA-UMC-SDK's safety logic - it calls the SDK's real `evaluate_job()` directly (a `read` capability skips the SDK entirely; `write`/`abort` map onto a documented, honestly-simplified single JobPhase - see sdk_gate.py's own module docstring for exactly why). Delivery 4's own certification log is real, append-only record-keeping of a human-attested evidence payload checked against the adapter's own evidenceSchema - it explicitly does NOT and cannot independently verify that evidence came from real hardware without the real hardware itself, which this development machine does not have; that gap is documented, not hidden."
+}
