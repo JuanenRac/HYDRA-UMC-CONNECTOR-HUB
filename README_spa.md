@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 de 4 entregas">
 </p>
 
-> **Estado: v0.0.5, scaffolding - Entregas 1-4 de 4 (esquema/CLI/
+> **Estado: v0.0.6, scaffolding - Entregas 1-4 de 4 (esquema/CLI/
 > fixtures, catálogo de solo lectura, puerta de seguridad del SDK,
 > registros de certificación).** `catalog`/`serve-catalog` son reales y
 > de solo GET (no existe ninguna ruta de escritura por red en todo el

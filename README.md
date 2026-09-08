@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries 4 of 4">
 </p>
 
-> **Status: v0.0.5, scaffolding - Deliveries 1-4 of 4 (schema/CLI/
+> **Status: v0.0.6, scaffolding - Deliveries 1-4 of 4 (schema/CLI/
 > fixtures, read-only catalog, SDK safety gate, certification records).**
 > `catalog`/`serve-catalog` are real and GET-only (no network write path
 > exists anywhere in this project); `gate` calls straight into

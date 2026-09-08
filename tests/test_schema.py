@@ -11,6 +11,7 @@ import unittest
 from pathlib import Path
 
 from hydra_umc_connector_hub.schema import (
+    check_sdk_compatibility,
     load_and_validate,
     validate_adapter_manifest,
     validate_against_json_schema_subset,
@@ -241,6 +242,37 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
         errors = validate_adapter_manifest(manifest)
         self.assertTrue(any("endpointSchema" in e for e in errors), errors)
 
+    # F07 ("gate caducado") - maxRequestAgeSeconds is optional (no
+    # existing fixture needs to change), but must be a real positive
+    # number when an adapter author does declare one.
+    def test_a_manifest_with_no_max_request_age_is_still_valid(self):
+        manifest = self._write_capability()
+        self.assertNotIn("maxRequestAgeSeconds", manifest)
+        self.assertEqual(validate_adapter_manifest(manifest), [])
+
+    def test_a_manifest_with_a_real_positive_max_request_age_is_valid(self):
+        manifest = self._write_capability()
+        manifest["maxRequestAgeSeconds"] = 15.0
+        self.assertEqual(validate_adapter_manifest(manifest), [])
+
+    def test_a_manifest_with_a_zero_max_request_age_is_rejected(self):
+        manifest = self._write_capability()
+        manifest["maxRequestAgeSeconds"] = 0
+        errors = validate_adapter_manifest(manifest)
+        self.assertTrue(any("maxRequestAgeSeconds" in e for e in errors), errors)
+
+    def test_a_manifest_with_a_negative_max_request_age_is_rejected(self):
+        manifest = self._write_capability()
+        manifest["maxRequestAgeSeconds"] = -5
+        errors = validate_adapter_manifest(manifest)
+        self.assertTrue(any("maxRequestAgeSeconds" in e for e in errors), errors)
+
+    def test_a_manifest_with_a_non_numeric_max_request_age_is_rejected(self):
+        manifest = self._write_capability()
+        manifest["maxRequestAgeSeconds"] = "soon"
+        errors = validate_adapter_manifest(manifest)
+        self.assertTrue(any("maxRequestAgeSeconds" in e for e in errors), errors)
+
 
 class ValidateAgainstJsonSchemaSubsetRobustnessTests(unittest.TestCase):
     """V07-009: `validate_against_json_schema_subset()` itself must never
@@ -265,6 +297,44 @@ class ValidateAgainstJsonSchemaSubsetRobustnessTests(unittest.TestCase):
     def test_a_non_string_required_entry_is_reported_as_an_error_not_raised(self):
         errors = validate_against_json_schema_subset({"type": "object", "required": [[]]}, {})
         self.assertTrue(errors)
+
+
+# F07 ("version incompatible") - check_sdk_compatibility() itself, pure
+# logic, no hydra-umc-sdk install needed (see sdk_gate.py's own real
+# caller for why the installed version is passed in rather than imported
+# here).
+class SdkCompatibilityCheckTests(unittest.TestCase):
+    def test_installed_version_meeting_the_minimum_is_compatible(self):
+        self.assertIsNone(check_sdk_compatibility(">=0.1.0", "0.1.0"))
+
+    def test_installed_version_above_the_minimum_is_compatible(self):
+        self.assertIsNone(check_sdk_compatibility(">=0.1.0", "0.2.5"))
+
+    def test_installed_version_below_the_minimum_is_incompatible(self):
+        error = check_sdk_compatibility(">=0.1.0", "0.0.9")
+        self.assertIsNotNone(error)
+        self.assertIn("0.1.0", error)
+        self.assertIn("0.0.9", error)
+
+    def test_a_major_version_bump_downward_is_incompatible(self):
+        self.assertIsNotNone(check_sdk_compatibility(">=1.0.0", "0.9.9"))
+
+    def test_a_malformed_constraint_is_a_real_reported_error_not_a_crash(self):
+        error = check_sdk_compatibility("whatever-i-want", "0.1.0")
+        self.assertIsNotNone(error)
+        self.assertIn("not a real, supported constraint", error)
+
+    def test_an_unsupported_operator_is_a_real_reported_error_not_silently_accepted(self):
+        # This ecosystem's own real fixtures only ever use '>=' - '==' is
+        # deliberately NOT understood, and must fail closed, not be
+        # silently treated as compatible.
+        error = check_sdk_compatibility("==0.1.0", "0.1.0")
+        self.assertIsNotNone(error)
+
+    def test_a_malformed_installed_version_is_a_real_reported_error_not_a_crash(self):
+        error = check_sdk_compatibility(">=0.1.0", "not-a-version")
+        self.assertIsNotNone(error)
+        self.assertIn("not a real", error)
 
 
 if __name__ == "__main__":

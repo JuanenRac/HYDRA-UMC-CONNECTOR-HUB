@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 consegne su 4">
 </p>
 
-> **Stato: v0.0.5, scaffolding - Consegne 1-4 di 4 (schema/CLI/fixture,
+> **Stato: v0.0.6, scaffolding - Consegne 1-4 di 4 (schema/CLI/fixture,
 > catalogo di sola lettura, cancello di sicurezza SDK, registri di
 > certificazione).** `catalog`/`serve-catalog` sono reali e solo GET
 > (non esiste alcuna rotta di scrittura di rete in nessuna parte di

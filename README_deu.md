@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 von 4 Lieferungen">
 </p>
 
-> **Status: v0.0.5, Scaffolding - Lieferungen 1-4 von 4 (Schema/CLI/
+> **Status: v0.0.6, Scaffolding - Lieferungen 1-4 von 4 (Schema/CLI/
 > Fixtures, schreibgeschützter Katalog, SDK-Sicherheitsschranke,
 > Zertifizierungsdatensätze).** `catalog`/`serve-catalog` sind echt und
 > nur GET (es gibt nirgendwo im Projekt einen Schreib-Netzwerkpfad);
