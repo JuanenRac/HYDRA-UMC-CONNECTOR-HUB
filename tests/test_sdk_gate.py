@@ -247,5 +247,105 @@ class CapabilityGateEnforcesDeclaredPolicyTests(unittest.TestCase):
         self.assertTrue(result.evidence_errors)
 
 
+# F07 (private plan's own flow: "ID malicioso, version incompatible,
+# certificado duplicado, confirmacion ausente y gate caducado") - the
+# last 2 real scenarios named there, found 2026-09-08 not implemented at
+# all (not just untested). "ID malicioso"/"confirmacion ausente" were
+# already real above (unknown capability / requiresHumanConfirmation);
+# "certificado duplicado" is Delivery 4's own certification.py, out of
+# this module's scope.
+@unittest.skipUnless(SDK_INSTALLED, "hydra-umc-sdk (optional [sdk] extra) is not installed")
+class RequestFreshnessGateTests(unittest.TestCase):
+    """'gate caducado' - a write/abort request built too long ago must be
+    refused, since the cell/machine state it attests to may no longer
+    hold. Uses `now=` injection throughout for a real, deterministic
+    "time has passed" instead of a flaky sleep()."""
+
+    def test_a_request_older_than_the_default_limit_is_denied(self):
+        manifest = _load("cnc-grbl.json")
+        now = 1_000_000.0
+        stale = _authorized_request(requested_at=now - 31.0)  # DEFAULT_MAX_REQUEST_AGE_SECONDS is 30.0
+        result = evaluate_capability_call(manifest, stale, now=now)
+        self.assertFalse(result.allowed)
+        self.assertIn("gate has expired", result.reason)
+
+    def test_a_request_within_the_default_limit_is_not_denied_for_freshness(self):
+        manifest = _load("cnc-grbl.json")
+        now = 1_000_000.0
+        fresh = _authorized_request(requested_at=now - 5.0)
+        result = evaluate_capability_call(manifest, fresh, now=now)
+        self.assertTrue(result.allowed)
+
+    def test_a_manifest_declaring_its_own_max_request_age_is_honoured(self):
+        manifest = dict(_load("cnc-grbl.json"))
+        manifest["maxRequestAgeSeconds"] = 5.0
+        now = 1_000_000.0
+        # Would pass the 30s ecosystem default, but not this manifest's
+        # own tighter, real 5s limit.
+        result = evaluate_capability_call(manifest, _authorized_request(requested_at=now - 10.0), now=now)
+        self.assertFalse(result.allowed)
+        self.assertIn("gate has expired", result.reason)
+
+    def test_a_freshly_constructed_request_defaults_to_now_and_is_never_stale(self):
+        # No now= override at all - requested_at's own default_factory
+        # (time.time) and evaluate_capability_call's own default (also
+        # time.time()) must never disagree by more than this test's own
+        # execution time.
+        manifest = _load("cnc-grbl.json")
+        result = evaluate_capability_call(manifest, _authorized_request())
+        self.assertTrue(result.allowed)
+
+    def test_a_read_capability_is_never_subject_to_the_freshness_check(self):
+        manifest = _load("cnc-grbl.json")
+        now = 1_000_000.0
+        ancient = _request(capability_name="grblStatus", requested_at=now - 10_000.0)
+        result = evaluate_capability_call(manifest, ancient, now=now)
+        self.assertTrue(result.allowed)
+
+
+@unittest.skipUnless(SDK_INSTALLED, "hydra-umc-sdk (optional [sdk] extra) is not installed")
+class SdkVersionCompatibilityGateTests(unittest.TestCase):
+    """'version incompatible' - an adapter manifest's own declared
+    `sdkCompatibility` (a real `>=X.Y.Z` constraint, required by every
+    real fixture already, see schema.py's own REQUIRED_TOP_LEVEL_STRING_
+    FIELDS) was only ever checked for being a non-empty string - its real
+    meaning against the actually-installed hydra-umc-sdk was never
+    evaluated anywhere until this pass."""
+
+    def test_a_manifest_requiring_an_unreleased_future_sdk_version_is_denied(self):
+        manifest = dict(_load("cnc-grbl.json"))
+        manifest["sdkCompatibility"] = ">=99.0.0"  # always incompatible, regardless of what's installed
+        result = evaluate_capability_call(manifest, _authorized_request())
+        self.assertFalse(result.allowed)
+        self.assertIn("requires hydra-umc-sdk >=99.0.0", result.reason)
+
+    def test_a_manifest_compatible_with_the_installed_sdk_is_not_denied_for_version(self):
+        manifest = dict(_load("cnc-grbl.json"))
+        manifest["sdkCompatibility"] = ">=0.0.1"  # every real installed version satisfies this
+        result = evaluate_capability_call(manifest, _authorized_request())
+        self.assertTrue(result.allowed)
+
+    def test_a_read_capability_is_never_subject_to_the_version_check(self):
+        # Same real design as the freshness check above: a read never
+        # touches the optional SDK dependency at all, so it cannot be
+        # gated on that dependency's own installed version either.
+        manifest = dict(_load("cnc-grbl.json"))
+        manifest["sdkCompatibility"] = ">=99.0.0"
+        result = evaluate_capability_call(manifest, _request(capability_name="grblStatus"))
+        self.assertTrue(result.allowed)
+
+    def test_version_incompatibility_is_checked_before_the_motion_gate_not_after(self):
+        # Cell not-ready would ALSO deny this call (see
+        # WriteAndAbortCapabilitiesUseTheRealSdkGateTests above) - the
+        # reason returned must be the version one, proving this check
+        # runs first, not that it merely happens to agree with a
+        # different real denial.
+        manifest = dict(_load("cnc-grbl.json"))
+        manifest["sdkCompatibility"] = ">=99.0.0"
+        result = evaluate_capability_call(manifest, _authorized_request(cell_state="INHIBITED"))
+        self.assertFalse(result.allowed)
+        self.assertIn("requires hydra-umc-sdk", result.reason)
+
+
 if __name__ == "__main__":
     unittest.main()

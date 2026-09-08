@@ -9,6 +9,38 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
+## [0.0.6] - F07: real "version incompatible" and "gate caducado" checks
+
+2 of the 5 real scenarios this project's own F07 flow names
+("ID malicioso, versión incompatible, certificado duplicado,
+confirmación ausente y gate caducado") were found not implemented at
+all - not merely untested:
+
+- **Version incompatible**: `sdkCompatibility` (required since Delivery
+  1, a real `>=X.Y.Z` constraint every fixture already declares) was
+  only ever checked for being a non-empty string - its actual meaning
+  against the REAL installed `hydra_umc_sdk.__version__` was never
+  evaluated anywhere. New `schema.check_sdk_compatibility()` (pure
+  logic, no SDK import needed) is now checked in
+  `evaluate_capability_call()` right where the optional dependency
+  already becomes available, before any `BridgeJob` is ever constructed.
+- **Gate caducado (expired)**: a write/abort request built long before
+  it is actually evaluated is now denied - the cell/machine state it
+  attests to may no longer hold by then. New `CapabilityCallRequest.
+  requested_at` (defaults to "now", so every existing caller keeps
+  behaving exactly as before) checked against a real, optional
+  per-manifest `maxRequestAgeSeconds` (a conservative 30s ecosystem
+  default applies when a manifest doesn't declare one).
+
+Both checks are read-exempt, same as every other policy check this
+module already enforces (V07-006) - a read capability still never
+touches the optional SDK dependency at all. `evaluate_capability_call()`
+gains an optional `now=` parameter for real, deterministic freshness
+tests instead of a flaky `sleep()`.
+
+Verified: full pytest suite (113/113, 21 new), `tools/ci_validate.py`
+PASS (incl. a 7-language README version-string fix this surfaced).
+
 ## [0.0.5] - Docs only: real client integration has started
 
 No code changed here - HYDRA-UMC-SERVER is now a real consumer of this

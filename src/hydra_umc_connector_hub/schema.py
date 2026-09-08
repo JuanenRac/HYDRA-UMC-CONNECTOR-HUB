@@ -57,6 +57,52 @@ IDEMPOTENCY_VALUES = ("none", "idempotent", "at-least-once", "exactly-once")
 # real risks a fixed, explicit list avoids).
 AUTHENTICATION_REF_PREFIXES = ("env:", "secret-store:", "vault:", "none:")
 
+_VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
+# Every one of this repo's own 12 real fixtures declares `sdkCompatibility`
+# as exactly ">=X.Y.Z" - the one real operator this ecosystem's own
+# manifests actually use, so it is the one real operator this parser
+# supports (no `==`/`<`/`~=` - adding support for an operator no real
+# fixture uses would be speculative, not real work).
+_SDK_COMPATIBILITY_RE = re.compile(r"^>=(\d+)\.(\d+)\.(\d+)$")
+
+
+def check_sdk_compatibility(constraint: str, installed_version: str) -> str | None:
+    """F07 (private plan's own flow, 'version incompatible' scenario):
+    `sdkCompatibility` (REQUIRED_TOP_LEVEL_STRING_FIELDS above) was only
+    ever checked for being a non-empty string - its own real meaning (a
+    real minimum-version constraint against the SDK actually installed)
+    was never evaluated anywhere in this codebase, a real gap found
+    2026-09-08. Pure logic, no `hydra_umc_sdk` import needed here - the
+    one real caller that needs this (sdk_gate.py, which already owns the
+    lazy-import boundary for that optional package) passes the real
+    installed `hydra_umc_sdk.__version__` in.
+
+    Returns None when compatible, or a real, human-readable reason when
+    not - never raises for a malformed but well-typed string input,
+    matching every other check in this module (a malformed constraint or
+    an unparseable installed version is itself a real reason to refuse,
+    not a crash).
+    """
+    match = _SDK_COMPATIBILITY_RE.match(constraint)
+    if match is None:
+        return (
+            f"'sdkCompatibility' {constraint!r} is not a real, supported constraint - "
+            "only '>=MAJOR.MINOR.PATCH' is understood"
+        )
+    required = tuple(int(part) for part in match.groups())
+
+    installed_match = _VERSION_RE.match(installed_version)
+    if installed_match is None:
+        return f"the installed hydra-umc-sdk version {installed_version!r} is not a real 'MAJOR.MINOR.PATCH' string"
+    installed = tuple(int(part) for part in installed_match.groups())
+
+    if installed < required:
+        return (
+            f"this adapter requires hydra-umc-sdk {constraint} but the installed version is "
+            f"{installed_version} - refusing before any capability call, not just a failed one"
+        )
+    return None
+
 # Fields a "write" or "abort" capability must ALL declare, per the audit
 # proposal's own explicit rule: "Las acciones write nunca son
 # seleccionables si falta una de esas condiciones."
@@ -202,6 +248,17 @@ def validate_adapter_manifest(data: Any) -> list[str]:
             # used as a real JSON-Schema-subset by sdk_gate.py and
             # certification.py, get this check.
             errors.extend(_validate_schema_shape(value, field))
+
+    # F07 ("gate caducado" scenario) - optional (no existing fixture needs
+    # to declare it; a real, conservative ecosystem default applies when
+    # absent, see sdk_gate.py's own DEFAULT_MAX_REQUEST_AGE_SECONDS), but
+    # if an adapter author DOES declare one it must be a real positive
+    # number, not a value that would silently accept every request
+    # (0/negative) or reject every one (a non-number).
+    max_request_age = data.get("maxRequestAgeSeconds")
+    if max_request_age is not None:
+        if isinstance(max_request_age, bool) or not isinstance(max_request_age, (int, float)) or max_request_age <= 0:
+            errors.append(f"'maxRequestAgeSeconds' must be a positive number when present, got {max_request_age!r}")
 
     required_safety_gates = data.get("requiredSafetyGates")
     if not isinstance(required_safety_gates, list) or not all(isinstance(g, str) for g in required_safety_gates):

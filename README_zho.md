@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 项交付中已完成 4 项">
 </p>
 
-> **状态：v0.0.5，脚手架阶段——4 项交付中的全部 4 项(模式定义/CLI/fixture、只读目录、SDK 安全门、认证记录)均已交付。**
+> **状态：v0.0.6，脚手架阶段——4 项交付中的全部 4 项(模式定义/CLI/fixture、只读目录、SDK 安全门、认证记录)均已交付。**
 > `catalog`/`serve-catalog` 是真实的、仅支持 GET(整个项目中不存在任何网络写入路径)；`gate` 直接调用 HYDRA-UMC-SDK 自身真实的 `evaluate_job()`，绝不是该安全门的第二套实现(见 [docs/CAPABILITY_GATE.md](docs/CAPABILITY_GATE.md))；`certify` 会记录一份真实的、由人类见证的证据，但明确**不会**独立地针对真实硬件去验证它——具体原因见 [docs/CERTIFICATION.md](docs/CERTIFICATION.md)，说明了为什么在没有实体机器在手的情况下这项工作必须保持在范围之外。关于当前真实存在的确切命令面，见 [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)。
 
 ---

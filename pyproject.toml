@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hydra-umc-connector-hub"
-version = "0.0.5"
+version = "0.0.6"
 description = "Declarative adapter-manifest registry, read-only catalog, SDK safety-gate integration and certification records for external-machine connectors in the HYDRA-UMC/URTC ecosystem."
 readme = "README.md"
 requires-python = ">=3.11"

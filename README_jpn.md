@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 件中 4 件の納品完了">
 </p>
 
-> **ステータス: v0.0.5、scaffolding - 4 件の納品のうち全 4 件(スキー
+> **ステータス: v0.0.6、scaffolding - 4 件の納品のうち全 4 件(スキー
 > マ/CLI/フィクスチャ、読み取り専用カタログ、SDK 安全ゲート、認証記
 > 録)完了。** `catalog`/`serve-catalog` は本物で GET のみです(このプ
 > ロジェクトのどこにもネットワーク書き込み経路は存在しません)。

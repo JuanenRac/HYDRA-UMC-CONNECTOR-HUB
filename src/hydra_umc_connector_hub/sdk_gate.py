@@ -59,13 +59,38 @@ mode restrictions simply declares `requiresHumanConfirmation: false`/
 `requiredCellState: "any"` for it (every real fixture in this repo
 already does exactly that), which this uniform check honours without
 the code itself ever assuming "abort is exempt".
+
+F07 (private plan's own flow, 2 of its 5 named scenarios found NOT
+implemented at all as of 2026-09-08 - not merely untested): a
+write/abort call is now ALSO denied when the caller's own request has
+gone stale (`requested_at` older than `maxRequestAgeSeconds`/
+`DEFAULT_MAX_REQUEST_AGE_SECONDS` - "gate caducado", the cell/machine
+state a request attests to may no longer hold by the time it is
+evaluated) or when the adapter manifest's own declared
+`sdkCompatibility` constraint does not match the REAL installed
+`hydra_umc_sdk.__version__` ("version incompatible" - `sdkCompatibility`
+was required to be a non-empty string since Delivery 1, but its actual
+semantic meaning was never once evaluated). Both are checked fail-closed
+and independent of the other policy checks above, same standard.
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from .schema import validate_adapter_manifest, validate_against_json_schema_subset
+from .schema import check_sdk_compatibility, validate_adapter_manifest, validate_against_json_schema_subset
+
+# F07 ("gate caducado" scenario, found and closed 2026-09-08): a write/
+# abort request that was constructed a long time ago must not be trusted
+# as if it were made right now - the cell/machine state it was built
+# against may no longer hold. No existing manifest declares its own
+# `maxRequestAgeSeconds` (added as an optional field in schema.py), so
+# every real fixture gets this same conservative default rather than
+# silently trusting a request of any age - matching this ecosystem's own
+# general "short, bounded window" convention (e.g. HYDRA-UMC-SERVER's own
+# DEFAULT_RESERVATION_TTL_MS for command ownership).
+DEFAULT_MAX_REQUEST_AGE_SECONDS = 30.0
 
 
 class CapabilityGateError(ValueError):
@@ -108,6 +133,13 @@ class CapabilityCallRequest:
     cell_mode: str | None = None
     human_confirmed: bool = False
     satisfied_safety_gates: frozenset[str] = field(default_factory=frozenset)
+    # F07 ("gate caducado") - when this request was actually built, real
+    # wall-clock seconds (`time.time()`). Defaults to "right now" so
+    # every existing caller/test that never set this explicitly keeps
+    # behaving exactly as before (a freshly-built request is never
+    # stale); a caller that wants to exercise real expiry sets this to a
+    # real past timestamp instead.
+    requested_at: float = field(default_factory=time.time)
 
     def __post_init__(self) -> None:
         for attr in ("job_id", "idempotency_key", "source", "capability_name", "cell_state", "machine_state"):
@@ -133,7 +165,7 @@ def _find_capability(manifest: dict[str, Any], capability_name: str) -> dict[str
     return None
 
 
-def _policy_denials(manifest: dict[str, Any], capability: dict[str, Any], request: CapabilityCallRequest) -> list[str]:
+def _policy_denials(manifest: dict[str, Any], capability: dict[str, Any], request: CapabilityCallRequest, now: float) -> list[str]:
     """V07-006: every real, separate reason a write/abort capability's
     own declared policy can refuse this specific call - independent of,
     and checked BEFORE, HYDRA-UMC-SDK's own generic motion gate (so a
@@ -161,10 +193,22 @@ def _policy_denials(manifest: dict[str, Any], capability: dict[str, Any], reques
     if missing_gates:
         denials.append(f"required safety gate(s) not satisfied: {', '.join(missing_gates)}")
 
+    # F07 ("gate caducado"): the request's own age, not the SDK's motion
+    # gate, is what expires here - checked with a plain wall-clock
+    # subtraction so it needs neither the optional SDK dependency nor a
+    # real machine, matching every other check in this function.
+    max_age = manifest.get("maxRequestAgeSeconds", DEFAULT_MAX_REQUEST_AGE_SECONDS)
+    age = now - request.requested_at
+    if age > max_age:
+        denials.append(
+            f"this request's own gate has expired: it was made {age:.1f}s ago, "
+            f"exceeding the {max_age}s limit - the cell/machine state it was built against can no longer be trusted"
+        )
+
     return denials
 
 
-def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRequest) -> CapabilityGateResult:
+def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRequest, *, now: float | None = None) -> CapabilityGateResult:
     """The one real entry point Delivery 3 adds. Order of checks, each
     one a real, separate reason a call can fail closed:
 
@@ -174,15 +218,24 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
     3. `read` is always allowed (see module docstring); `write`/`abort`
        must satisfy every real policy the capability/manifest declares
        (`requiredPermission`/`requiredCellState`/`requiresHumanConfirmation`/
-       `requiredSafetyGates` - see `_policy_denials()`, V07-006) BEFORE
-       going through HYDRA-UMC-SDK's own real `evaluate_job()` motion
-       gate - both must pass.
+       `requiredSafetyGates`/request freshness - see `_policy_denials()`,
+       V07-006 and F07's own "gate caducado" scenario) BEFORE going
+       through HYDRA-UMC-SDK's own real `evaluate_job()` motion gate -
+       every one of these, the SDK's own version compatibility (F07's
+       own "version incompatible" scenario) included, must pass.
     4. If `request.evidence` was supplied, it is checked against the
        manifest's own `evidenceSchema` - a call can be gate-allowed and
        still come back with real `evidence_errors` if the evidence
        payload does not match what the adapter itself promised to
        return.
+
+    `now`: real wall-clock seconds this call is evaluated at, for the
+    request-freshness check above - defaults to `time.time()`, override
+    only from a test that needs a real, reproducible "time has passed"
+    scenario rather than a flaky sleep().
     """
+    effective_now = now if now is not None else time.time()
+
     manifest_errors = validate_adapter_manifest(manifest)
     if manifest_errors:
         raise CapabilityGateError(f"refusing to gate a call against an invalid manifest: {'; '.join(manifest_errors)}")
@@ -195,7 +248,7 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
     if mode == "read":
         allowed, reason = True, "read capabilities are not subject to the motion safety gate"
     else:
-        policy_denials = _policy_denials(manifest, capability, request)
+        policy_denials = _policy_denials(manifest, capability, request, effective_now)
         if policy_denials:
             # V07-006: denied on the capability's own declared policy
             # BEFORE ever touching the optional SDK dependency - a call
@@ -206,6 +259,7 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
             allowed, reason = False, "; ".join(policy_denials)
         else:
             try:
+                import hydra_umc_sdk  # type: ignore[import-not-found]
                 from hydra_umc_sdk.bridge_contract import (  # type: ignore[import-not-found]
                     BridgeError,
                     BridgeJob,
@@ -220,30 +274,42 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
                     "`pip install -e \".[sdk]\"` to gate a write/abort capability call"
                 ) from exc
 
-            try:
-                cell_state = CellState(request.cell_state)
-            except ValueError as exc:
-                raise CapabilityGateError(f"unknown cell_state {request.cell_state!r} - expected one of {[s.value for s in CellState]}") from exc
-            try:
-                machine_state = MachineState(request.machine_state)
-            except ValueError as exc:
-                raise CapabilityGateError(f"unknown machine_state {request.machine_state!r} - expected one of {[s.value for s in MachineState]}") from exc
+            # F07 ("version incompatible"): checked here, right where the
+            # optional dependency becomes available - same real installed
+            # __version__ every other consumer of this package would see,
+            # never a value this module invents or caches stale. Denied
+            # exactly like a policy denial above (falls through to the
+            # shared evidence check below, never an early return) rather
+            # than ever constructing a BridgeJob against an SDK contract
+            # this manifest does not actually claim to support.
+            incompatibility_reason = check_sdk_compatibility(manifest["sdkCompatibility"], hydra_umc_sdk.__version__)
+            if incompatibility_reason is not None:
+                allowed, reason = False, incompatibility_reason
+            else:
+                try:
+                    cell_state = CellState(request.cell_state)
+                except ValueError as exc:
+                    raise CapabilityGateError(f"unknown cell_state {request.cell_state!r} - expected one of {[s.value for s in CellState]}") from exc
+                try:
+                    machine_state = MachineState(request.machine_state)
+                except ValueError as exc:
+                    raise CapabilityGateError(f"unknown machine_state {request.machine_state!r} - expected one of {[s.value for s in MachineState]}") from exc
 
-            phase = JobPhase.ABORT if mode == "abort" else JobPhase.PROCESS
-            try:
-                job = BridgeJob(
-                    job_id=request.job_id,
-                    idempotency_key=request.idempotency_key,
-                    source=request.source,
-                    phase=phase,
-                    machine_state=machine_state,
-                    parameters=dict(request.parameters),
-                )
-            except BridgeError as exc:
-                raise CapabilityGateError(f"HYDRA-UMC-SDK rejected this request before any gate ran: {exc}") from exc
+                phase = JobPhase.ABORT if mode == "abort" else JobPhase.PROCESS
+                try:
+                    job = BridgeJob(
+                        job_id=request.job_id,
+                        idempotency_key=request.idempotency_key,
+                        source=request.source,
+                        phase=phase,
+                        machine_state=machine_state,
+                        parameters=dict(request.parameters),
+                    )
+                except BridgeError as exc:
+                    raise CapabilityGateError(f"HYDRA-UMC-SDK rejected this request before any gate ran: {exc}") from exc
 
-            decision = evaluate_job(job, cell_state)
-            allowed, reason = decision.allowed, decision.reason
+                decision = evaluate_job(job, cell_state)
+                allowed, reason = decision.allowed, decision.reason
 
     evidence_errors: list[str] = []
     if request.evidence is not None:
