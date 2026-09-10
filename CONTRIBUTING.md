@@ -17,7 +17,7 @@ of the HYDRA-UMC platform.
 
 1. **A `write`/`abort` capability is never valid without its full real
    safety context.** `_WRITE_CAPABILITY_REQUIRED_FIELDS` in `schema.py`
-   is the audit proposal's own non-negotiable rule
+   is an explicit, non-negotiable rule
    ("las acciones write nunca son seleccionables si falta una de esas
    condiciones") made real and tested. Do not relax this check, and do
    not add a new capability mode without deciding - explicitly, in this
