@@ -36,7 +36,7 @@ reads:
   final decision when the caller actually supplies an `evidence` payload
   to check; it never invents evidence a real machine did not produce.
 
-V07-006 (found in an independent revalidation audit, P1): a write/abort
+V07-006 (P1): a write/abort
 capability's own declared `requiredPermission`/`requiredCellState`/
 `requiresHumanConfirmation`, and the manifest's own top-level
 `requiredSafetyGates`, used to be pure documentation - this module
@@ -52,7 +52,7 @@ from the SDK's own `CellState` enum, which this module already forwards
 separately), a human having explicitly confirmed, and every one of the
 manifest's own required safety gates being currently satisfied. Every
 one of these is fail-closed and independent: dropping any single one
-denies the call, matching the audit's own stated acceptance criterion.
+denies the call, matching the stated acceptance criterion.
 This is deliberately NOT a special case for `mode == "abort"` - a real
 adapter that wants its own abort capability to skip confirmation/cell-
 mode restrictions simply declares `requiresHumanConfirmation: false`/

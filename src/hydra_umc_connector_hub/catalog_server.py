@@ -8,7 +8,7 @@ deliberately no web framework: three GET routes, nothing else. There is
 no `do_POST`/`do_PUT`/`do_DELETE` anywhere in this module, so any write
 attempt gets `BaseHTTPRequestHandler`'s own honest 501, never a route
 this project forgot to protect. A real client (Server/Studio/Suite/
-Updater, per the audit proposal's own item 5) is meant to poll `/catalog`
+Updater) is meant to poll `/catalog`
 to discover which adapters exist and what they can do, then fetch
 `/catalog/<adapterId>` once it knows which one it wants - it never gets a
 way to invoke a capability from this module (that is Delivery 3's own,

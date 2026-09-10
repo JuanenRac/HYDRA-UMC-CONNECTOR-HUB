@@ -3,8 +3,8 @@
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 # GPL-3.0 - see LICENSE
 # =============================================================================
-"""The real "adapter-manifest" contract from the ecosystem-wide software-
-improvements audit's own proposal ("CONTRATO MINIMO DE ADAPTADOR"), plus a
+"""The real "adapter-manifest" contract defined while auditing the code
+("CONTRATO MINIMO DE ADAPTADOR"), plus a
 real, hand-written structural validator for it - deliberately not the
 third-party `jsonschema` package, since this project's own Delivery 1 is
 small enough (14 top-level fields, one nested capability shape) that a
@@ -23,10 +23,10 @@ from __future__ import annotations
 import re
 from typing import Any
 
-# The real capability modes the audit proposal names explicitly.
+# The real capability modes the contract names explicitly.
 CAPABILITY_MODES = ("read", "write", "abort")
 
-# V07-007 (found in an independent revalidation audit, P1): `adapterId`
+# V07-007 (P1): `adapterId`
 # becomes part of a real filename in certification.py's own
 # save_certification_record() (`{adapterId}__{certificationId}.json`
 # under an operator-chosen certs directory). Every one of this repo's own
@@ -47,8 +47,8 @@ _SAFE_ADAPTER_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 IDEMPOTENCY_VALUES = ("none", "idempotent", "at-least-once", "exactly-once")
 
 # `authenticationRef` must be a REFERENCE to where a real credential
-# lives, never the credential itself - the audit proposal's own explicit
-# rule ("Perfil de despliegue por celda, sin secretos: referencias a
+# lives, never the credential itself - an explicit rule of the contract
+# ("Perfil de despliegue por celda, sin secretos: referencias a
 # secret stores o variables de entorno, nunca tokens dentro del
 # manifiesto"). A closed set of real, known reference schemes, checked as
 # a literal prefix - deliberately not a "looks secret-shaped" heuristic
@@ -103,8 +103,8 @@ def check_sdk_compatibility(constraint: str, installed_version: str) -> str | No
         )
     return None
 
-# Fields a "write" or "abort" capability must ALL declare, per the audit
-# proposal's own explicit rule: "Las acciones write nunca son
+# Fields a "write" or "abort" capability must ALL declare, per an
+# explicit rule: "Las acciones write nunca son
 # seleccionables si falta una de esas condiciones."
 _WRITE_CAPABILITY_REQUIRED_FIELDS = (
     "risk",
@@ -161,7 +161,7 @@ def _validate_capability(capability: Any, index: int) -> list[str]:
     if mode not in CAPABILITY_MODES:
         errors.append(f"{prefix}.mode must be one of {CAPABILITY_MODES}, got {mode!r}")
 
-    # The audit proposal's own non-negotiable rule: a write/abort
+    # An explicit non-negotiable rule: a write/abort
     # capability is never selectable unless it ALSO declares every one
     # of these - checked here as a real, enforced structural rule, not
     # left as documentation someone could forget to implement later.
@@ -316,7 +316,7 @@ _JSON_SCHEMA_TYPE_CHECKS: dict[str, type | tuple[type, ...]] = {
 
 
 def _validate_schema_shape(schema: Any, path: str) -> list[str]:
-    """V07-009 (found in an independent revalidation audit, P2): checks
+    """V07-009 (P2): checks
     that `schema` (an endpointSchema/evidenceSchema value) is ITSELF
     well-formed, recursively - before validate_adapter_manifest ever
     accepts the manifest carrying it. A malformed schema used to pass

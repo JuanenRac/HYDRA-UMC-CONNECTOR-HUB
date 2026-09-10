@@ -5,8 +5,7 @@
 # =============================================================================
 """Delivery 4 [P1][HARDWARE] - the real, honest software half of "certify
 adapters one at a time against their own machine; no universal global
-label, every profile keeps its own real evidence" (the audit proposal's
-own wording).
+label, every profile keeps its own real evidence".
 
 What this module IS: a real attestation record - who certified which
 adapter, against which real machine model, with which real evidence
@@ -85,7 +84,7 @@ def _require_non_empty(value: Any, field_name: str) -> None:
 
 
 def _require_safe_path_segment(value: Any, field_name: str) -> None:
-    """V07-007 (found in an independent revalidation audit, P1):
+    """V07-007 (P1):
     `adapter_id`/`certification_id` become part of a real filename under
     a directory the caller controls - checked here independently of
     whatever `validate_adapter_manifest` may or may not have already

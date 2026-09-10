@@ -109,7 +109,7 @@ class SaveAndLoadCertificationRecordsTests(unittest.TestCase):
             (Path(tmp) / "broken.json").write_text("{not valid json", encoding="utf-8")
             self.assertEqual(load_certification_records(tmp), [])
 
-    # V07-007 (found in an independent revalidation audit, P1): a
+    # V07-007 (P1): a
     # CertificationRecord built directly (e.g. via from_dict() on
     # untrusted JSON) never goes through validate_adapter_manifest at
     # all - save_certification_record() must refuse a path-traversal
@@ -157,7 +157,7 @@ class SaveAndLoadCertificationRecordsTests(unittest.TestCase):
 
 
 class AppendOnlyCertificationStoreTests(unittest.TestCase):
-    """V07-008 (found in an independent revalidation audit, P2):
+    """V07-008 (P2):
     docs/CERTIFICATION.md and this module's own docstring promise a
     certification record is "never overwritten" once saved - but nothing
     actually enforced that."""

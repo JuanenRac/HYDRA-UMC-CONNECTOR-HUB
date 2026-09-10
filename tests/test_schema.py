@@ -153,7 +153,7 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
             "ownerProject": "HYDRA-UMC-X",
         }
 
-    # REV-028 regression: a real audit found `risk`/`requiredPermission`/
+    # REV-028 regression: a review found `risk`/`requiredPermission`/
     # `requiredCellState` accepting a list/dict/whitespace-only string -
     # every one of these must be a real, meaningful string.
     def test_a_write_capability_with_a_list_risk_is_rejected(self):
@@ -189,7 +189,7 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
         errors = validate_adapter_manifest(manifest)
         self.assertTrue(any("duplicates" in e for e in errors), errors)
 
-    # V07-007 (found in an independent revalidation audit, P1): adapterId
+    # V07-007 (P1): adapterId
     # becomes part of a real filename in certification.py's
     # save_certification_record() - a manifest that slips a path-traversal
     # segment past this validator used to let a certification record be
@@ -219,7 +219,7 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
         manifest["adapterId"] = "industrial-opcua-2"
         self.assertEqual(validate_adapter_manifest(manifest), [])
 
-    # V07-009 (found in an independent revalidation audit, P2): a
+    # V07-009 (P2): a
     # malformed endpointSchema/evidenceSchema used to sail through this
     # validator (which only checked "non-empty object") and only blow up
     # later, inside validate_against_json_schema_subset, when a real

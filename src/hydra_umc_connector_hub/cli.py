@@ -32,7 +32,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
             continue
         if errors:
             # `data` is real (JSON parsed) but not necessarily a dict - a
-            # real audit found a bare `[]`/`"..."`/`123` top-level document
+            # review found a bare `[]`/`"..."`/`123` top-level document
             # reaching `data.get(...)` here and crashing with a bare
             # AttributeError, aborting the whole batch instead of reporting
             # every file's own real errors.

@@ -8,8 +8,8 @@ read-only catalog - never a second protocol implementation, never a live
 connection to any machine. A registry entry IS the adapter-manifest file
 already validated by `schema.py`; this module only discovers a directory
 of them, keeps the ones that are structurally valid, and builds the small
-summary shape a catalog client (Server/Studio/Suite/Updater, per the
-audit proposal's own item 5) actually needs - it never invents a field
+summary shape a catalog client (Server/Studio/Suite/Updater) actually
+needs - it never invents a field
 the manifest itself does not declare.
 
 A manifest that fails `validate_adapter_manifest()` is never silently
