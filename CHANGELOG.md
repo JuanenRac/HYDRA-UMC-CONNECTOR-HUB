@@ -57,9 +57,9 @@ updated to drop the stale "No real client integration yet" line -
 Studio/Suite/Updater calling `gate` themselves is still real, separate,
 future work.
 
-## [0.0.4] - Real regressions found by a second, independent revalidation audit
+## [0.0.4] - Real regressions found by a second review pass
 
-A second independent ecosystem-wide revalidation audit found 4 more real
+A second review pass found 4 more real
 issues, each reproduced first against a real fixture/fixture-derived
 request (no network/hardware), then fixed with new regression tests:
 
@@ -110,7 +110,7 @@ request (no network/hardware), then fixed with new regression tests:
 
 ## [0.0.3] - Real regressions found by independent revalidation
 
-An independent ecosystem-wide revalidation audit reproduced 4 real
+A review pass reproduced 4 real
 issues against this project's own v0.0.1/v0.0.2 code (each with a real
 fixture/probe, no network/hardware involved). All 4 are fixed here,
 each with a new regression test:
@@ -141,7 +141,7 @@ each with a new regression test:
   `pytest` as its own, separate, later step. Wording corrected in all 7
   languages. The `ownerProject` test now checks each fixture's own
   exact, fixed real owner (not merely a `HYDRA-UMC-` prefix).
-- 7 new regression tests (65 total), each reproducing the audit's own
+- 7 new regression tests (65 total), each reproducing an explicit
   exact scenario before the fix and passing after it.
 
 ## [0.0.2] - Deliveries 2-4: catalog, SDK safety gate, certification records
@@ -192,14 +192,14 @@ each with a new regression test:
 ## [0.0.1] - Delivery 1: schema + CLI validate + fixtures
 
 First real scaffolding version - Delivery 1 of the 4-delivery plan from
-the ecosystem-wide software-improvements audit's own recommended-new-
-project proposal ("Esquema JSON, CLI validate y diez fixtures (sin red,
+a recommended-new-project proposal made while auditing the code
+("Esquema JSON, CLI validate y diez fixtures (sin red,
 sin hardware)"). This version touches no network, no hardware, and no
 real machine - it only validates the structure of an adapter-manifest
 file already on disk.
 
 - **`schema.py`** - a real, hand-written structural validator (no
-  `jsonschema` dependency) for the audit proposal's own "CONTRATO MINIMO
+  `jsonschema` dependency) for an explicit "CONTRATO MINIMO
   DE ADAPTADOR" - all 13 top-level fields, plus the capability shape
   (`name`/`mode`/`risk`/`requiredPermission`/`requiredCellState`/
   `requiresHumanConfirmation`/`timeoutMs`). Enforces the proposal's own

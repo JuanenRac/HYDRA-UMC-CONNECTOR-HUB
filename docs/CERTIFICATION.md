@@ -1,6 +1,6 @@
 # Certification Records (Delivery 4, [P1][HARDWARE])
 
-The audit proposal's own wording for this delivery is explicit: *"no hay
+The proposal's own wording for this delivery is explicit: *"no hay
 etiqueta universal global, cada perfil conserva su propia evidencia"* -
 certify adapters one at a time against their own real target machine;
 there is no single "certified" checkbox for an adapter in the abstract.
