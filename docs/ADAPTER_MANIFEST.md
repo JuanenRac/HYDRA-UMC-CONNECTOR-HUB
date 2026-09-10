@@ -1,8 +1,8 @@
 # The Adapter-Manifest Contract
 
 This is the real, current shape `schema.py` validates - field-for-field,
-the ecosystem-wide software-improvements audit's own "CONTRATO MINIMO DE
-ADAPTADOR" proposal, made concrete and enforced.
+an explicit "CONTRATO MINIMO DE ADAPTADOR" proposal, made concrete and
+enforced.
 
 ## Top-level fields
 
@@ -40,7 +40,7 @@ Each entry in `capabilities` describes one real, discrete action:
 ### The one rule this validator will never relax
 
 > "Las acciones write nunca son seleccionables si falta una de esas
-> condiciones." - the audit proposal's own words.
+> condiciones." - the proposal's own words.
 
 A `write` or `abort` capability that is missing `risk`,
 `requiredPermission`, `requiredCellState`, `requiresHumanConfirmation`,
