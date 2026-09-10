@@ -42,11 +42,11 @@ domande: **quale protocollo parla, cosa può davvero fare
 (leggere/scrivere/abortire, con quale rischio), e quale progetto reale
 già esistente di questo ecosistema lo implementa già?**
 
-Questa versione spedisce tutte e quattro le consegne di quel piano:
+Questa versione spedisce tutte e quattro le consegne previste:
 
 1. **Un contratto reale e fisso** ([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md)) -
-   il proprio "CONTRATO MINIMO DE ADAPTADOR" dell'audit
-   ecosistema-ampio, con una regola non negoziabile già applicata nel
+   il "CONTRATO MINIMO DE ADAPTADOR" di questo
+   ecosistema, con una regola non negoziabile già applicata nel
    codice: una capacità `write`/`abort` viene rifiutata a meno che non
    dichiari anche il proprio rischio, il permesso richiesto, lo stato di
    cella richiesto, il requisito di conferma umana e il timeout.
@@ -106,7 +106,7 @@ comandi completa e reale.
   campo/indice responsabile, non un percorso di schema generico.
 - **La regola di sicurezza write/abort è applicata nel codice, non nella
   documentazione.** `_WRITE_CAPABILITY_REQUIRED_FIELDS` in `schema.py` è
-  la propria frase esplicita dell'audit trasformata in un controllo
+  quella regola esplicita trasformata in un controllo
   reale e testato - chi scrive un manifesto non può dimenticarla, perché
   il validatore rifiuta una capacità che lo fa.
 - **`authenticationRef` viene controllato come un riferimento, mai
@@ -272,7 +272,7 @@ Questo progetto fa parte dell'ecosistema robotico HYDRA-UMC dello stesso autore 
 
 **Direttamente Correlati**
 - **[HYDRA-UMC-SDK](https://github.com/JuanenRac/HYDRA-UMC-SDK)** — il contratto JSON-Schema condiviso contro cui ogni bridge valida già i propri comandi; il comando `gate` di questo hub (Consegna 3) chiama direttamente il proprio `bridge_contract.evaluate_job()` reale per una capacità write/abort, mai una seconda implementazione di quel cancello.
-- **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — l'altro nuovo progetto raccomandato dalla proposta di audit: gestisce il ciclo di vita degli incidenti di manutenzione dei propri componenti di questo ecosistema, mentre questo hub scopre e valida cosa può fare una macchina/adattatore ESTERNO.
+- **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — un nuovo progetto affine: gestisce il ciclo di vita degli incidenti di manutenzione dei propri componenti di questo ecosistema, mentre questo hub scopre e valida cosa può fare una macchina/adattatore ESTERNO.
 - **[HYDRA-UMC-GATEWAY-INDUSTRIAL](https://github.com/JuanenRac/HYDRA-UMC-GATEWAY-INDUSTRIAL)** — esplicitamente NON sostituito da questo progetto: GATEWAY-INDUSTRIAL è un vero relè di protocollo con la propria allowlist di comandi; questo hub è un registro/validatore dichiarativo che si colloca sopra di esso e sopra ogni altro bridge, mai una seconda implementazione di un protocollo.
 
 **Fa Anche Parte dell'Ecosistema**

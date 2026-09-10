@@ -26,7 +26,7 @@
 
 本版本交付了该计划的全部四项：
 
-1. **一份真实且固定的契约**([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md))——生态系统级软件改进审计自身提出的"最小适配器契约(CONTRATO MINIMO DE ADAPTADOR)"，并且已经在代码中落实了一条不可协商的规则：一个 `write`/`abort` 能力，除非同时声明其风险等级、所需权限、所需单元状态、是否需要人工确认，以及超时时间，否则会被拒绝。
+1. **一份真实且固定的契约**([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md))——本生态系统的"最小适配器契约(CONTRATO MINIMO DE ADAPTADOR)"，并且已经在代码中落实了一条不可协商的规则：一个 `write`/`abort` 能力，除非同时声明其风险等级、所需权限、所需单元状态、是否需要人工确认，以及超时时间，否则会被拒绝。
 2. **一个真实的 CLI 校验器**(`hydra-umc-connector-hub validate`)——一段手写的结构性检查(不依赖 `jsonschema`)，因此每一条真实错误都会精确指出出问题的适配器/字段/能力。
 3. **十个真实 fixture**，分别对应本生态系统中十个已经存在的真实 bridge/协议项目——证明该契约并非纸上谈兵，同时也是编写新适配器清单的起点模板。
 4. **一个真实的只读目录**(`catalog`/`serve-catalog`)——发现某个目录中每一份结构有效的清单，并通过 `serve-catalog` 用一个真实的、仅支持 GET 的 `http.server` 暴露它们(整个项目中不存在任何写入路由)。
@@ -54,7 +54,7 @@ CERTIFIED adapterId='cnc-grbl' certificationId='...' -> certifications/cnc-grbl_
 ## 2. 🧱 架构与设计决策
 
 - **手写校验器，而非 `jsonschema`。** 交付 1 自身的契约足够小(14 个顶层字段，一种嵌套的能力结构)，以至于一个收集真实、具体错误字符串的简单 Python 函数，既比通用 JSON-Schema 校验器更简单，又能给出更清晰的输出——每条消息都会指出确切出问题的字段/下标，而不是一条泛泛的 schema 路径。
-- **write/abort 安全规则由代码强制执行，而非只写在文档里。** `schema.py` 中的 `_WRITE_CAPABILITY_REQUIRED_FIELDS` 正是审计自身那句明确规定被转化成的真实、经过测试的检查——清单编写者不可能遗忘它，因为校验器会拒绝任何遗漏它的能力。
+- **write/abort 安全规则由代码强制执行，而非只写在文档里。** `schema.py` 中的 `_WRITE_CAPABILITY_REQUIRED_FIELDS` 正是那条明确规则被转化成的真实、经过测试的检查——清单编写者不可能遗忘它，因为校验器会拒绝任何遗漏它的能力。
 - **`authenticationRef` 被当作一个引用来检查，绝不被当作自由文本信任。** 一个封闭的真实前缀集合(`env:`、`secret-store:`、`vault:`、`none:`)——刻意不采用"看起来像秘密"式的启发式判断(为什么这种启发式在这个具体问题上同样是错误的工具，见 HYDRA-UMC-OPS-AGENT 自身的 `log_redaction.py`)。
 - **每一条错误都会被收集，绝不只报告第一条。** `validate_adapter_manifest()` 在发现一个问题后会继续检查——修复清单的人能在一次运行中看到所有真实问题。
 - **目录是刻意做成真实且只读的。** `registry.py` 对一个目录做非递归扫描(因此嵌套的 `fixtures/invalid/` 永远不会进入真实目录)，会丢弃——但依然报告——任何未通过 `validate_adapter_manifest()` 的内容，并拒绝两份声明同一个 `adapterId` 的文件。`catalog_server.py` 里任何地方都没有 `do_POST`/`do_PUT`——任何写入尝试都会得到 `BaseHTTPRequestHandler` 自身诚实的 `501`，绝不会有本项目忘记保护的路由。
@@ -135,7 +135,7 @@ pip install -e ".[sdk]"                    # 仅在对一个 write/abort 能力�
 
 **直接相关**
 - **[HYDRA-UMC-SDK](https://github.com/JuanenRac/HYDRA-UMC-SDK)** — 每个桥接都已据此校验自身指令的共享 JSON-Schema 契约；本枢纽的 `gate` 命令(交付 3)会为一次 write/abort 能力调用直接调用其自身真实的 `bridge_contract.evaluate_job()`，绝不是该安全门的第二套实现。
-- **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — 审计提案推荐的另一个新项目：负责运维本生态系统自身组件的维护事件生命周期，而本枢纽则负责发现并校验一台**外部**机器/适配器能做什么。
+- **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — 一个同类的新项目：负责运维本生态系统自身组件的维护事件生命周期，而本枢纽则负责发现并校验一台**外部**机器/适配器能做什么。
 - **[HYDRA-UMC-GATEWAY-INDUSTRIAL](https://github.com/JuanenRac/HYDRA-UMC-GATEWAY-INDUSTRIAL)** — 明确**不会**被本项目取代：GATEWAY-INDUSTRIAL 是一个拥有自身指令白名单的真实协议中继；本枢纽是一个位于它以及每一个其他 bridge 之上的声明式注册/校验层，绝非任何协议的第二套实现。
 
 **生态系统中的其他项目**
