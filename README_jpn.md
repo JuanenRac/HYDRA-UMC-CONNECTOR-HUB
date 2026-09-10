@@ -41,10 +41,10 @@
 取り/書き込み/中止、それぞれどのリスクで)、そしてこのエコシステムの
 どの既存の実在するプロジェクトが既にそれを実装しているのか？**
 
-このバージョンは、その計画の 4 件すべてを届けます:
+このバージョンは、計画された 4 件すべてを届けます:
 
 1. **本物で固定された契約** ([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md)) -
-   エコシステム全体のソフトウェア改善監査自身の「CONTRATO MINIMO DE
+   このエコシステムの「CONTRATO MINIMO DE
    ADAPTADOR」であり、既にコードで強制されている譲れないルールを持ち
    ます: `write`/`abort` 能力は、自身のリスク、必要な権限、必要なセル
    状態、人による確認の要否、タイムアウトのすべてを宣言しない限り拒否
@@ -100,8 +100,8 @@ CERTIFIED adapterId='cnc-grbl' certificationId='...' -> certifications/cnc-grbl_
   より明確な出力を生成します——すべてのメッセージが、汎用的なスキーマ
   パスではなく、責任のある正確なフィールド/インデックスを名指しします。
 - **write/abort の安全ルールはドキュメントではなくコードで強制されて
-  います。** `schema.py` の `_WRITE_CAPABILITY_REQUIRED_FIELDS` は、監
-  査自身の明示的な文が本物のテスト済みチェックに変換されたものです
+  います。** `schema.py` の `_WRITE_CAPABILITY_REQUIRED_FIELDS` は、そ
+  の明示的なルールが本物のテスト済みチェックに変換されたものです
   ——マニフェストの作者がそれを忘れることはできません。忘れた能力をバ
   リデーターが拒否するからです。
 - **`authenticationRef` は参照として検証され、自由記述テキストとして
@@ -269,7 +269,7 @@ Windows では: 先に `build.bat`、その後 `run.bat`(引数なしの場合�
 
 **直接関連**
 - **[HYDRA-UMC-SDK](https://github.com/JuanenRac/HYDRA-UMC-SDK)** — すべてのブリッジが既に自身のコマンドを検証している共有 JSON-Schema 契約。本ハブの `gate` コマンド(納品 3)は、write/abort 能力に対してその本物の `bridge_contract.evaluate_job()` を直接呼び出し、決してそのゲートの第二の実装ではありません。
-- **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — 監査提案が推奨するもう一つの新プロジェクト: このエコシステム自身のコンポーネントの保守インシデントライフサイクルを運用する一方、本ハブは**外部**のマシン/アダプターが何をできるかを発見し検証します。
+- **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — 関連する新プロジェクト: このエコシステム自身のコンポーネントの保守インシデントライフサイクルを運用する一方、本ハブは**外部**のマシン/アダプターが何をできるかを発見し検証します。
 - **[HYDRA-UMC-GATEWAY-INDUSTRIAL](https://github.com/JuanenRac/HYDRA-UMC-GATEWAY-INDUSTRIAL)** — 本プロジェクトによって明示的に置き換えられることはありません: GATEWAY-INDUSTRIAL は独自のコマンド許可リストを持つ実際のプロトコルリレーです。本ハブはそれとすべての他のブリッジの上に位置する宣言的なレジストリ/バリデーターであり、いかなるプロトコルの第二の実装でもありません。
 
 **エコシステムの他のプロジェクト**

@@ -42,10 +42,10 @@ sie, was kann sie wirklich tun (lesen/schreiben/abbrechen, mit welchem
 Risiko), und welches echte, bereits existierende Projekt dieses
 Ökosystems implementiert das bereits?**
 
-Diese Version liefert alle vier Lieferungen dieses Plans:
+Diese Version liefert alle vier geplanten Lieferungen:
 
 1. **Ein echter, fester Vertrag** ([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md)) -
-   das eigene "CONTRATO MINIMO DE ADAPTADOR" des ökosystemweiten Audits,
+   das "CONTRATO MINIMO DE ADAPTADOR" dieses Ökosystems,
    mit einer bereits im Code durchgesetzten, nicht verhandelbaren Regel:
    eine `write`/`abort`-Fähigkeit wird abgelehnt, sofern sie nicht auch
    ihr eigenes Risiko, die erforderliche Berechtigung, den erforderlichen
@@ -108,7 +108,7 @@ echte Befehlsoberfläche.
   betroffene Feld/den Index, keinen generischen Schema-Pfad.
 - **Die write/abort-Sicherheitsregel wird im Code durchgesetzt, nicht in
   der Dokumentation.** `_WRITE_CAPABILITY_REQUIRED_FIELDS` in
-  `schema.py` ist der eigene explizite Satz des Audits, umgesetzt in
+  `schema.py` ist diese explizite Regel, umgesetzt in
   eine echte, getestete Prüfung - wer ein Manifest schreibt, kann sie
   nicht vergessen, weil der Validator eine Fähigkeit ablehnt, die es
   tut.
@@ -279,7 +279,7 @@ Dieses Projekt ist Teil des HYDRA-UMC-Robotik-Ökosystems desselben Autors (Juan
 
 **Direkt verwandt**
 - **[HYDRA-UMC-SDK](https://github.com/JuanenRac/HYDRA-UMC-SDK)** — der gemeinsame JSON-Schema-Vertrag, gegen den jede Bridge bereits ihre eigenen Befehle validiert; der `gate`-Befehl dieses Hubs (Lieferung 3) ruft direkt dessen eigenes echtes `bridge_contract.evaluate_job()` für eine write/abort-Fähigkeit auf, niemals eine zweite Implementierung dieser Schranke.
-- **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — das andere vom Audit-Vorschlag empfohlene neue Projekt: betreibt den Wartungsvorfall-Lebenszyklus der eigenen Komponenten dieses Ökosystems, während dieser Hub entdeckt und validiert, was eine EXTERNE Maschine/ein Adapter kann.
+- **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — ein verwandtes neues Projekt: betreibt den Wartungsvorfall-Lebenszyklus der eigenen Komponenten dieses Ökosystems, während dieser Hub entdeckt und validiert, was eine EXTERNE Maschine/ein Adapter kann.
 - **[HYDRA-UMC-GATEWAY-INDUSTRIAL](https://github.com/JuanenRac/HYDRA-UMC-GATEWAY-INDUSTRIAL)** — ausdrücklich NICHT durch dieses Projekt ersetzt: GATEWAY-INDUSTRIAL ist ein echtes Protokoll-Relais mit eigener Befehls-Allowlist; dieser Hub ist ein deklaratives Register/Validator, das über ihm und jeder anderen Bridge sitzt, niemals eine zweite Implementierung eines Protokolls.
 
 **Ebenfalls Teil des Ökosystems**
