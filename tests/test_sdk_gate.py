@@ -137,7 +137,7 @@ class WriteAndAbortCapabilitiesUseTheRealSdkGateTests(unittest.TestCase):
 
 @unittest.skipUnless(SDK_INSTALLED, "hydra-umc-sdk (optional [sdk] extra) is not installed")
 class CapabilityGateEnforcesDeclaredPolicyTests(unittest.TestCase):
-    """V07-006 (found in an independent revalidation audit, P1): a write/
+    """V07-006 (P1): a write/
     abort capability's own declared requiredPermission/requiredCellState/
     requiresHumanConfirmation, and the manifest's own top-level
     requiredSafetyGates, used to be pure documentation -
@@ -146,7 +146,7 @@ class CapabilityGateEnforcesDeclaredPolicyTests(unittest.TestCase):
     starts from a fully-authorised baseline (_authorized_request) and
     removes exactly ONE requirement, proving that ONE requirement alone
     is enough to deny the call - fixing "any one dropped -> denied" is
-    the audit's own stated acceptance criterion."""
+    the stated acceptance criterion."""
 
     def test_missing_the_required_permission_denies_the_call(self):
         manifest = _load("cnc-grbl.json")
