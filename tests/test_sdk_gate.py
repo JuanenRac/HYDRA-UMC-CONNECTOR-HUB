@@ -247,9 +247,9 @@ class CapabilityGateEnforcesDeclaredPolicyTests(unittest.TestCase):
         self.assertTrue(result.evidence_errors)
 
 
-# F07 (private plan's own flow: "ID malicioso, version incompatible,
-# certificado duplicado, confirmacion ausente y gate caducado") - the
-# last 2 real scenarios named there, found 2026-09-08 not implemented at
+# F07 ("ID malicioso, version incompatible, certificado duplicado,
+# confirmacion ausente y gate caducado") - the last 2 of those
+# scenarios were found not implemented at
 # all (not just untested). "ID malicioso"/"confirmacion ausente" were
 # already real above (unknown capability / requiresHumanConfirmation);
 # "certificado duplicado" is Delivery 4's own certification.py, out of

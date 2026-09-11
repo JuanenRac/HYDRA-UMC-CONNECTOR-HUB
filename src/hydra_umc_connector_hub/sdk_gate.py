@@ -60,8 +60,8 @@ mode restrictions simply declares `requiresHumanConfirmation: false`/
 already does exactly that), which this uniform check honours without
 the code itself ever assuming "abort is exempt".
 
-F07 (private plan's own flow, 2 of its 5 named scenarios found NOT
-implemented at all as of 2026-09-08 - not merely untested): a
+F07 (2 of its 5 named scenarios were found not implemented at all,
+not merely untested): a
 write/abort call is now ALSO denied when the caller's own request has
 gone stale (`requested_at` older than `maxRequestAgeSeconds`/
 `DEFAULT_MAX_REQUEST_AGE_SECONDS` - "gate caducado", the cell/machine
