@@ -67,7 +67,7 @@ _SDK_COMPATIBILITY_RE = re.compile(r"^>=(\d+)\.(\d+)\.(\d+)$")
 
 
 def check_sdk_compatibility(constraint: str, installed_version: str) -> str | None:
-    """F07 (private plan's own flow, 'version incompatible' scenario):
+    """F07 ('version incompatible' scenario):
     `sdkCompatibility` (REQUIRED_TOP_LEVEL_STRING_FIELDS above) was only
     ever checked for being a non-empty string - its own real meaning (a
     real minimum-version constraint against the SDK actually installed)
