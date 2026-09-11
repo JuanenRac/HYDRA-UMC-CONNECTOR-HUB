@@ -29,6 +29,8 @@
 > bleibt. Siehe [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) für die
 > genaue Befehlsoberfläche, die es heute gibt.
 
+> **Ehrlichkeitscheck - was heute wirklich läuft:** das Manifest-Schema/der Validator (`schema.py`), der schreibgeschützte Katalog (`registry.py`, `catalog_server.py`), die SDK-Sicherheitsgate-Integration (`sdk_gate.py`, die das echte `evaluate_job()` von `HYDRA-UMC-SDK` gegen einen echt installierten Checkout aufruft, nie eine Simulation), das Zertifizierungsprotokoll (`certification.py`) und die CLI (`cli.py`) sind real und durch 113 bestehende Tests abgedeckt (`pytest tests/`). `certify` zeichnet eine von einem Menschen bezeugte Evidenz auf, verifiziert sie aber ausdrücklich nicht unabhängig gegen echte Hardware - hinter keiner der 10 Fixtures steht eine physische Maschine, und kein Adapter hier wurde je genutzt, um tatsächlich mit einem echten Gerät zu sprechen. `catalog`/`serve-catalog` sind konstruktionsbedingt nur GET (`catalog_server.py` hat überhaupt kein `do_POST`/`do_PUT`). Siehe den Status-Kasten oben und `CHANGELOG.md` für das, was bisher genau ausgeliefert wurde.
+
 ---
 
 ## 1. 🛠️ TECHNISCHER ÜBERBLICK

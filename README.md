@@ -29,6 +29,8 @@
 > [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) for the exact command
 > surface that exists today.
 
+> **Honesty check - what actually runs today:** the manifest schema/validator (`schema.py`), the read-only catalog (`registry.py`, `catalog_server.py`), the SDK safety-gate integration (`sdk_gate.py`, calling `HYDRA-UMC-SDK`'s own real `evaluate_job()` against a real installed checkout, never a mock), the certification log (`certification.py`), and the CLI (`cli.py`) are real and covered by 113 passing tests (`pytest tests/`). `certify` records a human-attested evidence payload but explicitly does not independently verify it against real hardware - there is no physical machine behind any of the 10 fixtures, and no adapter here has ever been used to actually talk to a real device. `catalog`/`serve-catalog` are GET-only by construction (`catalog_server.py` has no `do_POST`/`do_PUT` at all). See the Status callout above and `CHANGELOG.md` for exactly what has shipped so far.
+
 ---
 
 ## 1. 🛠️ TECHNICAL OVERVIEW
