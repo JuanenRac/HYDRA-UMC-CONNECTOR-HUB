@@ -242,6 +242,25 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
         errors = validate_adapter_manifest(manifest)
         self.assertTrue(any("endpointSchema" in e for e in errors), errors)
 
+    # H009 regression: a `type` that is itself unhashable (a list or
+    # object - someone's malformed multi-type attempt, or just a mistake)
+    # used to raise `TypeError: unhashable type` from the plain
+    # `schema_type not in _JSON_SCHEMA_TYPE_CHECKS` dict-membership check,
+    # taking down this validator instead of returning it as a real
+    # problem found - exactly what this function's own docstring promises
+    # never to do.
+    def test_a_manifest_with_a_list_schema_type_in_its_evidence_schema_is_rejected_not_raised(self):
+        manifest = self._write_capability()
+        manifest["evidenceSchema"] = {"type": ["string", "object"]}
+        errors = validate_adapter_manifest(manifest)
+        self.assertTrue(any("evidenceSchema" in e for e in errors), errors)
+
+    def test_a_manifest_with_a_dict_schema_type_in_its_endpoint_schema_is_rejected_not_raised(self):
+        manifest = self._write_capability()
+        manifest["endpointSchema"] = {"type": {}}
+        errors = validate_adapter_manifest(manifest)
+        self.assertTrue(any("endpointSchema" in e for e in errors), errors)
+
     # F07 ("gate caducado") - maxRequestAgeSeconds is optional (no
     # existing fixture needs to change), but must be a real positive
     # number when an adapter author does declare one.

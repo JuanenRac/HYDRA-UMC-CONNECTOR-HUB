@@ -333,7 +333,15 @@ def _validate_schema_shape(schema: Any, path: str) -> list[str]:
         return [f"{path}: schema itself must be an object, got {schema!r}"]
 
     schema_type = schema.get("type")
-    if schema_type is not None and schema_type not in _JSON_SCHEMA_TYPE_CHECKS:
+    # H009: a plain `x not in _JSON_SCHEMA_TYPE_CHECKS` (a dict) hashes
+    # `x` to look it up - real JSON allows "type" to be any value, and an
+    # unhashable one (a list or object, someone's malformed multi-type
+    # attempt) raised TypeError here, taking down this validator instead
+    # of returning it as just another real problem found - exactly the
+    # contract this function's own docstring promises never to break.
+    # `isinstance(..., str)` first, same guard validate_against_json_schema_
+    # subset() below already uses for the identical lookup.
+    if schema_type is not None and (not isinstance(schema_type, str) or schema_type not in _JSON_SCHEMA_TYPE_CHECKS):
         errors.append(f"{path}.type: unknown schema type {schema_type!r}, expected one of {tuple(_JSON_SCHEMA_TYPE_CHECKS)}")
 
     pattern = schema.get("pattern")
