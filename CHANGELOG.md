@@ -9,6 +9,30 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
+## [0.0.7] - H008/H009/H071: textual booleans, unhashable schema types, non-finite freshness
+
+- **H008:** `CapabilityCallRequest.human_confirmed` was a plain `bool`
+  type hint with no runtime check. The literal string `"false"` is
+  truthy in Python, so a caller wiring this dataclass up from
+  loosely-typed input (a future HTTP/JSON layer, a query string) that
+  passed textual `"false"` instead of a real bool would have it treated
+  as an actual human confirmation. Fixed: `__post_init__` now rejects any
+  `human_confirmed` that is not a real `bool`.
+- **H009:** `_validate_schema_shape()`'s own `schema_type not in
+  _JSON_SCHEMA_TYPE_CHECKS` hashes `schema_type` to look it up - a
+  malformed `"type"` that is itself unhashable (a list or object) raised
+  `TypeError`, taking down this validator instead of returning it as a
+  real problem found, contradicting this function's own "never raises"
+  docstring. Fixed: guarded with `isinstance(schema_type, str)` first,
+  same pattern `validate_against_json_schema_subset()` already used for
+  the identical lookup.
+- **H071 (P1):** `_policy_denials()`'s request-freshness check compared
+  `age > max_age` directly. NaN compares `False` against everything, so
+  a non-finite `requested_at` (or `now`) silently passed as "not stale"
+  instead of being rejected - defeating the fail-closed guarantee F07's
+  own "gate caducado" scenario exists for. Fixed: a non-finite age is now
+  rejected explicitly before the threshold comparison runs.
+
 ## [0.0.6] - F07: real "version incompatible" and "gate caducado" checks
 
 2 of the 5 real scenarios this project's own F07 flow names

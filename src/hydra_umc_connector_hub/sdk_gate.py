@@ -75,6 +75,7 @@ and independent of the other policy checks above, same standard.
 """
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -146,6 +147,16 @@ class CapabilityCallRequest:
             value = getattr(self, attr)
             if not isinstance(value, str) or not value.strip():
                 raise CapabilityGateError(f"{attr!r} must be a non-empty string")
+        # H008: `human_confirmed` must be a real Python bool, not merely
+        # truthy. A caller wiring this dataclass up from loosely-typed
+        # input (a future HTTP/JSON layer, a query string, an env var)
+        # could pass the literal string "false" - which is truthy in
+        # Python, so `not request.human_confirmed` in _policy_denials()
+        # would silently treat textual "false" as an actual human
+        # confirmation and let a write/abort call through unconfirmed.
+        # Fail closed on the type instead of trusting the caller's own.
+        if not isinstance(self.human_confirmed, bool):
+            raise CapabilityGateError(f"human_confirmed must be a real bool, got {self.human_confirmed!r}")
 
 
 @dataclass(frozen=True)
@@ -199,7 +210,15 @@ def _policy_denials(manifest: dict[str, Any], capability: dict[str, Any], reques
     # real machine, matching every other check in this function.
     max_age = manifest.get("maxRequestAgeSeconds", DEFAULT_MAX_REQUEST_AGE_SECONDS)
     age = now - request.requested_at
-    if age > max_age:
+    # H071 (P1): NaN compares False against everything - `float("nan") >
+    # max_age` is never True - so a non-finite `requested_at` (or `now`)
+    # would silently pass this freshness check instead of being rejected,
+    # defeating the exact fail-closed guarantee F07's "gate caducado"
+    # scenario exists for. Reject a non-finite age explicitly, before the
+    # ordinary threshold comparison ever runs.
+    if not math.isfinite(age):
+        denials.append(f"this request's own age is not a finite number ({age!r}) - refusing to trust it as fresh")
+    elif age > max_age:
         denials.append(
             f"this request's own gate has expired: it was made {age:.1f}s ago, "
             f"exceeding the {max_age}s limit - the cell/machine state it was built against can no longer be trusted"

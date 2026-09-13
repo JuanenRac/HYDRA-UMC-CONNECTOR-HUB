@@ -9,6 +9,7 @@ HYDRA-UMC-SDK's own gate logic. If `hydra_umc_sdk` is not installed in
 this environment, the write/abort tests are skipped rather than faked -
 the whole point of Delivery 3 is proving this module calls the REAL
 `evaluate_job()`, so a mock would test nothing real."""
+import math
 import unittest
 
 from hydra_umc_connector_hub.schema import load_and_validate
@@ -178,6 +179,19 @@ class CapabilityGateEnforcesDeclaredPolicyTests(unittest.TestCase):
         self.assertFalse(result.allowed)
         self.assertIn("confirmation", result.reason)
 
+    # H008 regression: the literal string "false" is truthy in Python, so
+    # a caller wiring this dataclass up from loosely-typed input (a future
+    # HTTP/JSON layer, a query string) that passed the textual "false"
+    # instead of a real bool used to sail through `not
+    # request.human_confirmed` as if a human really had confirmed.
+    def test_a_textual_false_for_human_confirmed_is_rejected_not_treated_as_true(self):
+        with self.assertRaises(CapabilityGateError):
+            _authorized_request(human_confirmed="false")
+
+    def test_a_textual_true_for_human_confirmed_is_also_rejected(self):
+        with self.assertRaises(CapabilityGateError):
+            _authorized_request(human_confirmed="true")
+
     def test_a_missing_safety_gate_denies_the_call(self):
         manifest = _load("cnc-grbl.json")
         result = evaluate_capability_call(
@@ -285,6 +299,25 @@ class RequestFreshnessGateTests(unittest.TestCase):
         result = evaluate_capability_call(manifest, _authorized_request(requested_at=now - 10.0), now=now)
         self.assertFalse(result.allowed)
         self.assertIn("gate has expired", result.reason)
+
+    # H071 (P1) regression: NaN compares False against everything, so
+    # `age > max_age` was never True for a non-finite age - a NaN/inf
+    # `requested_at` used to silently pass this freshness check instead
+    # of being rejected, defeating the fail-closed guarantee "gate
+    # caducado" exists for.
+    def test_a_nan_requested_at_is_denied_not_silently_treated_as_fresh(self):
+        manifest = _load("cnc-grbl.json")
+        now = 1_000_000.0
+        result = evaluate_capability_call(manifest, _authorized_request(requested_at=math.nan), now=now)
+        self.assertFalse(result.allowed)
+        self.assertIn("not a finite number", result.reason)
+
+    def test_an_infinite_requested_at_is_denied_not_silently_treated_as_fresh(self):
+        manifest = _load("cnc-grbl.json")
+        now = 1_000_000.0
+        result = evaluate_capability_call(manifest, _authorized_request(requested_at=math.inf), now=now)
+        self.assertFalse(result.allowed)
+        self.assertIn("not a finite number", result.reason)
 
     def test_a_freshly_constructed_request_defaults_to_now_and_is_never_stale(self):
         # No now= override at all - requested_at's own default_factory
