@@ -9,6 +9,27 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
+## [0.0.9] - PROM-HUB-E01: the catalog gained a real, deterministic snapshot version and a real conditional-GET
+
+`build_catalog()` itself stays a fresh per-call directory scan (Delivery
+2's own deliberate design - a registry directory is real, live
+filesystem state, never cached), but nothing let a caller cheaply tell
+"has this catalog changed since I last saw it" without diffing the
+whole body itself. New `registry.catalog_snapshot_version()`: a real
+SHA-256 over the catalog's own canonical content - deterministic (two
+scans of an unchanged registry always agree), changes if and only if a
+real adapter is added/removed/edited or a file starts/stops failing
+validation.
+
+- `catalog` (CLI) now always includes `snapshotVersion` in its output.
+- `GET /catalog` (`serve-catalog`) now sends it as a real `ETag` header
+  and honors `If-None-Match`: a matching value gets a real, honest `304
+  Not Modified` (empty body) instead of the full catalog - the real
+  "transactional reload" half, since every response is still one
+  complete, freshly-rescanned comparison, never a partial/torn one.
+
+7 new tests (133 passed).
+
 ## [0.0.8] - PROM-HUB-F02: ownerProject was only ever checked as a non-empty string, never verified against a real project
 
 Two real, independent layers, neither one alone sufficient:

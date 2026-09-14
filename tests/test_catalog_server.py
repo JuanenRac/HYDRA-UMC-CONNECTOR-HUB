@@ -98,5 +98,60 @@ class CatalogServerTests(unittest.TestCase):
             thread.join(timeout=5)
 
 
+class CatalogSnapshotVersionTests(unittest.TestCase):
+    """PROM-HUB-E01: a real, deterministic snapshot version + ETag, and a
+    real conditional-GET 304 when the registry genuinely has not
+    changed."""
+
+    def setUp(self):
+        self.server = serve_catalog(str(FIXTURES_DIR), port=0)
+        self.base_url = f"http://127.0.0.1:{self.server.server_port}"
+
+    def tearDown(self):
+        self.server.server_close()
+
+    def _get_with_headers(self, path: str, headers: dict | None = None):
+        import threading
+
+        thread = threading.Thread(target=self.server.handle_request)
+        thread.start()
+        try:
+            request = urllib.request.Request(f"{self.base_url}{path}", headers=headers or {})
+            try:
+                response = urllib.request.urlopen(request, timeout=5)
+                return response.status, dict(response.headers), response.read()
+            except urllib.error.HTTPError as exc:
+                return exc.code, dict(exc.headers), exc.read()
+        finally:
+            thread.join(timeout=5)
+
+    def test_catalog_response_carries_a_real_etag_matching_its_own_snapshot_version(self):
+        status, headers, body = self._get_with_headers("/catalog")
+        self.assertEqual(status, 200)
+        payload = json.loads(body)
+        self.assertIn("snapshotVersion", payload)
+        self.assertEqual(headers["ETag"], f'"{payload["snapshotVersion"]}"')
+
+    def test_two_back_to_back_scans_of_an_unchanged_registry_yield_the_same_version(self):
+        _, _, body_a = self._get_with_headers("/catalog")
+        _, _, body_b = self._get_with_headers("/catalog")
+        self.assertEqual(json.loads(body_a)["snapshotVersion"], json.loads(body_b)["snapshotVersion"])
+
+    def test_matching_if_none_match_gets_a_real_304_not_a_full_body(self):
+        _, headers, body = self._get_with_headers("/catalog")
+        version = json.loads(body)["snapshotVersion"]
+
+        status, headers_304, body_304 = self._get_with_headers("/catalog", {"If-None-Match": f'"{version}"'})
+
+        self.assertEqual(status, 304)
+        self.assertEqual(headers_304["ETag"], f'"{version}"')
+        self.assertEqual(body_304, b"")
+
+    def test_a_stale_if_none_match_still_gets_the_real_full_body(self):
+        status, headers, body = self._get_with_headers("/catalog", {"If-None-Match": '"not-a-real-version"'})
+        self.assertEqual(status, 200)
+        self.assertIn("adapters", json.loads(body))
+
+
 if __name__ == "__main__":
     unittest.main()

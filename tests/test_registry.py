@@ -11,7 +11,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from hydra_umc_connector_hub.registry import CatalogEntry, build_catalog, load_full_manifest, verify_catalog_owners
+from hydra_umc_connector_hub.registry import (
+    CatalogEntry,
+    build_catalog,
+    catalog_snapshot_version,
+    load_full_manifest,
+    verify_catalog_owners,
+)
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures"
 
@@ -74,6 +80,42 @@ class LoadFullManifestTests(unittest.TestCase):
 
     def test_an_unregistered_adapter_id_returns_none(self):
         self.assertIsNone(load_full_manifest(str(FIXTURES_DIR), "not-a-real-adapter"))
+
+
+class CatalogSnapshotVersionTests(unittest.TestCase):
+    def test_the_same_real_registry_yields_the_same_version_every_time(self):
+        entries_a, invalid_a = build_catalog(str(FIXTURES_DIR))
+        entries_b, invalid_b = build_catalog(str(FIXTURES_DIR))
+        self.assertEqual(
+            catalog_snapshot_version(entries_a, invalid_a),
+            catalog_snapshot_version(entries_b, invalid_b),
+        )
+
+    def test_adding_a_real_adapter_changes_the_version(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            original = json.loads((FIXTURES_DIR / "industrial-mqtt.json").read_text(encoding="utf-8"))
+            (Path(tmp) / "one.json").write_text(json.dumps(original), encoding="utf-8")
+            entries_a, invalid_a = build_catalog(tmp)
+            version_a = catalog_snapshot_version(entries_a, invalid_a)
+
+            second = dict(original)
+            second["adapterId"] = "a-second-real-adapter"
+            (Path(tmp) / "two.json").write_text(json.dumps(second), encoding="utf-8")
+            entries_b, invalid_b = build_catalog(tmp)
+            version_b = catalog_snapshot_version(entries_b, invalid_b)
+
+            self.assertNotEqual(version_a, version_b)
+
+    def test_an_invalid_file_appearing_changes_the_version_too(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            entries_a, invalid_a = build_catalog(tmp)
+            version_a = catalog_snapshot_version(entries_a, invalid_a)
+
+            (Path(tmp) / "broken.json").write_text(json.dumps({"adapterId": "broken"}), encoding="utf-8")
+            entries_b, invalid_b = build_catalog(tmp)
+            version_b = catalog_snapshot_version(entries_b, invalid_b)
+
+            self.assertNotEqual(version_a, version_b)
 
 
 def _fake_entry(adapter_id: str, owner_project: str) -> CatalogEntry:
