@@ -104,6 +104,35 @@ class CliCatalogTests(unittest.TestCase):
         payload = json.loads(stdout.getvalue())
         self.assertEqual(len(payload["adapters"]), 10)
         self.assertEqual(payload["invalidFiles"], {})
+        self.assertNotIn("unverifiedOwners", payload)
+
+    def test_catalog_without_ecosystem_root_never_runs_owner_verification(self):
+        # PROM-HUB-F02: --ecosystem-root is optional - omitting it must
+        # never fail the whole command just because there is nothing
+        # real to verify owners against.
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            exit_code = main(["catalog", "--registry-dir", str(FIXTURES_DIR)])
+        self.assertEqual(exit_code, 0)
+
+    def test_catalog_with_a_real_ecosystem_root_verifies_owners_for_real(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "HYDRA-UMC-MQTT-BROKER").mkdir()
+            (root / "HYDRA-UMC-MQTT-BROKER" / "hydra-umc.project.json").write_text(
+                json.dumps({"name": "HYDRA-UMC-MQTT-BROKER"}), encoding="utf-8",
+            )
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                exit_code = main(["catalog", "--registry-dir", str(FIXTURES_DIR), "--ecosystem-root", str(root)])
+            payload = json.loads(stdout.getvalue())
+            self.assertIn("unverifiedOwners", payload)
+            # This ecosystem_root only has one real sibling project on
+            # disk - every OTHER real fixture's own ownerProject must be
+            # reported as genuinely unverifiable, and the command must
+            # reflect that with a real non-zero exit code, not a silent 0.
+            self.assertNotEqual(exit_code, 0)
+            self.assertGreater(len(payload["unverifiedOwners"]), 0)
 
 
 class CliGateTests(unittest.TestCase):

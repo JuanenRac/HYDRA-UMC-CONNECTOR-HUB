@@ -16,7 +16,7 @@ from typing import Any
 
 from . import __version__
 from .certification import CertificationError, certify_adapter, load_certification_records, save_certification_record
-from .registry import build_catalog, load_full_manifest
+from .registry import build_catalog, load_full_manifest, verify_catalog_owners
 from .schema import load_and_validate
 from .sdk_gate import CapabilityCallRequest, CapabilityGateError, SdkUnavailableError, evaluate_capability_call
 
@@ -48,9 +48,19 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
 def _cmd_catalog(args: argparse.Namespace) -> int:
     entries, invalid_files = build_catalog(args.registry_dir)
-    payload = {"adapters": [entry.to_dict() for entry in entries], "invalidFiles": invalid_files}
+    payload: dict[str, Any] = {"adapters": [entry.to_dict() for entry in entries], "invalidFiles": invalid_files}
+    unverified_owners: dict[str, str] = {}
+    if args.ecosystem_root:
+        # PROM-HUB-F02: only run when the caller has a real ecosystem
+        # root to verify against - there is nothing honest to check
+        # without one, and `--ecosystem-root` stays optional so a
+        # caller with no sibling checkouts available (a CI job testing
+        # only this repo's own fixtures, say) is never forced to fail
+        # every entry for a reason unrelated to the manifest itself.
+        unverified_owners = verify_catalog_owners(entries, args.ecosystem_root)
+        payload["unverifiedOwners"] = unverified_owners
     print(json.dumps(payload, indent=2))
-    return 0 if not invalid_files else 1
+    return 0 if not invalid_files and not unverified_owners else 1
 
 
 def _cmd_serve_catalog(args: argparse.Namespace) -> int:
@@ -159,6 +169,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     catalog = subparsers.add_parser("catalog", help="Print the real read-only catalog built from a directory of manifest files.")
     catalog.add_argument("--registry-dir", required=True, help="Directory scanned (non-recursive) for *.json adapter manifests.")
+    catalog.add_argument(
+        "--ecosystem-root",
+        help="Optional: a real directory of sibling HYDRA-UMC-*/URTC-* checkouts. When given, every entry's "
+        "own ownerProject is verified for real against that project's own hydra-umc.project.json (PROM-HUB-F02) "
+        "and any failure is reported under 'unverifiedOwners'. Omitted, ownerProject stays only shape-checked.",
+    )
     catalog.set_defaults(func=_cmd_catalog)
 
     serve_catalog_cmd = subparsers.add_parser("serve-catalog", help="Serve the real read-only catalog over HTTP (GET-only).")

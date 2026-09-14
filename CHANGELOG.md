@@ -9,6 +9,28 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
+## [0.0.8] - PROM-HUB-F02: ownerProject was only ever checked as a non-empty string, never verified against a real project
+
+Two real, independent layers, neither one alone sufficient:
+
+- **Shape check (`schema.py`).** New `PROJECT_NAME_PATTERN` (mirrors
+  HYDRA-UMC-SDK's own) rejects an `ownerProject` that does not even look
+  like a real `HYDRA-UMC-*`/`URTC-*` project name - a typo or a made-up
+  value used to pass `validate_adapter_manifest()` just as cleanly as a
+  real one.
+- **Existence check (`registry.py`'s new `verify_catalog_owners()`).**
+  For a real batch of catalog entries against a real ecosystem root,
+  confirms the claimed owner project's own `hydra-umc.project.json`
+  actually exists AND self-identifies with that same name - the same
+  self-consistency check HYDRA-UMC-LOCAL-TECHNICIAN's own
+  `resolve_project_manifest_path()` already applies, ported here. Wired
+  into the real CLI as a new, optional `catalog --ecosystem-root <dir>`
+  flag - omitted, nothing changes (only the shape check runs, same as
+  before); given, every failure is reported under a new
+  `unverifiedOwners` key and fails the command's own exit code.
+
+7 new tests (126 passed).
+
 ## [0.0.7] - H008/H009/H071: textual booleans, unhashable schema types, non-finite freshness
 
 - **H008:** `CapabilityCallRequest.human_confirmed` was a plain `bool`

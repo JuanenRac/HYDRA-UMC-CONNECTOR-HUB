@@ -32,7 +32,7 @@ reports every one of them, even after the first failure - a caller
 checking a whole `fixtures/` directory sees every real problem in one
 run.
 
-## `catalog --registry-dir <dir>`
+## `catalog --registry-dir <dir> [--ecosystem-root <dir>]`
 
 Prints, as JSON on stdout, the real read-only catalog built from every
 `*.json` file directly inside `<dir>` (non-recursive - a nested
@@ -50,7 +50,21 @@ hydra-umc-connector-hub catalog --registry-dir fixtures
 Output also includes `invalidFiles` (a map of file name to its real
 validation errors) for anything in `<dir>` that failed
 `validate_adapter_manifest()` - it is left out of `adapters` but never
-silently dropped. Exit code `0` only if `invalidFiles` is empty.
+silently dropped. Exit code `0` only if `invalidFiles` is empty (and, when
+`--ecosystem-root` is given, `unverifiedOwners` too).
+
+`ownerProject` is only ever shape-checked by
+`validate_adapter_manifest()` itself (does it look like a real
+`HYDRA-UMC-*`/`URTC-*` project name) - PROM-HUB-F02's real second half is
+`--ecosystem-root`, an optional path to a real directory of sibling
+project checkouts. When given, every entry's own `ownerProject` is
+verified for real against that project's own `hydra-umc.project.json`
+(must exist, and its own `name` must equal `ownerProject`) via
+`registry.verify_catalog_owners()`; any failure is reported under a new
+`unverifiedOwners` key (adapter id -> real reason) and fails the exit
+code. Omitted, `unverifiedOwners` never appears in the output at all -
+there is nothing honest to verify without a real ecosystem root, so this
+never silently claims every owner is verified when none were checked.
 
 ## `serve-catalog --registry-dir <dir> [--host HOST] [--port PORT]`
 

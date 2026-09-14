@@ -127,6 +127,20 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
         })
         self.assertEqual(errors, [])
 
+    # PROM-HUB-F02: ownerProject used to be accepted as any non-empty
+    # string - a typo or a made-up value passed just as cleanly as a
+    # real HYDRA-UMC-*/URTC-* project name.
+    def test_an_owner_project_not_shaped_like_a_real_project_name_is_rejected(self):
+        errors = validate_adapter_manifest({
+            "adapterId": "x", "schemaVersion": "1.0", "protocol": "http",
+            "targetKinds": ["thing"], "endpointSchema": {"a": 1},
+            "authenticationRef": "env:X", "capabilities": [{"name": "read", "mode": "read", "risk": "low"}],
+            "requiredSafetyGates": [], "healthCheck": {"type": "http"}, "timeoutMs": 100,
+            "idempotency": "none", "evidenceSchema": {"a": 1}, "sdkCompatibility": ">=0",
+            "ownerProject": "nobody in particular",
+        })
+        self.assertTrue(any("ownerProject" in e for e in errors), errors)
+
     def test_an_unknown_capability_mode_is_rejected(self):
         errors = validate_adapter_manifest({
             "adapterId": "x", "schemaVersion": "1.0", "protocol": "http",
