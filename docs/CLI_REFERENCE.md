@@ -66,14 +66,29 @@ code. Omitted, `unverifiedOwners` never appears in the output at all -
 there is nothing honest to verify without a real ecosystem root, so this
 never silently claims every owner is verified when none were checked.
 
+PROM-HUB-E01: the output also always carries `snapshotVersion` - a real,
+deterministic SHA-256 over the catalog's own canonical content
+(`registry.catalog_snapshot_version()`), never a random id or a
+timestamp. Unchanged real registry contents always yield the exact same
+version across separate calls; any real addition/removal/edit changes
+it. See `serve-catalog` below for the real HTTP `ETag`/conditional-GET
+use of this same value.
+
 ## `serve-catalog --registry-dir <dir> [--host HOST] [--port PORT]`
 
 Serves the same real catalog over a real, GET-only `http.server`
 (default `127.0.0.1:8801`). Three routes, nothing else:
 
-- **`GET /catalog`** — the same JSON `catalog` prints, live-rebuilt from
-  `<dir>` on every request (so a manifest edited on disk shows up on the
-  very next poll, no restart needed).
+- **`GET /catalog`** — the same JSON `catalog` prints (including
+  `snapshotVersion`), live-rebuilt from `<dir>` on every request (so a
+  manifest edited on disk shows up on the very next poll, no restart
+  needed). The response also carries a real `ETag` header equal to
+  `"<snapshotVersion>"`; send it back as `If-None-Match` on a later
+  request and get a real `304 Not Modified` (empty body) the instant the
+  registry genuinely has not changed since - PROM-HUB-E01's own
+  "transactional reload" half: a client always gets either the honest
+  "nothing changed" answer or one complete, freshly-rescanned body,
+  never a partial/torn one.
 - **`GET /catalog/<adapterId>`** — the full real manifest for one
   registered, structurally-valid adapter, or a real `404` if no such
   adapter is registered.

@@ -20,6 +20,7 @@ standard `schema.py` already holds itself to.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -113,6 +114,37 @@ def build_catalog(registry_dir: str) -> tuple[list[CatalogEntry], dict[str, list
 
     entries.sort(key=lambda entry: entry.adapter_id)
     return entries, invalid_files
+
+
+def catalog_snapshot_version(entries: list[CatalogEntry], invalid_files: dict[str, list[str]]) -> str:
+    """PROM-HUB-E01's own real "versioned snapshot" half: a deterministic
+    SHA-256 over `entries`' + `invalid_files`' own real, canonical
+    content - never a random id, never a timestamp (two back-to-back
+    calls against an unchanged real registry directory must return the
+    exact same version). Changes if and only if a real adapter is
+    added/removed/edited, or a file starts/stops failing validation -
+    `build_catalog()` itself stays a fresh per-call scan (Delivery 2's
+    own design, see this module's header comment on why: a registry
+    directory is real, live filesystem state, never cached across
+    calls), so this is computed fresh every time too, from whatever that
+    scan just found - never a stale cached hash going out of sync with
+    what a caller's own `entries` actually says right now.
+
+    A real HTTP caller (`catalog_server.py`) turns this into a real
+    `ETag` - the "transactional reload" half: a client sends
+    `If-None-Match` back and gets a real, fresh, honest `304 Not Modified`
+    exactly when nothing changed, or a real, freshly-and-fully-rescanned
+    body when it did - never a torn read mixing an old and a new scan,
+    since each response is one complete scan compared as a whole, not a
+    partial diff applied to cached state."""
+    canonical = json.dumps(
+        {
+            "adapters": [entry.to_dict() for entry in entries],
+            "invalidFiles": invalid_files,
+        },
+        sort_keys=True, ensure_ascii=False,
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def verify_catalog_owners(entries: list[CatalogEntry], ecosystem_root: str) -> dict[str, str]:

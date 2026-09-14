@@ -16,7 +16,7 @@ from typing import Any
 
 from . import __version__
 from .certification import CertificationError, certify_adapter, load_certification_records, save_certification_record
-from .registry import build_catalog, load_full_manifest, verify_catalog_owners
+from .registry import build_catalog, catalog_snapshot_version, load_full_manifest, verify_catalog_owners
 from .schema import load_and_validate
 from .sdk_gate import CapabilityCallRequest, CapabilityGateError, SdkUnavailableError, evaluate_capability_call
 
@@ -48,7 +48,11 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
 def _cmd_catalog(args: argparse.Namespace) -> int:
     entries, invalid_files = build_catalog(args.registry_dir)
-    payload: dict[str, Any] = {"adapters": [entry.to_dict() for entry in entries], "invalidFiles": invalid_files}
+    payload: dict[str, Any] = {
+        "adapters": [entry.to_dict() for entry in entries],
+        "invalidFiles": invalid_files,
+        "snapshotVersion": catalog_snapshot_version(entries, invalid_files),
+    }
     unverified_owners: dict[str, str] = {}
     if args.ecosystem_root:
         # PROM-HUB-F02: only run when the caller has a real ecosystem

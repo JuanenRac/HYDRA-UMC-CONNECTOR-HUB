@@ -19,18 +19,20 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
-from .registry import build_catalog, load_full_manifest
+from .registry import build_catalog, catalog_snapshot_version, load_full_manifest
 
 
 def _make_handler(registry_dir: str) -> type[BaseHTTPRequestHandler]:
     class CatalogRequestHandler(BaseHTTPRequestHandler):
         server_version = "HydraUmcConnectorHubCatalog/0.1"
 
-        def _send_json(self, status: int, payload: Any) -> None:
+        def _send_json(self, status: int, payload: Any, *, etag: str | None = None) -> None:
             body = json.dumps(payload).encode("utf-8")
             self.send_response(status)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
+            if etag is not None:
+                self.send_header("ETag", f'"{etag}"')
             self.end_headers()
             self.wfile.write(body)
 
@@ -40,8 +42,27 @@ def _make_handler(registry_dir: str) -> type[BaseHTTPRequestHandler]:
                 self._send_json(200, {"status": "ok", "adapterCount": len(entries), "invalidFileCount": len(invalid_files)})
                 return
             if self.path == "/catalog":
+                # PROM-HUB-E01: a real, deterministic snapshot version
+                # (never random, never a timestamp) computed fresh from
+                # THIS scan - a real ETag, not a stale cached one. A
+                # client sending back the same If-None-Match it was
+                # given gets a real, honest 304 the instant the
+                # underlying registry genuinely has not changed, never a
+                # partial/torn body.
                 entries, invalid_files = build_catalog(registry_dir)
-                self._send_json(200, {"adapters": [entry.to_dict() for entry in entries], "invalidFiles": invalid_files})
+                version = catalog_snapshot_version(entries, invalid_files)
+                if_none_match = self.headers.get("If-None-Match", "").strip('"')
+                if if_none_match == version:
+                    self.send_response(304)
+                    self.send_header("ETag", f'"{version}"')
+                    self.end_headers()
+                    return
+                payload = {
+                    "adapters": [entry.to_dict() for entry in entries],
+                    "invalidFiles": invalid_files,
+                    "snapshotVersion": version,
+                }
+                self._send_json(200, payload, etag=version)
                 return
             if self.path.startswith("/catalog/"):
                 adapter_id = self.path[len("/catalog/"):]
