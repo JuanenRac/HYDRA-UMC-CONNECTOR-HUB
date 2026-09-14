@@ -20,11 +20,12 @@ standard `schema.py` already holds itself to.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .schema import load_and_validate
+from .schema import PROJECT_NAME_PATTERN, load_and_validate
 
 
 @dataclass(frozen=True)
@@ -112,6 +113,56 @@ def build_catalog(registry_dir: str) -> tuple[list[CatalogEntry], dict[str, list
 
     entries.sort(key=lambda entry: entry.adapter_id)
     return entries, invalid_files
+
+
+def verify_catalog_owners(entries: list[CatalogEntry], ecosystem_root: str) -> dict[str, str]:
+    """PROM-HUB-F02's own real second half: `schema.py`'s own
+    `PROJECT_NAME_PATTERN` check on `ownerProject` only confirms a value
+    LOOKS like a real project name - it never confirms the claimed owner
+    actually exists. This function does that for real: for every entry,
+    resolves `ecosystem_root / ownerProject / hydra-umc.project.json`
+    and requires it to (a) exist and (b) itself declare `name` equal to
+    that same `ownerProject` - the same self-consistency check
+    HYDRA-UMC-LOCAL-TECHNICIAN's own `resolve_project_manifest_path()`
+    already applies, ported here rather than imported (this project
+    stays independent, same real property every other shared-but-not-
+    centralized piece of this ecosystem already follows).
+
+    Returns a real reason string per adapter_id that FAILS verification
+    - an adapter whose owner cannot be confirmed is never silently kept
+    in an already-trusted-looking catalog, but this function itself
+    never mutates `entries`; a caller (catalog_server.py, cli.py)
+    decides what to do with a failing entry (typically: keep it out of
+    what is presented as a verified catalog, same as an invalid_files
+    entry). A caller with no real `ecosystem_root` available at all
+    should not call this - there is nothing honest to verify against."""
+    root = Path(ecosystem_root)
+    failures: dict[str, str] = {}
+    for entry in entries:
+        owner = entry.owner_project
+        if not PROJECT_NAME_PATTERN.fullmatch(owner):
+            # Already caught by schema.py at manifest-validation time for
+            # every real caller that runs it first - this is real
+            # defense in depth, not the primary check.
+            failures[entry.adapter_id] = f"ownerProject {owner!r} does not look like a real project name"
+            continue
+        manifest_path = (root / owner / "hydra-umc.project.json").resolve()
+        if root.resolve() not in manifest_path.parents:
+            failures[entry.adapter_id] = f"ownerProject {owner!r} does not resolve under {root}"
+            continue
+        if not manifest_path.is_file():
+            failures[entry.adapter_id] = f"no real hydra-umc.project.json found for ownerProject {owner!r} under {root}"
+            continue
+        try:
+            owner_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            failures[entry.adapter_id] = f"ownerProject {owner!r}'s own manifest at {manifest_path} could not be read: {exc}"
+            continue
+        if not isinstance(owner_manifest, dict) or owner_manifest.get("name") != owner:
+            failures[entry.adapter_id] = (
+                f"ownerProject {owner!r}'s own manifest at {manifest_path} does not self-identify as {owner!r}"
+            )
+    return failures
 
 
 def load_full_manifest(registry_dir: str, adapter_id: str) -> dict[str, Any] | None:

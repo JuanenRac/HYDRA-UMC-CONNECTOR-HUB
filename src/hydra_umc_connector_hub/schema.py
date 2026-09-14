@@ -40,6 +40,19 @@ CAPABILITY_MODES = ("read", "write", "abort")
 # filesystem.
 _SAFE_ADAPTER_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 
+# PROM-HUB-F02: `ownerProject` was only ever checked for being a
+# non-empty string - any junk value ("me", "nobody in particular", a
+# typo of a real project name) passed structural validation just as
+# happily as a real one. Mirrors HYDRA-UMC-SDK's own PROJECT_NAME_PATTERN
+# (clients/python/src/hydra_umc_sdk/validation.py) - every real
+# hydra-umc.project.json this ecosystem publishes names itself this way,
+# and `ownerProject` is meant to name one of them. This alone is still
+# only a SHAPE check (does it look like a real project name); the
+# deeper "does that project actually exist and self-identify with this
+# name" check is registry.py's own verify_catalog_owners(), which needs
+# a real ecosystem root this module has no business knowing about.
+PROJECT_NAME_PATTERN = re.compile(r"^(HYDRA-UMC|URTC)(-[A-Z0-9-]+)?$")
+
 # The real idempotency vocabulary this contract uses - deliberately a
 # fixed, closed set (like `redaction_level` in HYDRA-UMC-OPS-AGENT's own
 # incident.py) rather than an open string, so a typo becomes a real
@@ -210,6 +223,13 @@ def validate_adapter_manifest(data: Any) -> list[str]:
         errors.append(
             f"'adapterId' must contain only letters, digits, '-' and '_' (no path separators or '.') "
             f"so it can never escape the directory a certification record is stored under - got {adapter_id!r}"
+        )
+
+    owner_project = data.get("ownerProject")
+    if isinstance(owner_project, str) and owner_project.strip() and not PROJECT_NAME_PATTERN.fullmatch(owner_project):
+        errors.append(
+            f"'ownerProject' must be a real HYDRA-UMC-*/URTC-* project name, got {owner_project!r} - "
+            "a self-declared owner is not enough on its own, but it must at least look like a real one"
         )
 
     idempotency = data.get("idempotency")

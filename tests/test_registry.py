@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from hydra_umc_connector_hub.registry import build_catalog, load_full_manifest
+from hydra_umc_connector_hub.registry import CatalogEntry, build_catalog, load_full_manifest, verify_catalog_owners
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures"
 
@@ -74,6 +74,69 @@ class LoadFullManifestTests(unittest.TestCase):
 
     def test_an_unregistered_adapter_id_returns_none(self):
         self.assertIsNone(load_full_manifest(str(FIXTURES_DIR), "not-a-real-adapter"))
+
+
+def _fake_entry(adapter_id: str, owner_project: str) -> CatalogEntry:
+    return CatalogEntry(
+        adapter_id=adapter_id, protocol="mqtt", target_kinds=["sensor"], owner_project=owner_project,
+        sdk_compatibility=">=0.1.0", idempotency="none", capabilities=[], source_path="fake.json",
+    )
+
+
+class VerifyCatalogOwnersTests(unittest.TestCase):
+    """PROM-HUB-F02: `ownerProject` is real project-name-shaped by the
+    time it reaches here (schema.py's own PROJECT_NAME_PATTERN check),
+    but this is the actual "does that project exist and self-identify
+    with this name" verification - a real filesystem check, never
+    trusted from the manifest's own say-so alone."""
+
+    def test_a_real_self_consistent_owner_manifest_verifies_clean(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "HYDRA-UMC-MQTT-BROKER").mkdir()
+            (root / "HYDRA-UMC-MQTT-BROKER" / "hydra-umc.project.json").write_text(
+                json.dumps({"name": "HYDRA-UMC-MQTT-BROKER", "version": "0.1.0"}), encoding="utf-8",
+            )
+            entry = _fake_entry("mqtt-adapter", "HYDRA-UMC-MQTT-BROKER")
+
+            failures = verify_catalog_owners([entry], str(root))
+
+            self.assertEqual(failures, {})
+
+    def test_a_missing_owner_manifest_fails_verification(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            entry = _fake_entry("mqtt-adapter", "HYDRA-UMC-MQTT-BROKER")
+
+            failures = verify_catalog_owners([entry], tmp)
+
+            self.assertIn("mqtt-adapter", failures)
+            self.assertIn("no real hydra-umc.project.json", failures["mqtt-adapter"])
+
+    def test_an_owner_manifest_that_self_identifies_differently_fails_verification(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "HYDRA-UMC-MQTT-BROKER").mkdir()
+            (root / "HYDRA-UMC-MQTT-BROKER" / "hydra-umc.project.json").write_text(
+                json.dumps({"name": "HYDRA-UMC-SOMETHING-ELSE", "version": "0.1.0"}), encoding="utf-8",
+            )
+            entry = _fake_entry("mqtt-adapter", "HYDRA-UMC-MQTT-BROKER")
+
+            failures = verify_catalog_owners([entry], str(root))
+
+            self.assertIn("does not self-identify", failures["mqtt-adapter"])
+
+    def test_real_fixtures_all_have_real_project_name_shaped_owners(self):
+        # Real, end-to-end: the 10 real fixtures this repo ships all
+        # declare a genuinely well-formed ownerProject (they simply
+        # don't have real sibling checkouts under this temp root, so
+        # this only exercises the PROJECT_NAME_PATTERN defense-in-depth
+        # branch, not full existence - a real ecosystem_root pointed at
+        # this workspace's own parent directory would verify them fully).
+        with tempfile.TemporaryDirectory() as tmp:
+            entries, _ = build_catalog(str(FIXTURES_DIR))
+            failures = verify_catalog_owners(entries, tmp)
+            for adapter_id, reason in failures.items():
+                self.assertIn("no real hydra-umc.project.json", reason, f"{adapter_id}: {reason}")
 
 
 if __name__ == "__main__":
