@@ -9,7 +9,7 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
-## [0.0.9] - PROM-HUB-E01: the catalog gained a real, deterministic snapshot version and a real conditional-GET
+## [0.0.9] - the catalog gained a real, deterministic snapshot version and a real conditional-GET
 
 `build_catalog()` itself stays a fresh per-call directory scan (Delivery
 2's own deliberate design - a registry directory is real, live
@@ -30,7 +30,7 @@ validation.
 
 7 new tests (133 passed).
 
-## [0.0.8] - PROM-HUB-F02: ownerProject was only ever checked as a non-empty string, never verified against a real project
+## [0.0.8] - ownerProject was only ever checked as a non-empty string, never verified against a real project
 
 Two real, independent layers, neither one alone sufficient:
 
@@ -52,16 +52,16 @@ Two real, independent layers, neither one alone sufficient:
 
 7 new tests (126 passed).
 
-## [0.0.7] - H008/H009/H071: textual booleans, unhashable schema types, non-finite freshness
+## [0.0.7] - textual booleans, unhashable schema types, non-finite freshness
 
-- **H008:** `CapabilityCallRequest.human_confirmed` was a plain `bool`
+- `CapabilityCallRequest.human_confirmed` was a plain `bool`
   type hint with no runtime check. The literal string `"false"` is
   truthy in Python, so a caller wiring this dataclass up from
   loosely-typed input (a future HTTP/JSON layer, a query string) that
   passed textual `"false"` instead of a real bool would have it treated
   as an actual human confirmation. Fixed: `__post_init__` now rejects any
   `human_confirmed` that is not a real `bool`.
-- **H009:** `_validate_schema_shape()`'s own `schema_type not in
+- `_validate_schema_shape()`'s own `schema_type not in
   _JSON_SCHEMA_TYPE_CHECKS` hashes `schema_type` to look it up - a
   malformed `"type"` that is itself unhashable (a list or object) raised
   `TypeError`, taking down this validator instead of returning it as a
@@ -69,18 +69,18 @@ Two real, independent layers, neither one alone sufficient:
   docstring. Fixed: guarded with `isinstance(schema_type, str)` first,
   same pattern `validate_against_json_schema_subset()` already used for
   the identical lookup.
-- **H071 (P1):** `_policy_denials()`'s request-freshness check compared
+- `_policy_denials()`'s request-freshness check compared
   `age > max_age` directly. NaN compares `False` against everything, so
   a non-finite `requested_at` (or `now`) silently passed as "not stale"
-  instead of being rejected - defeating the fail-closed guarantee F07's
-  own "gate caducado" scenario exists for. Fixed: a non-finite age is now
+  instead of being rejected - defeating the fail-closed guarantee the
+  "expired gate" scenario below exists for. Fixed: a non-finite age is now
   rejected explicitly before the threshold comparison runs.
 
-## [0.0.6] - F07: real "version incompatible" and "gate caducado" checks
+## [0.0.6] - Real "version incompatible" and "expired gate" checks
 
-2 of the 5 real scenarios this project's own F07 flow names
-("ID malicioso, versión incompatible, certificado duplicado,
-confirmación ausente y gate caducado") were found not implemented at
+2 of the 5 real scenarios this project's own certification flow names
+(malicious ID, incompatible version, duplicate certificate, missing
+confirmation, and an expired gate) were found not implemented at
 all - not merely untested:
 
 - **Version incompatible**: `sdkCompatibility` (required since Delivery
@@ -91,7 +91,7 @@ all - not merely untested:
   logic, no SDK import needed) is now checked in
   `evaluate_capability_call()` right where the optional dependency
   already becomes available, before any `BridgeJob` is ever constructed.
-- **Gate caducado (expired)**: a write/abort request built long before
+- **Expired gate**: a write/abort request built long before
   it is actually evaluated is now denied - the cell/machine state it
   attests to may no longer hold by then. New `CapabilityCallRequest.
   requested_at` (defaults to "now", so every existing caller keeps
@@ -100,7 +100,7 @@ all - not merely untested:
   default applies when a manifest doesn't declare one).
 
 Both checks are read-exempt, same as every other policy check this
-module already enforces (V07-006) - a read capability still never
+module already enforces - a read capability still never
 touches the optional SDK dependency at all. `evaluate_capability_call()`
 gains an optional `now=` parameter for real, deterministic freshness
 tests instead of a flaky `sleep()`.
@@ -130,7 +130,7 @@ A second review pass found 4 more real
 issues, each reproduced first against a real fixture/fixture-derived
 request (no network/hardware), then fixed with new regression tests:
 
-- **V07-006 (P1): the capability gate ignored every permission/
+- **The capability gate ignored every permission/
   confirmation/gate a write or abort capability itself declared.**
   `evaluate_capability_call()` forwarded straight to HYDRA-UMC-SDK's own
   generic READY/IDLE motion gate - `cnc-grbl.json`'s own `sendControlByte`
@@ -145,7 +145,7 @@ request (no network/hardware), then fixed with new regression tests:
   single one denies the call. See `docs/CAPABILITY_GATE.md` and the new
   `gate` CLI flags (`--permission`/`--cell-mode`/`--human-confirmed`/
   `--safety-gate`).
-- **V07-007 (P1): `adapterId` could escape the certification directory.**
+- **`adapterId` could escape the certification directory.**
   `validate_adapter_manifest()` accepted `adapterId: "../escaped"`, and
   `save_certification_record()` joined it straight into a real file path
   with no containment check - a real file could land outside the
@@ -156,7 +156,7 @@ request (no network/hardware), then fixed with new regression tests:
   directory - belt-and-suspenders, since a `CertificationRecord` built
   directly (`from_dict()` on untrusted JSON) never goes through the
   manifest validator at all.
-- **V07-008 (P2): the certification store was not actually append-only.**
+- **The certification store was not actually append-only.**
   Saving a second, DIFFERENT `CertificationRecord` under the same
   `certification_id` silently overwrote the first, despite
   `docs/CERTIFICATION.md` and this module's own docstring promising
@@ -164,7 +164,7 @@ request (no network/hardware), then fixed with new regression tests:
   `O_CREAT|O_EXCL` semantics (`open(path, "x")`); a second write of the
   byte-for-byte SAME record is a harmless idempotent no-op, a different
   one under the same id is refused outright.
-- **V07-009 (P2): the evidence-schema validator accepted wrong types and
+- **The evidence-schema validator accepted wrong types and
   could raise.** `{"type": "number"}` accepted a real Python `bool`
   (`isinstance(True, int)` is true); a `pattern` that is not a valid
   regex raised `re.error`; a non-string `required` entry raised

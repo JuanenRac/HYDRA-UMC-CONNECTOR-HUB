@@ -55,7 +55,7 @@ silently dropped. Exit code `0` only if `invalidFiles` is empty (and, when
 
 `ownerProject` is only ever shape-checked by
 `validate_adapter_manifest()` itself (does it look like a real
-`HYDRA-UMC-*`/`URTC-*` project name) - PROM-HUB-F02's real second half is
+`HYDRA-UMC-*`/`URTC-*` project name) - the real second half is
 `--ecosystem-root`, an optional path to a real directory of sibling
 project checkouts. When given, every entry's own `ownerProject` is
 verified for real against that project's own `hydra-umc.project.json`
@@ -66,7 +66,7 @@ code. Omitted, `unverifiedOwners` never appears in the output at all -
 there is nothing honest to verify without a real ecosystem root, so this
 never silently claims every owner is verified when none were checked.
 
-PROM-HUB-E01: the output also always carries `snapshotVersion` - a real,
+The output also always carries `snapshotVersion` - a real,
 deterministic SHA-256 over the catalog's own canonical content
 (`registry.catalog_snapshot_version()`), never a random id or a
 timestamp. Unchanged real registry contents always yield the exact same
@@ -85,8 +85,8 @@ Serves the same real catalog over a real, GET-only `http.server`
   needed). The response also carries a real `ETag` header equal to
   `"<snapshotVersion>"`; send it back as `If-None-Match` on a later
   request and get a real `304 Not Modified` (empty body) the instant the
-  registry genuinely has not changed since - PROM-HUB-E01's own
-  "transactional reload" half: a client always gets either the honest
+  registry genuinely has not changed since - the same
+  "transactional reload" guarantee: a client always gets either the honest
   "nothing changed" answer or one complete, freshly-rescanned body,
   never a partial/torn one.
 - **`GET /catalog/<adapterId>`** — the full real manifest for one
@@ -107,7 +107,7 @@ Evaluates one real capability call against
 capability is always allowed without needing HYDRA-UMC-SDK installed at
 all; a `write`/`abort` capability must first satisfy its own declared
 policy (`--permission`/`--cell-mode`/`--human-confirmed`/`--safety-gate`
-- see CAPABILITY_GATE.md, V07-006) and is THEN gated by HYDRA-UMC-SDK's
+- see CAPABILITY_GATE.md) and is THEN gated by HYDRA-UMC-SDK's
 own real `evaluate_job()` (requires the optional `[sdk]` extra - see
 `pip install -e ".[sdk]"`). `--cell-state` is one of
 `READY`/`INHIBITED`/`FAULT`/`SAFE_STOP`; `--machine-state` is one of
