@@ -55,7 +55,7 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
     }
     unverified_owners: dict[str, str] = {}
     if args.ecosystem_root:
-        # PROM-HUB-F02: only run when the caller has a real ecosystem
+        # only run when the caller has a real ecosystem
         # root to verify against - there is nothing honest to check
         # without one, and `--ecosystem-root` stays optional so a
         # caller with no sibling checkouts available (a CI job testing
@@ -112,7 +112,7 @@ def _cmd_gate(args: argparse.Namespace) -> int:
             machine_state=args.machine_state,
             parameters=parameters,
             evidence=evidence,
-            # V07-006: a write/abort capability's own declared
+            # a write/abort capability's own declared
             # requiredPermission/requiredCellState/requiresHumanConfirmation/
             # requiredSafetyGates are now real, enforced checks - a CLI
             # caller must attest to them explicitly, the same way it

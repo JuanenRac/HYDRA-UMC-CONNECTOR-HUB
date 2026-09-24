@@ -58,7 +58,7 @@ class CliValidateTests(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("ERROR", stderr.getvalue())
 
-    # REV-029 regression: a review found a well-formed JSON document
+    # regression: a review found a well-formed JSON document
     # that is not an object (a bare `[]`) crashing this command with a raw
     # AttributeError (`data.get(...)` on a list) instead of reporting the
     # real "must be a JSON object" error like any other invalid manifest.
@@ -107,7 +107,7 @@ class CliCatalogTests(unittest.TestCase):
         self.assertNotIn("unverifiedOwners", payload)
 
     def test_catalog_without_ecosystem_root_never_runs_owner_verification(self):
-        # PROM-HUB-F02: --ecosystem-root is optional - omitting it must
+        # --ecosystem-root is optional - omitting it must
         # never fail the whole command just because there is nothing
         # real to verify owners against.
         stdout = io.StringIO()
@@ -160,7 +160,7 @@ class CliGateTests(unittest.TestCase):
 
     @unittest.skipUnless(SDK_INSTALLED, "hydra-umc-sdk (optional [sdk] extra) is not installed")
     def test_gate_on_a_write_capability_uses_the_real_sdk(self):
-        # V07-006: exercising the SDK's own motion gate requires the
+        # exercising the SDK's own motion gate requires the
         # caller to ALSO attest to sendControlByte's own declared policy
         # (permission/cell-mode/confirmation/gates) - otherwise the call
         # is denied on policy grounds before the SDK is ever consulted.
@@ -179,7 +179,7 @@ class CliGateTests(unittest.TestCase):
         self.assertIn("not READY", payload["reason"])
 
     def test_gate_on_a_write_capability_with_no_policy_context_is_denied_on_policy_grounds(self):
-        # V07-006's own reproduction: the exact command line that
+        # this project's own reproduction: the exact command line that
         # reproduced it (no --permission/--cell-mode/--human-confirmed/
         # --safety-gate at all) used to print allowed=true.
         stdout = io.StringIO()

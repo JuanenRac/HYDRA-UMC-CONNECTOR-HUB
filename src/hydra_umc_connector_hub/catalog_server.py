@@ -42,7 +42,7 @@ def _make_handler(registry_dir: str) -> type[BaseHTTPRequestHandler]:
                 self._send_json(200, {"status": "ok", "adapterCount": len(entries), "invalidFileCount": len(invalid_files)})
                 return
             if self.path == "/catalog":
-                # PROM-HUB-E01: a real, deterministic snapshot version
+                # a real, deterministic snapshot version
                 # (never random, never a timestamp) computed fresh from
                 # THIS scan - a real ETag, not a stale cached one. A
                 # client sending back the same If-None-Match it was

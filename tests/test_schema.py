@@ -127,7 +127,7 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
         })
         self.assertEqual(errors, [])
 
-    # PROM-HUB-F02: ownerProject used to be accepted as any non-empty
+    # ownerProject used to be accepted as any non-empty
     # string - a typo or a made-up value passed just as cleanly as a
     # real HYDRA-UMC-*/URTC-* project name.
     def test_an_owner_project_not_shaped_like_a_real_project_name_is_rejected(self):
@@ -167,7 +167,7 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
             "ownerProject": "HYDRA-UMC-X",
         }
 
-    # REV-028 regression: a review found `risk`/`requiredPermission`/
+    # regression: a review found `risk`/`requiredPermission`/
     # `requiredCellState` accepting a list/dict/whitespace-only string -
     # every one of these must be a real, meaningful string.
     def test_a_write_capability_with_a_list_risk_is_rejected(self):
@@ -185,7 +185,7 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
     def test_a_well_formed_write_capability_still_passes(self):
         self.assertEqual(validate_adapter_manifest(self._write_capability()), [])
 
-    # REV-030 regression: `authenticationRef` with a real prefix but no
+    # regression: `authenticationRef` with a real prefix but no
     # identifier after it, and two capabilities sharing the same name,
     # both used to pass with errors=[].
     def test_authentication_ref_with_prefix_but_no_identifier_is_rejected(self):
@@ -203,7 +203,7 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
         errors = validate_adapter_manifest(manifest)
         self.assertTrue(any("duplicates" in e for e in errors), errors)
 
-    # V07-007 (P1): adapterId
+    # adapterId
     # becomes part of a real filename in certification.py's
     # save_certification_record() - a manifest that slips a path-traversal
     # segment past this validator used to let a certification record be
@@ -233,7 +233,7 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
         manifest["adapterId"] = "industrial-opcua-2"
         self.assertEqual(validate_adapter_manifest(manifest), [])
 
-    # V07-009 (P2): a
+    # a
     # malformed endpointSchema/evidenceSchema used to sail through this
     # validator (which only checked "non-empty object") and only blow up
     # later, inside validate_against_json_schema_subset, when a real
@@ -256,7 +256,7 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
         errors = validate_adapter_manifest(manifest)
         self.assertTrue(any("endpointSchema" in e for e in errors), errors)
 
-    # H009 regression: a `type` that is itself unhashable (a list or
+    # regression: a `type` that is itself unhashable (a list or
     # object - someone's malformed multi-type attempt, or just a mistake)
     # used to raise `TypeError: unhashable type` from the plain
     # `schema_type not in _JSON_SCHEMA_TYPE_CHECKS` dict-membership check,
@@ -308,7 +308,7 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
 
 
 class ValidateAgainstJsonSchemaSubsetRobustnessTests(unittest.TestCase):
-    """V07-009: `validate_against_json_schema_subset()` itself must never
+    """`validate_against_json_schema_subset` itself must never
     raise, no matter how malformed the schema handed to it is - its own
     docstring promises exactly that. These exercise it directly (not
     through validate_adapter_manifest's new up-front gate above) since a
