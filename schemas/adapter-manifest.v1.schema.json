@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JuanenRac/HYDRA-UMC-CONNECTOR-HUB/schemas/adapter-manifest.v1.schema.json",
+  "title": "HYDRA-UMC adapter manifest",
+  "description": "The structural contract for one adapter manifest. The validator in src/hydra_umc_connector_hub/schema.py is the reference implementation; tests/test_published_schema.py keeps this file in step with it. Cross-field rules are stated in the descriptions.",
+  "type": "object",
+  "required": [
+    "adapterId",
+    "schemaVersion",
+    "protocol",
+    "authenticationRef",
+    "sdkCompatibility",
+    "ownerProject",
+    "idempotency",
+    "targetKinds",
+    "endpointSchema",
+    "healthCheck",
+    "evidenceSchema",
+    "requiredSafetyGates",
+    "timeoutMs",
+    "capabilities"
+  ],
+  "properties": {
+    "adapterId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
+      "description": "Letters, digits, '-' and '_' only, so it can never escape the directory a certification record is stored under."
+    },
+    "schemaVersion": { "type": "string", "minLength": 1 },
+    "protocol": { "type": "string", "minLength": 1 },
+    "authenticationRef": {
+      "type": "string",
+      "pattern": "^(env:|secret-store:|vault:|none:).+",
+      "description": "A reference to where a credential lives, never the credential itself."
+    },
+    "sdkCompatibility": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A minimum-version constraint, '>=MAJOR.MINOR.PATCH', checked against the installed SDK before any capability call."
+    },
+    "ownerProject": { "type": "string", "pattern": "^(HYDRA-UMC|URTC)(-[A-Z0-9-]+)?$" },
+    "idempotency": { "enum": ["none", "idempotent", "at-least-once", "exactly-once"] },
+    "targetKinds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "endpointSchema": { "type": "object", "minProperties": 1 },
+    "healthCheck": { "type": "object", "minProperties": 1 },
+    "evidenceSchema": { "type": "object", "minProperties": 1 },
+    "requiredSafetyGates": { "type": "array", "items": { "type": "string" } },
+    "timeoutMs": { "type": "integer", "exclusiveMinimum": 0 },
+    "maxRequestAgeSeconds": { "type": "number", "exclusiveMinimum": 0 },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Names must be unique within one manifest.",
+      "items": { "$ref": "#/$defs/capability" }
+    }
+  },
+  "$defs": {
+    "capability": {
+      "type": "object",
+      "required": ["name", "mode"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "mode": { "enum": ["read", "write", "abort"] },
+        "risk": { "type": "string", "minLength": 1 },
+        "requiredPermission": { "type": "string", "minLength": 1 },
+        "requiredCellState": { "type": "string", "minLength": 1 },
+        "requiresHumanConfirmation": { "type": "boolean" },
+        "timeoutMs": { "type": "integer", "exclusiveMinimum": 0 }
+      },
+      "if": { "properties": { "mode": { "enum": ["write", "abort"] } }, "required": ["mode"] },
+      "then": {
+        "required": ["risk", "requiredPermission", "requiredCellState", "requiresHumanConfirmation", "timeoutMs"],
+        "description": "A write or abort capability is never selectable unless it declares all of these."
+      }
+    }
+  }
+}

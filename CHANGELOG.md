@@ -9,6 +9,14 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
+## [0.1.0] - Published JSON Schema for the adapter manifest
+
+- **`schemas/adapter-manifest.v1.schema.json`:** the adapter manifest contract as a JSON
+  Schema document (required fields, enumerations, patterns, the write/abort capability
+  requirements). `schema.py` remains the reference validator; six new tests compare the
+  published file against it and against every valid and invalid fixture, so the two cannot
+  drift apart unnoticed. Documented in `docs/ADAPTER_MANIFEST.md`.
+
 ## [0.0.9] - the catalog gained a real, deterministic snapshot version and a real conditional-GET
 
 `build_catalog()` itself stays a fresh per-call directory scan (Delivery
