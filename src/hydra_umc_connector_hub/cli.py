@@ -176,7 +176,7 @@ def build_parser() -> argparse.ArgumentParser:
     catalog.add_argument(
         "--ecosystem-root",
         help="Optional: a real directory of sibling HYDRA-UMC-*/URTC-* checkouts. When given, every entry's "
-        "own ownerProject is verified for real against that project's own hydra-umc.project.json (PROM-HUB-F02) "
+        "own ownerProject is verified for real against that project's own hydra-umc.project.json "
         "and any failure is reported under 'unverifiedOwners'. Omitted, ownerProject stays only shape-checked.",
     )
     catalog.set_defaults(func=_cmd_catalog)
@@ -199,19 +199,19 @@ def build_parser() -> argparse.ArgumentParser:
     gate.add_argument("--evidence-file", help="Optional path to a JSON evidence payload checked against evidenceSchema.")
     gate.add_argument(
         "--permission", action="append",
-        help="A permission the caller attests to holding, repeatable - checked against the capability's own requiredPermission (V07-006).",
+        help="A permission the caller attests to holding, repeatable - checked against the capability's own requiredPermission.",
     )
     gate.add_argument(
         "--cell-mode",
-        help="The cell's current real supervision mode (e.g. operational/supervised/ready) - checked against the capability's own requiredCellState (V07-006). Distinct from --cell-state, which is HYDRA-UMC-SDK's own generic motion-gate state.",
+        help="The cell's current real supervision mode (e.g. operational/supervised/ready) - checked against the capability's own requiredCellState. Distinct from --cell-state, which is HYDRA-UMC-SDK's own generic motion-gate state.",
     )
     gate.add_argument(
         "--human-confirmed", action="store_true",
-        help="Pass this if a human has explicitly confirmed this specific call - checked against the capability's own requiresHumanConfirmation (V07-006).",
+        help="Pass this if a human has explicitly confirmed this specific call - checked against the capability's own requiresHumanConfirmation.",
     )
     gate.add_argument(
         "--safety-gate", action="append",
-        help="A real safety gate currently satisfied, repeatable - checked against the manifest's own requiredSafetyGates (V07-006).",
+        help="A real safety gate currently satisfied, repeatable - checked against the manifest's own requiredSafetyGates.",
     )
     gate.set_defaults(func=_cmd_gate)
 
