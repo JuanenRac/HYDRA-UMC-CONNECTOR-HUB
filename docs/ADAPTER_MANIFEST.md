@@ -68,3 +68,11 @@ version, or a certification result - those belong to Delivery 2 (a
 read-only catalog endpoint) and Delivery 4 (per-adapter hardware
 certification), and adding a field for them before that code exists
 would be a promise this version can't keep.
+
+## Published JSON Schema
+
+[`schemas/adapter-manifest.v1.schema.json`](../schemas/adapter-manifest.v1.schema.json) is the same contract as
+a JSON Schema document any tool can read. The validator in `schema.py` stays the reference: it also
+enforces the rules a schema cannot express (unique capability names, the shape of `endpointSchema` and
+`evidenceSchema`). `tests/test_published_schema.py` fails when the two drift apart - required fields,
+enumerations, patterns and the write-capability requirements are compared against the code.
