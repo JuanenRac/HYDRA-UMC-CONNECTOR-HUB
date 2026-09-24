@@ -126,7 +126,7 @@ def _fake_entry(adapter_id: str, owner_project: str) -> CatalogEntry:
 
 
 class VerifyCatalogOwnersTests(unittest.TestCase):
-    """PROM-HUB-F02: `ownerProject` is real project-name-shaped by the
+    """`ownerProject` is real project-name-shaped by the
     time it reaches here (schema.py's own PROJECT_NAME_PATTERN check),
     but this is the actual "does that project exist and self-identify
     with this name" verification - a real filesystem check, never

@@ -99,7 +99,7 @@ class CatalogServerTests(unittest.TestCase):
 
 
 class CatalogSnapshotVersionTests(unittest.TestCase):
-    """PROM-HUB-E01: a real, deterministic snapshot version + ETag, and a
+    """a real, deterministic snapshot version + ETag, and a
     real conditional-GET 304 when the registry genuinely has not
     changed."""
 

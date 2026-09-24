@@ -36,7 +36,7 @@ reads:
   final decision when the caller actually supplies an `evidence` payload
   to check; it never invents evidence a real machine did not produce.
 
-V07-006 (P1): a write/abort
+a write/abort
 capability's own declared `requiredPermission`/`requiredCellState`/
 `requiresHumanConfirmation`, and the manifest's own top-level
 `requiredSafetyGates`, used to be pure documentation - this module
@@ -126,7 +126,7 @@ class CapabilityCallRequest:
     machine_state: str
     parameters: dict[str, str] = field(default_factory=dict)
     evidence: dict[str, Any] | None = None
-    # V07-006: the real authorisation context a caller must actually
+    # the real authorisation context a caller must actually
     # attest to for a write/abort capability - see this module's own
     # docstring for why these are checked here, separately from
     # evaluate_job()'s own generic motion gate.
@@ -147,7 +147,7 @@ class CapabilityCallRequest:
             value = getattr(self, attr)
             if not isinstance(value, str) or not value.strip():
                 raise CapabilityGateError(f"{attr!r} must be a non-empty string")
-        # H008: `human_confirmed` must be a real Python bool, not merely
+        # `human_confirmed` must be a real Python bool, not merely
         # truthy. A caller wiring this dataclass up from loosely-typed
         # input (a future HTTP/JSON layer, a query string, an env var)
         # could pass the literal string "false" - which is truthy in
@@ -177,7 +177,7 @@ def _find_capability(manifest: dict[str, Any], capability_name: str) -> dict[str
 
 
 def _policy_denials(manifest: dict[str, Any], capability: dict[str, Any], request: CapabilityCallRequest, now: float) -> list[str]:
-    """V07-006: every real, separate reason a write/abort capability's
+    """every real, separate reason a write/abort capability's
     own declared policy can refuse this specific call - independent of,
     and checked BEFORE, HYDRA-UMC-SDK's own generic motion gate (so a
     call missing a permission is denied without even needing the
@@ -210,7 +210,7 @@ def _policy_denials(manifest: dict[str, Any], capability: dict[str, Any], reques
     # real machine, matching every other check in this function.
     max_age = manifest.get("maxRequestAgeSeconds", DEFAULT_MAX_REQUEST_AGE_SECONDS)
     age = now - request.requested_at
-    # H071 (P1): NaN compares False against everything - `float("nan") >
+    # NaN compares False against everything - `float("nan") >
     # max_age` is never True - so a non-finite `requested_at` (or `now`)
     # would silently pass this freshness check instead of being rejected,
     # defeating the exact fail-closed guarantee F07's "gate caducado"
@@ -238,7 +238,7 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
        must satisfy every real policy the capability/manifest declares
        (`requiredPermission`/`requiredCellState`/`requiresHumanConfirmation`/
        `requiredSafetyGates`/request freshness - see `_policy_denials()`,
-       V07-006 and F07's own "gate caducado" scenario) BEFORE going
+       and F07's own "gate caducado" scenario) BEFORE going
        through HYDRA-UMC-SDK's own real `evaluate_job()` motion gate -
        every one of these, the SDK's own version compatibility (F07's
        own "version incompatible" scenario) included, must pass.
@@ -269,7 +269,7 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
     else:
         policy_denials = _policy_denials(manifest, capability, request, effective_now)
         if policy_denials:
-            # V07-006: denied on the capability's own declared policy
+            # denied on the capability's own declared policy
             # BEFORE ever touching the optional SDK dependency - a call
             # missing a permission does not need `hydra-umc-sdk`
             # installed to already know the answer is "no". Still falls

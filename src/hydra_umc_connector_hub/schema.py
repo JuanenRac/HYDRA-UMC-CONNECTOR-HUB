@@ -26,7 +26,7 @@ from typing import Any
 # The real capability modes the contract names explicitly.
 CAPABILITY_MODES = ("read", "write", "abort")
 
-# V07-007 (P1): `adapterId`
+# `adapterId`
 # becomes part of a real filename in certification.py's own
 # save_certification_record() (`{adapterId}__{certificationId}.json`
 # under an operator-chosen certs directory). Every one of this repo's own
@@ -40,7 +40,7 @@ CAPABILITY_MODES = ("read", "write", "abort")
 # filesystem.
 _SAFE_ADAPTER_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 
-# PROM-HUB-F02: `ownerProject` was only ever checked for being a
+# `ownerProject` was only ever checked for being a
 # non-empty string - any junk value ("me", "nobody in particular", a
 # typo of a real project name) passed structural validation just as
 # happily as a real one. Mirrors HYDRA-UMC-SDK's own PROJECT_NAME_PATTERN
@@ -260,7 +260,7 @@ def validate_adapter_manifest(data: Any) -> list[str]:
         if not isinstance(value, dict) or not value:
             errors.append(f"{field!r} must be a non-empty object")
         elif field != "healthCheck":
-            # V07-009: `healthCheck`'s own shape is protocol-specific
+            # `healthCheck`'s own shape is protocol-specific
             # (`{"expect": ...}`, `{"topic": ...}`, ...) and is never run
             # through validate_against_json_schema_subset anywhere in
             # this codebase, so it is deliberately not shape-checked
@@ -336,7 +336,7 @@ _JSON_SCHEMA_TYPE_CHECKS: dict[str, type | tuple[type, ...]] = {
 
 
 def _validate_schema_shape(schema: Any, path: str) -> list[str]:
-    """V07-009 (P2): checks
+    """checks
     that `schema` (an endpointSchema/evidenceSchema value) is ITSELF
     well-formed, recursively - before validate_adapter_manifest ever
     accepts the manifest carrying it. A malformed schema used to pass
@@ -353,7 +353,7 @@ def _validate_schema_shape(schema: Any, path: str) -> list[str]:
         return [f"{path}: schema itself must be an object, got {schema!r}"]
 
     schema_type = schema.get("type")
-    # H009: a plain `x not in _JSON_SCHEMA_TYPE_CHECKS` (a dict) hashes
+    # a plain `x not in _JSON_SCHEMA_TYPE_CHECKS` (a dict) hashes
     # `x` to look it up - real JSON allows "type" to be any value, and an
     # unhashable one (a list or object, someone's malformed multi-type
     # attempt) raised TypeError here, taking down this validator instead
@@ -410,7 +410,7 @@ def validate_against_json_schema_subset(schema: Any, instance: Any, *, path: str
         python_type = _JSON_SCHEMA_TYPE_CHECKS.get(expected_type)
         if python_type is None:
             errors.append(f"{path}: schema names unknown type {expected_type!r}")
-        # V07-009: `bool` is a subclass of `int` in Python, so
+        # `bool` is a subclass of `int` in Python, so
         # `isinstance(True, int)` (and therefore the "number" tuple check
         # below, which includes `int`) is True - without this explicit
         # exclusion a real boolean silently passed as both an "integer"
@@ -425,7 +425,7 @@ def validate_against_json_schema_subset(schema: Any, instance: Any, *, path: str
             return errors  # further object/string checks below would be meaningless on a type mismatch
 
     if isinstance(instance, str) and isinstance(schema.get("pattern"), str):
-        # V07-009: an adapter manifest's own evidenceSchema/endpointSchema
+        # an adapter manifest's own evidenceSchema/endpointSchema
         # is real, adapter-author-supplied data, not a value this project
         # controls - a malformed regex here used to raise `re.error`
         # straight out of this "never raises" function. `_validate_schema_shape`
@@ -449,7 +449,7 @@ def validate_against_json_schema_subset(schema: Any, instance: Any, *, path: str
         required = schema.get("required")
         if isinstance(required, list):
             for key in required:
-                # V07-009: a non-string `required` entry (e.g. `[[]]`)
+                # a non-string `required` entry (e.g. `[[]]`)
                 # used to raise `TypeError: unhashable type` on `key not
                 # in instance` - a schema's own `required` list is
                 # exactly as untrusted as `pattern` above.

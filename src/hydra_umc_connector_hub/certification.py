@@ -84,7 +84,7 @@ def _require_non_empty(value: Any, field_name: str) -> None:
 
 
 def _require_safe_path_segment(value: Any, field_name: str) -> None:
-    """V07-007 (P1):
+    """
     `adapter_id`/`certification_id` become part of a real filename under
     a directory the caller controls - checked here independently of
     whatever `validate_adapter_manifest` may or may not have already
@@ -151,12 +151,12 @@ def save_certification_record(record: CertificationRecord, directory: str) -> st
     Two real, independent safety checks make that honest, not just
     documented:
 
-    - V07-007: `adapter_id`/`certification_id` are checked as safe path
+    - `adapter_id`/`certification_id` are checked as safe path
       segments (see `_require_safe_path_segment`), AND the final
       resolved path is verified to still be inside `directory` - a
       belt-and-suspenders pair, since either one alone trusts a single
       layer that a future change could weaken.
-    - V07-008: the file is created EXCLUSIVELY (`open(..., "x")` -
+    - the file is created EXCLUSIVELY (`open(..., "x")` -
       real `O_CREAT|O_EXCL` semantics, atomic against a second, real
       concurrent writer). If a file already exists under this exact
       certification_id, saving the byte-for-byte SAME record again is a
@@ -183,7 +183,7 @@ def save_certification_record(record: CertificationRecord, directory: str) -> st
             handle.write(payload)
     except FileExistsError:
         if path.read_text(encoding="utf-8") == payload:
-            return str(path)  # V07-008: identical content re-saved - a real, harmless no-op
+            return str(path)  # identical content re-saved - a real, harmless no-op
         raise CertificationError(
             f"refusing to overwrite {path.name} - a DIFFERENT certification record already exists on disk "
             "under this certification_id; this store is append-only and is never mutated in place"

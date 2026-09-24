@@ -117,7 +117,7 @@ def build_catalog(registry_dir: str) -> tuple[list[CatalogEntry], dict[str, list
 
 
 def catalog_snapshot_version(entries: list[CatalogEntry], invalid_files: dict[str, list[str]]) -> str:
-    """PROM-HUB-E01's own real "versioned snapshot" half: a deterministic
+    """this project's own real "versioned snapshot" half: a deterministic
     SHA-256 over `entries`' + `invalid_files`' own real, canonical
     content - never a random id, never a timestamp (two back-to-back
     calls against an unchanged real registry directory must return the
@@ -148,7 +148,7 @@ def catalog_snapshot_version(entries: list[CatalogEntry], invalid_files: dict[st
 
 
 def verify_catalog_owners(entries: list[CatalogEntry], ecosystem_root: str) -> dict[str, str]:
-    """PROM-HUB-F02's own real second half: `schema.py`'s own
+    """this project's own real second half: `schema.py`'s own
     `PROJECT_NAME_PATTERN` check on `ownerProject` only confirms a value
     LOOKS like a real project name - it never confirms the claimed owner
     actually exists. This function does that for real: for every entry,

@@ -55,7 +55,7 @@ def _authorized_request(**overrides) -> CapabilityCallRequest:
     (`requiredPermission=cnc.control.send`, `requiredCellState=supervised`,
     `requiresHumanConfirmation=true`, and the manifest's own
     `requiredSafetyGates` - `cell.estop.clear`/`cell.enclosure.closed`) -
-    V07-006's fix means a write call is denied unless every one of these
+    's fix means a write call is denied unless every one of these
     is actually satisfied, not just the generic READY/IDLE motion gate.
     Tests exercising ONE axis (the SDK's own motion gate, say) start from
     this fully-authorised baseline and vary only that one field, so a
@@ -138,7 +138,7 @@ class WriteAndAbortCapabilitiesUseTheRealSdkGateTests(unittest.TestCase):
 
 @unittest.skipUnless(SDK_INSTALLED, "hydra-umc-sdk (optional [sdk] extra) is not installed")
 class CapabilityGateEnforcesDeclaredPolicyTests(unittest.TestCase):
-    """V07-006 (P1): a write/
+    """a write/
     abort capability's own declared requiredPermission/requiredCellState/
     requiresHumanConfirmation, and the manifest's own top-level
     requiredSafetyGates, used to be pure documentation -
@@ -179,7 +179,7 @@ class CapabilityGateEnforcesDeclaredPolicyTests(unittest.TestCase):
         self.assertFalse(result.allowed)
         self.assertIn("confirmation", result.reason)
 
-    # H008 regression: the literal string "false" is truthy in Python, so
+    # regression: the literal string "false" is truthy in Python, so
     # a caller wiring this dataclass up from loosely-typed input (a future
     # HTTP/JSON layer, a query string) that passed the textual "false"
     # instead of a real bool used to sail through `not
@@ -300,7 +300,7 @@ class RequestFreshnessGateTests(unittest.TestCase):
         self.assertFalse(result.allowed)
         self.assertIn("gate has expired", result.reason)
 
-    # H071 (P1) regression: NaN compares False against everything, so
+    # regression: NaN compares False against everything, so
     # `age > max_age` was never True for a non-finite age - a NaN/inf
     # `requested_at` used to silently pass this freshness check instead
     # of being rejected, defeating the fail-closed guarantee "gate
