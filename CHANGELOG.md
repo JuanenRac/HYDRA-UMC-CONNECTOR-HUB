@@ -267,7 +267,7 @@ each with a new regression test:
 ## [0.0.1] - Delivery 1: schema + CLI validate + fixtures
 
 First real scaffolding version - Delivery 1 of the 4-delivery plan from
-a recommended-new-project proposal made while auditing the code
+a recommended-new-project proposal made on code review
 ("Esquema JSON, CLI validate y diez fixtures (sin red,
 sin hardware)"). This version touches no network, no hardware, and no
 real machine - it only validates the structure of an adapter-manifest
