@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries 4 of 4">
 </p>
 
-> **Estado: v0.1.1, andaimes (scaffolding) - Entregas 1-4 de 4 (esquema/CLI/
+> **Estado: v0.1.2, andaimes (scaffolding) - Entregas 1-4 de 4 (esquema/CLI/
 > dados de teste, catálogo só de leitura, porta de segurança do SDK, registos de certificação).**
 > `catalog`/`serve-catalog` são reais e só de GET (não existe nenhum caminho de
 > escrita pela rede em todo este projeto); `gate` chama diretamente o
@@ -29,7 +29,7 @@
 > [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) para a superfície exata de
 > comandos que existe hoje.
 
-> **Verificação de honestidade - o que realmente funciona hoje:** o esquema/validador de manifestos (`schema.py`), o catálogo só de leitura (`registry.py`, `catalog_server.py`), a integração da porta de segurança do SDK (`sdk_gate.py`, que chama o `evaluate_job()` real do próprio `HYDRA-UMC-SDK` contra uma cópia real instalada, nunca um simulado), o registo de certificação (`certification.py`) e a CLI (`cli.py`) são reais e estão cobertos por 139 testes a passar (`pytest tests/`, com o extra opcional `[sdk]` instalado - 31 deles são ignorados sem ele). O `certify` regista uma prova atestada por uma pessoa, mas explicitamente não a verifica de forma independente contra hardware real - não há nenhuma máquina física por trás de qualquer um dos 10 dados de teste, e nenhum adaptador aqui foi alguma vez usado para falar de facto com um dispositivo real. `catalog`/`serve-catalog` são só de GET por construção (o `catalog_server.py` não tem sequer `do_POST`/`do_PUT`). Veja a caixa de Estado acima e o `CHANGELOG.md` para saber exatamente o que foi entregue até agora.
+> **Verificação de honestidade - o que realmente funciona hoje:** o esquema/validador de manifestos (`schema.py`), o catálogo só de leitura (`registry.py`, `catalog_server.py`), a integração da porta de segurança do SDK (`sdk_gate.py`, que chama o `evaluate_job()` real do próprio `HYDRA-UMC-SDK` contra uma cópia real instalada, nunca um simulado), o registo de certificação (`certification.py`) e a CLI (`cli.py`) são reais e estão cobertos por 143 testes a passar (`pytest tests/`, com o extra opcional `[sdk]` instalado - 31 deles são ignorados sem ele). O `certify` regista uma prova atestada por uma pessoa, mas explicitamente não a verifica de forma independente contra hardware real - não há nenhuma máquina física por trás de qualquer um dos 10 dados de teste, e nenhum adaptador aqui foi alguma vez usado para falar de facto com um dispositivo real. `catalog`/`serve-catalog` são só de GET por construção (o `catalog_server.py` não tem sequer `do_POST`/`do_PUT`). Veja a caixa de Estado acima e o `CHANGELOG.md` para saber exatamente o que foi entregue até agora.
 
 ---
 

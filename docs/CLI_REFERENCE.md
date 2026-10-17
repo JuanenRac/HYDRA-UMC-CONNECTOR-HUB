@@ -100,6 +100,12 @@ write attempt gets a real `501 Unsupported method` from
 `BaseHTTPRequestHandler` itself, never a route this project forgot to
 protect. Runs until `Ctrl+C`.
 
+A manifest file that is not valid UTF-8, or larger than 1 MB, is listed
+under `invalidFiles` like any other broken file instead of stopping the
+catalog; if the registry directory disappears while the server runs,
+requests get a `503` with a JSON error; and a connection that sends
+nothing for 15 seconds is closed.
+
 ## `gate <manifest-file> --capability NAME --job-id ID --idempotency-key KEY --source SRC --cell-state STATE --machine-state STATE [--param k=v ...] [--evidence-file FILE] [--permission PERM ...] [--cell-mode MODE] [--human-confirmed] [--safety-gate GATE ...]`
 
 Evaluates one real capability call against

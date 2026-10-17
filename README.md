@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries 4 of 4">
 </p>
 
-> **Status: v0.1.1, scaffolding - Deliveries 1-4 of 4 (schema/CLI/
+> **Status: v0.1.2, scaffolding - Deliveries 1-4 of 4 (schema/CLI/
 > fixtures, read-only catalog, SDK safety gate, certification records).**
 > `catalog`/`serve-catalog` are real and GET-only (no network write path
 > exists anywhere in this project); `gate` calls straight into
@@ -29,7 +29,7 @@
 > [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) for the exact command
 > surface that exists today.
 
-> **Honesty check - what actually runs today:** the manifest schema/validator (`schema.py`), the read-only catalog (`registry.py`, `catalog_server.py`), the SDK safety-gate integration (`sdk_gate.py`, calling `HYDRA-UMC-SDK`'s own real `evaluate_job()` against a real installed checkout, never a mock), the certification log (`certification.py`), and the CLI (`cli.py`) are real and covered by 139 passing tests (`pytest tests/`, with the optional `[sdk]` extra installed - 31 of them are skipped without it). `certify` records a human-attested evidence payload but explicitly does not independently verify it against real hardware - there is no physical machine behind any of the 10 fixtures, and no adapter here has ever been used to actually talk to a real device. `catalog`/`serve-catalog` are GET-only by construction (`catalog_server.py` has no `do_POST`/`do_PUT` at all). See the Status callout above and `CHANGELOG.md` for exactly what has shipped so far.
+> **Honesty check - what actually runs today:** the manifest schema/validator (`schema.py`), the read-only catalog (`registry.py`, `catalog_server.py`), the SDK safety-gate integration (`sdk_gate.py`, calling `HYDRA-UMC-SDK`'s own real `evaluate_job()` against a real installed checkout, never a mock), the certification log (`certification.py`), and the CLI (`cli.py`) are real and covered by 143 passing tests (`pytest tests/`, with the optional `[sdk]` extra installed - 31 of them are skipped without it). `certify` records a human-attested evidence payload but explicitly does not independently verify it against real hardware - there is no physical machine behind any of the 10 fixtures, and no adapter here has ever been used to actually talk to a real device. `catalog`/`serve-catalog` are GET-only by construction (`catalog_server.py` has no `do_POST`/`do_PUT` at all). See the Status callout above and `CHANGELOG.md` for exactly what has shipped so far.
 
 ---
 

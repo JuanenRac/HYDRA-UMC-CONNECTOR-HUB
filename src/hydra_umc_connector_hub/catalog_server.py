@@ -25,6 +25,8 @@ from .registry import build_catalog, catalog_snapshot_version, load_full_manifes
 def _make_handler(registry_dir: str) -> type[BaseHTTPRequestHandler]:
     class CatalogRequestHandler(BaseHTTPRequestHandler):
         server_version = "HydraUmcConnectorHubCatalog/0.1"
+        # A client that connects and then goes quiet must not hold a thread forever.
+        timeout = 15.0
 
         def _send_json(self, status: int, payload: Any, *, etag: str | None = None) -> None:
             body = json.dumps(payload).encode("utf-8")
@@ -37,6 +39,15 @@ def _make_handler(registry_dir: str) -> type[BaseHTTPRequestHandler]:
             self.wfile.write(body)
 
         def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler's own naming
+            try:
+                self._route()
+            except (NotADirectoryError, FileNotFoundError, PermissionError) as exc:
+                # The registry directory vanished (or became unreadable) after
+                # the server started: answer that, instead of dropping the
+                # connection with a traceback and no response at all.
+                self._send_json(503, {"error": f"the registry directory is not readable: {exc}"})
+
+        def _route(self) -> None:
             if self.path == "/health":
                 entries, invalid_files = build_catalog(registry_dir)
                 self._send_json(200, {"status": "ok", "adapterCount": len(entries), "invalidFileCount": len(invalid_files)})

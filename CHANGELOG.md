@@ -9,6 +9,12 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
+## [0.1.2] - Broken registry files and idle connections
+
+- A manifest file in the registry that is not valid UTF-8 no longer takes the whole catalog down: it is listed under `invalidFiles` (the `UnicodeDecodeError` was not caught, so one such file made every scan, `/health` and `/catalog` fail), and a file over 1 MB is listed as invalid without being read.
+- The catalog server drops a connection that stays idle for 15 seconds instead of holding a thread forever, and answers `503` with a JSON error (instead of dropping the connection with a traceback) when the registry directory disappears under it.
+- Added 4 tests for all of the above (143 in total, 31 of them skipped when the optional SDK is not installed); corrected the README test count and sample version line in every language and documented the behaviour.
+
 ## [0.1.1] - SDK-gate tests run in CI, Portuguese README
 
 - **CI now runs the SDK-gate tests:** the workflow installed only `.[dev]`, so the 31 tests of the safety-gate integration (`tests/test_sdk_gate.py`, which call the real `HYDRA-UMC-SDK` `evaluate_job()`) were skipped on every CI run and the gate was never exercised there. It now installs `.[dev,sdk]` and prints the skip reasons; with the SDK present the whole suite passes (139 tests, 108 without the optional extra).

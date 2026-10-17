@@ -465,6 +465,9 @@ def validate_against_json_schema_subset(schema: Any, instance: Any, *, path: str
     return errors
 
 
+MAX_MANIFEST_BYTES = 1_000_000
+
+
 def load_and_validate(path: str) -> tuple[dict[str, Any] | None, list[str]]:
     """Reads and validates one manifest file. Returns (data, errors) -
     `data` is None only when the file itself could not be read/parsed as
@@ -472,10 +475,19 @@ def load_and_validate(path: str) -> tuple[dict[str, Any] | None, list[str]]:
     manifest, which returns the parsed `data` alongside its own real
     errors so a caller can still report which adapterId failed)."""
     import json
+    import os
 
     try:
+        # A manifest is a few KB; a file past this cap in the registry is not
+        # one, and the catalog server re-reads every file on each request.
+        if os.path.getsize(path) > MAX_MANIFEST_BYTES:
+            return None, [f"{path} is larger than {MAX_MANIFEST_BYTES} bytes - not a manifest"]
         with open(path, "r", encoding="utf-8") as handle:
             text = handle.read()
+    except UnicodeDecodeError as exc:
+        # One file that is not UTF-8 must be listed as invalid, not take the
+        # whole catalog (and the server's /health) down with it.
+        return None, [f"{path} is not valid UTF-8: {exc}"]
     except OSError as exc:
         return None, [f"could not read {path}: {exc}"]
     try:
