@@ -4,7 +4,7 @@
 
 # 🔌 HYDRA-UMC-CONNECTOR-HUB
 
-<p align="center"><a href="README.md">🇺🇸 English</a> | <a href="README_spa.md">🇪🇸 Español</a> | <a href="README_fra.md">🇫🇷 Français</a> | <a href="README_ita.md">🇮🇹 Italiano</a> | 🇩🇪 <b>Deutsch</b> | <a href="README_zho.md">🇨🇳 简体中文</a> | <a href="README_jpn.md">🇯🇵 日本語</a></p>
+<p align="center"><a href="README.md">🇺🇸 English</a> | <a href="README_spa.md">🇪🇸 Español</a> | <a href="README_fra.md">🇫🇷 Français</a> | <a href="README_ita.md">🇮🇹 Italiano</a> | 🇩🇪 <b>Deutsch</b> | <a href="README_zho.md">🇨🇳 简体中文</a> | <a href="README_jpn.md">🇯🇵 日本語</a> | <a href="README_por.md">🇵🇹 Português</a></p>
 
 ### 🧩 Ein deklaratives Register und Validator für Adapter externer Maschinen
 
@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 von 4 Lieferungen">
 </p>
 
-> **Status: v0.1.0, Scaffolding - Lieferungen 1-4 von 4 (Schema/CLI/
+> **Status: v0.1.1, Scaffolding - Lieferungen 1-4 von 4 (Schema/CLI/
 > Fixtures, schreibgeschützter Katalog, SDK-Sicherheitsschranke,
 > Zertifizierungsdatensätze).** `catalog`/`serve-catalog` sind echt und
 > nur GET (es gibt nirgendwo im Projekt einen Schreib-Netzwerkpfad);
@@ -29,7 +29,7 @@
 > bleibt. Siehe [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) für die
 > genaue Befehlsoberfläche, die es heute gibt.
 
-> **Ehrlichkeitscheck - was heute wirklich läuft:** das Manifest-Schema/der Validator (`schema.py`), der schreibgeschützte Katalog (`registry.py`, `catalog_server.py`), die SDK-Sicherheitsgate-Integration (`sdk_gate.py`, die das echte `evaluate_job()` von `HYDRA-UMC-SDK` gegen einen echt installierten Checkout aufruft, nie eine Simulation), das Zertifizierungsprotokoll (`certification.py`) und die CLI (`cli.py`) sind real und durch 113 bestehende Tests abgedeckt (`pytest tests/`). `certify` zeichnet eine von einem Menschen bezeugte Evidenz auf, verifiziert sie aber ausdrücklich nicht unabhängig gegen echte Hardware - hinter keiner der 10 Fixtures steht eine physische Maschine, und kein Adapter hier wurde je genutzt, um tatsächlich mit einem echten Gerät zu sprechen. `catalog`/`serve-catalog` sind konstruktionsbedingt nur GET (`catalog_server.py` hat überhaupt kein `do_POST`/`do_PUT`). Siehe den Status-Kasten oben und `CHANGELOG.md` für das, was bisher genau ausgeliefert wurde.
+> **Ehrlichkeitscheck - was heute wirklich läuft:** das Manifest-Schema/der Validator (`schema.py`), der schreibgeschützte Katalog (`registry.py`, `catalog_server.py`), die SDK-Sicherheitsgate-Integration (`sdk_gate.py`, die das echte `evaluate_job()` von `HYDRA-UMC-SDK` gegen einen echt installierten Checkout aufruft, nie eine Simulation), das Zertifizierungsprotokoll (`certification.py`) und die CLI (`cli.py`) sind real und durch 139 bestehende Tests abgedeckt (`pytest tests/`, mit dem optionalen Extra `[sdk]` installiert - 31 davon werden ohne es übersprungen). `certify` zeichnet eine von einem Menschen bezeugte Evidenz auf, verifiziert sie aber ausdrücklich nicht unabhängig gegen echte Hardware - hinter keiner der 10 Fixtures steht eine physische Maschine, und kein Adapter hier wurde je genutzt, um tatsächlich mit einem echten Gerät zu sprechen. `catalog`/`serve-catalog` sind konstruktionsbedingt nur GET (`catalog_server.py` hat überhaupt kein `do_POST`/`do_PUT`). Siehe den Status-Kasten oben und `CHANGELOG.md` für das, was bisher genau ausgeliefert wurde.
 
 ---
 

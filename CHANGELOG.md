@@ -9,6 +9,11 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
+## [0.1.1] - SDK-gate tests run in CI, Portuguese README
+
+- **CI now runs the SDK-gate tests:** the workflow installed only `.[dev]`, so the 31 tests of the safety-gate integration (`tests/test_sdk_gate.py`, which call the real `HYDRA-UMC-SDK` `evaluate_job()`) were skipped on every CI run and the gate was never exercised there. It now installs `.[dev,sdk]` and prints the skip reasons; with the SDK present the whole suite passes (139 tests, 108 without the optional extra).
+- **Docs:** the test count in the README was out of date (113) and now states 139 with the `[sdk]` extra and how many skip without it, and a README in Portuguese (`README_por.md`) joins the other translations.
+
 ## [0.1.0] - Published JSON Schema for the adapter manifest
 
 - **`schemas/adapter-manifest.v1.schema.json`:** the adapter manifest contract as a JSON

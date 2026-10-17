@@ -40,8 +40,9 @@ jobs:
           PY
       - name: Validate Updater manifest and discovery tests
         run: |
-          python -m pip install ".[dev]"
-          PYTHONPATH=src python -m pytest tests -q
+          # the [sdk] extra is installed too: without it the 31 SDK-gate tests are skipped
+          python -m pip install ".[dev,sdk]"
+          PYTHONPATH=src python -m pytest tests -q -rs
       - name: Validate v1 SDK contract fixtures
         if: ${{ hashFiles('clients/python/tests/test_validation.py') != '' }}
         env:
