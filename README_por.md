@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries 4 of 4">
 </p>
 
-> **Estado: v0.1.3, andaimes (scaffolding) - Entregas 1-4 de 4 (esquema/CLI/
+> **Estado: v0.1.3, funcional - Entregas 1-4 de 4 (esquema/CLI/
 > dados de teste, catálogo só de leitura, porta de segurança do SDK, registos de certificação).**
 > `catalog`/`serve-catalog` são reais e só de GET (não existe nenhum caminho de
 > escrita pela rede em todo este projeto); `gate` chama diretamente o
