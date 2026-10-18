@@ -54,7 +54,8 @@ class CatalogEntry:
             "sdkCompatibility": self.sdk_compatibility,
             "idempotency": self.idempotency,
             "capabilities": [dict(capability) for capability in self.capabilities],
-            "sourcePath": self.source_path,
+            # the file name only: the absolute path of the registry on the server is nobody's business
+            "sourcePath": Path(self.source_path).name,
         }
 
 
@@ -95,7 +96,11 @@ def build_catalog(registry_dir: str) -> tuple[list[CatalogEntry], dict[str, list
     seen_adapter_ids: dict[str, str] = {}
 
     for path in sorted(directory.glob("*.json")):
-        data, errors = load_and_validate(str(path))
+        try:
+            data, errors = load_and_validate(str(path))
+        except Exception as exc:  # noqa: BLE001 - one broken file must never take the whole catalog down
+            invalid_files[path.name] = [f"unexpected {type(exc).__name__} while reading this file"]
+            continue
         if data is None:
             invalid_files[path.name] = errors
             continue

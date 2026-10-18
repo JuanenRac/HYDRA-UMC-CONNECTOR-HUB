@@ -9,6 +9,17 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
+## [0.1.3] - A gate that says what it is worth, robust against hostile files, four-component SDK versions
+
+- **The capability gate is documented as advisory, and can use an observation.** Every fact it evaluates (permissions, human confirmation, safety gates, cell mode, cell and machine state) is attested by the caller, so a decision is only as good as the caller. The README example that showed a write capability being allowed with no attestation at all is replaced by one that is true, `docs/CAPABILITY_GATE.md` says what a decision is worth, and a caller that can read the machine passes `observed_machine_state` (`--observed-machine-state`), which the SDK gate uses instead of the claim.
+- A capability call dated more than 5 seconds in the future is denied: its negative age passed every freshness check.
+- **SDK versions of four components** (`0.8.0.0`) are understood in `sdkCompatibility` and in the installed version; before this a write or abort capability would have been denied for every adapter once the SDK moved to them. The optional SDK is installed from its `v0.3.2` tag instead of from `main`.
+- **One bad file no longer breaks the catalog:** a document nested thousands of levels deep raised `RecursionError` inside the scan and made the catalog server drop the connection of `/health`, `/catalog` and `/catalog/<id>`; it is listed under `invalidFiles` now, and any other unexpected failure on one file is reported for that file only. A certification record that is not an object, or has no valid `certifiedAt`, is skipped instead of making `certifications` crash.
+- The catalog publishes the manifest's file name as `sourcePath` instead of an absolute path on the server; a query string or a trailing slash no longer makes `/catalog` a `404`; `If-None-Match` accepts a list of tags and weak tags; `serve-catalog --ecosystem-root` lists only the adapters whose `ownerProject` is confirmed (the others appear under `unverifiedOwners`), as `catalog --ecosystem-root` already did.
+- `authenticationRef` is stricter: after `env:` only the name of an environment variable (upper case, digits, `_`) is accepted, so a literal secret pasted after the prefix is refused, and the other prefixes accept only identifier or store-path characters. JSON Schema `integer` accepts `1.0`. The published schema carries the same patterns.
+- **The `industrial-opcua` fixture describes the OPC-UA server** (anonymous read of the address space, health check on the `ServerStatus` node by NodeId) instead of an OPC-UA client that project does not implement.
+- The CLI reports an unreadable evidence file or an unwritable certification directory as an `ERROR` instead of a traceback; unused imports were removed; the CI step that runs the tests has its own name. 165 tests (34 are skipped when the optional SDK is not installed).
+
 ## [0.1.2] - Broken registry files and idle connections
 
 - A manifest file in the registry that is not valid UTF-8 no longer takes the whole catalog down: it is listed under `invalidFiles` (the `UnicodeDecodeError` was not caught, so one such file made every scan, `/health` and `/catalog` fail), and a file over 1 MB is listed as invalid without being read.

@@ -204,8 +204,12 @@ def load_certification_records(directory: str, adapter_id: str | None = None) ->
     for path in sorted(target_dir.glob("*.json")):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                continue  # a list or a number is not a record
             record = CertificationRecord.from_dict(data)
-        except (OSError, ValueError, KeyError):
+        except (OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError):
+            continue
+        if not isinstance(record.certified_at, str):
             continue
         if adapter_id is not None and record.adapter_id != adapter_id:
             continue

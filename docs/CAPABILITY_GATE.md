@@ -8,6 +8,26 @@ second, competing implementation of that gate that could silently drift
 from the one every physical-motion bridge (CNC/LASER/OPENPNP/PRINTER3D/
 ROS2) already depends on.
 
+## What a decision is worth: advisory
+
+Everything the gate evaluates is **attested by the caller**: the permissions
+held, the human confirmation, the safety gates satisfied, the cell mode, the
+cell state and the machine state all travel in the request, and nothing here
+checks them against an independent source (HYDRA-UMC-SERVER, the safety zones,
+an emergency stop). Used as an authorisation, anybody could authorise
+themselves. It is useful as a check that a caller that does hold those facts
+respects the policy the manifest declares; until a caller wires real providers
+in (permissions of an authenticated identity, safety gates read from the safety
+layer, a confirmation token from a real confirmation flow), treat a decision as
+advisory.
+
+The one fact a caller can usually observe is the machine state: pass
+`observed_machine_state` (`--observed-machine-state` on the CLI) and the SDK
+gate uses it instead of the `machine_state` the requester claims.
+
+A request dated more than 5 seconds in the future is denied (its age would be
+negative and pass every freshness check); a little clock skew is allowed.
+
 ## The real decision path
 
 1. **The manifest is re-validated first.** `evaluate_capability_call()`

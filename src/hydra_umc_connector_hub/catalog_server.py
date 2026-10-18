@@ -18,13 +18,27 @@ from __future__ import annotations
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
+from urllib.parse import urlsplit
 
-from .registry import build_catalog, catalog_snapshot_version, load_full_manifest
+from .registry import build_catalog, catalog_snapshot_version, load_full_manifest, verify_catalog_owners
 
 
-def _make_handler(registry_dir: str) -> type[BaseHTTPRequestHandler]:
+def _etag_matches(header: str, version: str) -> bool:
+    """True when an `If-None-Match` header (a list of entity tags, each possibly weak, or `*`) names this version."""
+    for candidate in header.split(","):
+        candidate = candidate.strip()
+        if candidate == "*":
+            return True
+        if candidate.startswith("W/"):
+            candidate = candidate[2:]
+        if candidate.strip('"') == version:
+            return True
+    return False
+
+
+def _make_handler(registry_dir: str, ecosystem_root: str | None = None) -> type[BaseHTTPRequestHandler]:
     class CatalogRequestHandler(BaseHTTPRequestHandler):
-        server_version = "HydraUmcConnectorHubCatalog/0.1"
+        server_version = "HydraUmcConnectorHubCatalog"
         # A client that connects and then goes quiet must not hold a thread forever.
         timeout = 15.0
 
@@ -47,12 +61,25 @@ def _make_handler(registry_dir: str) -> type[BaseHTTPRequestHandler]:
                 # connection with a traceback and no response at all.
                 self._send_json(503, {"error": f"the registry directory is not readable: {exc}"})
 
+        def _scan(self):
+            """The catalog scan, with the entries whose owner project cannot be confirmed moved out when an ecosystem root was given."""
+            entries, invalid_files = build_catalog(registry_dir)
+            unverified: dict[str, str] = {}
+            if ecosystem_root:
+                unverified = verify_catalog_owners(entries, ecosystem_root)
+                entries = [entry for entry in entries if entry.adapter_id not in unverified]
+            return entries, invalid_files, unverified
+
         def _route(self) -> None:
-            if self.path == "/health":
-                entries, invalid_files = build_catalog(registry_dir)
+            # the query string and a trailing slash do not make a different route
+            route = urlsplit(self.path).path
+            if len(route) > 1 and route.endswith("/"):
+                route = route.rstrip("/")
+            if route == "/health":
+                entries, invalid_files, _unverified = self._scan()
                 self._send_json(200, {"status": "ok", "adapterCount": len(entries), "invalidFileCount": len(invalid_files)})
                 return
-            if self.path == "/catalog":
+            if route == "/catalog":
                 # a real, deterministic snapshot version
                 # (never random, never a timestamp) computed fresh from
                 # THIS scan - a real ETag, not a stale cached one. A
@@ -60,10 +87,9 @@ def _make_handler(registry_dir: str) -> type[BaseHTTPRequestHandler]:
                 # given gets a real, honest 304 the instant the
                 # underlying registry genuinely has not changed, never a
                 # partial/torn body.
-                entries, invalid_files = build_catalog(registry_dir)
+                entries, invalid_files, unverified = self._scan()
                 version = catalog_snapshot_version(entries, invalid_files)
-                if_none_match = self.headers.get("If-None-Match", "").strip('"')
-                if if_none_match == version:
+                if _etag_matches(self.headers.get("If-None-Match", ""), version):
                     self.send_response(304)
                     self.send_header("ETag", f'"{version}"')
                     self.end_headers()
@@ -73,10 +99,12 @@ def _make_handler(registry_dir: str) -> type[BaseHTTPRequestHandler]:
                     "invalidFiles": invalid_files,
                     "snapshotVersion": version,
                 }
+                if ecosystem_root:
+                    payload["unverifiedOwners"] = unverified
                 self._send_json(200, payload, etag=version)
                 return
-            if self.path.startswith("/catalog/"):
-                adapter_id = self.path[len("/catalog/"):]
+            if route.startswith("/catalog/"):
+                adapter_id = route[len("/catalog/"):]
                 manifest = load_full_manifest(registry_dir, adapter_id)
                 if manifest is None:
                     self._send_json(404, {"error": f"no registered adapter with adapterId {adapter_id!r}"})
@@ -97,7 +125,7 @@ def _make_handler(registry_dir: str) -> type[BaseHTTPRequestHandler]:
     return CatalogRequestHandler
 
 
-def serve_catalog(registry_dir: str, host: str = "127.0.0.1", port: int = 0) -> ThreadingHTTPServer:
+def serve_catalog(registry_dir: str, host: str = "127.0.0.1", port: int = 0, ecosystem_root: str | None = None) -> ThreadingHTTPServer:
     """Builds and returns a real, already-bound `ThreadingHTTPServer` -
     the caller decides whether to call `.serve_forever()` (the real CLI
     path) or drive it manually with `.handle_request()` (what this
@@ -105,6 +133,10 @@ def serve_catalog(registry_dir: str, host: str = "127.0.0.1", port: int = 0) -> 
     mocked socket). `port=0` (the default) lets the OS assign a free
     real port, read back afterwards via `server.server_port` - the same
     pattern this project's own test suite already needs to avoid ever
-    colliding with a port some other real process on this machine owns."""
-    handler_cls = _make_handler(registry_dir)
+    colliding with a port some other real process on this machine owns.
+
+    `ecosystem_root`, when given, makes the catalog list only the adapters whose
+    `ownerProject` is confirmed by that project's own manifest under that
+    directory; the others are reported under `unverifiedOwners`."""
+    handler_cls = _make_handler(registry_dir, ecosystem_root)
     return ThreadingHTTPServer((host, port), handler_cls)

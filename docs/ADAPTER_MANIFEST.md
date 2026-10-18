@@ -13,14 +13,14 @@ enforced.
 | `protocol` | string | The real wire protocol, e.g. `opc-ua`, `mqtt`, `mavlink`. |
 | `targetKinds` | array of string | What kind(s) of machine this adapter targets, e.g. `["cnc-controller"]`. Non-empty. |
 | `endpointSchema` | object | A structural description of the connection config this adapter needs (host, port, credentials reference, ...). Non-empty. |
-| `authenticationRef` | string | A REFERENCE to where a real credential lives - must start with `env:`, `secret-store:`, `vault:`, or `none:`. Never a literal secret - see [Why `authenticationRef` is a reference](#why-authenticationref-is-a-reference) below. |
+| `authenticationRef` | string | A REFERENCE to where a real credential lives - must start with `env:`, `secret-store:`, `vault:`, or `none:`; after `env:` comes the NAME of an environment variable (upper case letters, digits and `_`), and after the other prefixes an identifier or store path (letters, digits and `_ . / @ -`). Never a literal secret - see [Why `authenticationRef` is a reference](#why-authenticationref-is-a-reference) below. |
 | `capabilities` | array of object | See [Capabilities](#capabilities) below. Non-empty. |
 | `requiredSafetyGates` | array of string | Ecosystem-wide safety gates this adapter's own capabilities depend on (e.g. `cell.estop.clear`). An empty list is valid - not every adapter needs one. |
 | `healthCheck` | object | A structural description of how to check this adapter is reachable, e.g. `{"type": "mqtt-ping", "topic": "..."}`. Non-empty. |
 | `timeoutMs` | integer > 0 | The adapter's own default timeout. |
 | `idempotency` | string | One of `none`, `idempotent`, `at-least-once`, `exactly-once` - a closed, real vocabulary, not an open string. |
 | `evidenceSchema` | object | A structural description of what a capability call returns as evidence. Non-empty. |
-| `sdkCompatibility` | string | A version-range string against this ecosystem's own SDK contract, e.g. `">=0.1.0"`. |
+| `sdkCompatibility` | string | A minimum version of this ecosystem's own SDK contract, `">=MAJOR.MINOR.PATCH"` (optionally with a fourth `.BUILD` component, as the ecosystem's versions have from 0.8.0 on), e.g. `">=0.1.0"`. |
 | `ownerProject` | string | The real HYDRA-UMC/URTC repository that implements this adapter, e.g. `HYDRA-UMC-OPCUA-SERVER`. Never an invented or aspirational project name. |
 
 ## Capabilities

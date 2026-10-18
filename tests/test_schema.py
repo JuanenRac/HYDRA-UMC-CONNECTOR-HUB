@@ -6,7 +6,6 @@
 """Real tests: every one of the ten real Delivery-1 fixtures must validate
 cleanly, and every real invalid fixture must fail for the SPECIFIC reason
 it was constructed to demonstrate - never just "some error occurred"."""
-import json
 import unittest
 from pathlib import Path
 

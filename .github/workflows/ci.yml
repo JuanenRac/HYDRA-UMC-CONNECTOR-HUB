@@ -38,7 +38,7 @@ jobs:
               py_compile.compile(str(path), doraise=True)
           print(f"PYTHON_SYNTAX=PASS files={len(files)}")
           PY
-      - name: Validate Updater manifest and discovery tests
+      - name: Run the test suite (with the SDK extra, so the safety-gate tests run)
         run: |
           # the [sdk] extra is installed too: without it the 31 SDK-gate tests are skipped
           python -m pip install ".[dev,sdk]"

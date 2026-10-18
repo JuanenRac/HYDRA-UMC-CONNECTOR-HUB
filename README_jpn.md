@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 件中 4 件の納品完了">
 </p>
 
-> **ステータス: v0.1.2、scaffolding - 4 件の納品のうち全 4 件(スキー
+> **ステータス: v0.1.3、scaffolding - 4 件の納品のうち全 4 件(スキー
 > マ/CLI/フィクスチャ、読み取り専用カタログ、SDK 安全ゲート、認証記
 > 録)完了。** `catalog`/`serve-catalog` は本物で GET のみです(このプ
 > ロジェクトのどこにもネットワーク書き込み経路は存在しません)。
@@ -29,7 +29,7 @@
 > 今日実在する正確なコマンド面については
 > [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) を参照してください。
 
-> **誠実性チェック - 今日実際に動くもの:** マニフェストのスキーマ/バリデータ（`schema.py`）、読み取り専用カタログ（`registry.py`、`catalog_server.py`）、SDK 安全ゲート統合（`sdk_gate.py`。実際にインストールされたチェックアウトに対して `HYDRA-UMC-SDK` 自身の本物の `evaluate_job()` を呼び出しており、モックでは決してない）、認証ログ（`certification.py`）、そして CLI（`cli.py`）は本物であり、143件の通過するテストで検証されている（`pytest tests/`。オプションの `[sdk]` エクストラをインストールした場合で、なければそのうち31件はスキップされる）。`certify` は人間が証言したエビデンスを記録するが、それを実際のハードウェアに対して独立に検証することは明示的に行わない - 10個のフィクスチャのどれの背後にも物理的な機械は存在せず、ここにあるどのアダプタも実際のデバイスと本当に通信するために使われたことは一度もない。`catalog`/`serve-catalog` は構造上 GET のみである（`catalog_server.py` には `do_POST`/`do_PUT` が一切ない）。詳細は上記のステータス欄と、これまでに実際に出荷された内容を記す `CHANGELOG.md` を参照。
+> **誠実性チェック - 今日実際に動くもの:** マニフェストのスキーマ/バリデータ（`schema.py`）、読み取り専用カタログ（`registry.py`、`catalog_server.py`）、SDK 安全ゲート統合（`sdk_gate.py`。実際にインストールされたチェックアウトに対して `HYDRA-UMC-SDK` 自身の本物の `evaluate_job()` を呼び出しており、モックでは決してない）、認証ログ（`certification.py`）、そして CLI（`cli.py`）は本物であり、165件の通過するテストで検証されている（`pytest tests/`。オプションの `[sdk]` エクストラをインストールした場合で、なければそのうち34件はスキップされる）。`certify` は人間が証言したエビデンスを記録するが、それを実際のハードウェアに対して独立に検証することは明示的に行わない - 10個のフィクスチャのどれの背後にも物理的な機械は存在せず、ここにあるどのアダプタも実際のデバイスと本当に通信するために使われたことは一度もない。`catalog`/`serve-catalog` は構造上 GET のみである（`catalog_server.py` には `do_POST`/`do_PUT` が一切ない）。詳細は上記のステータス欄と、これまでに実際に出荷された内容を記す `CHANGELOG.md` を参照。
 
 ---
 
@@ -80,9 +80,9 @@ VALID fixtures/industrial-opcua.json adapterId='industrial-opcua' ownerProject='
 $ hydra-umc-connector-hub catalog --registry-dir fixtures | head -c 200
 {"adapters": [{"adapterId": "cnc-grbl", "protocol": "grbl-serial", ...
 
-$ hydra-umc-connector-hub gate fixtures/cnc-grbl.json --capability sendControlByte \
+$ hydra-umc-connector-hub gate fixtures/cnc-grbl.json --capability grblStatus \
     --job-id j1 --idempotency-key i1 --source studio --cell-state READY --machine-state IDLE
-{"allowed": true, "reason": "cell and external machine are ready", "evidenceErrors": []}
+{"allowed": true, "reason": "read capabilities are not subject to the motion safety gate", "evidenceErrors": []}
 
 $ hydra-umc-connector-hub certify fixtures/cnc-grbl.json --machine-model "Genmitsu 3018-PROVer" \
     --certified-by "Juan Enrique" --evidence-file real-status.json --out-dir certifications/

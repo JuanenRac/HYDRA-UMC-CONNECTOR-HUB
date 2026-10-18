@@ -11,7 +11,7 @@
     },
     "required": ["endpointUrl"]
   },
-  "authenticationRef": "env:OPCUA_CLIENT_CERT_PATH",
+  "authenticationRef": "none:anonymous-read",
   "capabilities": [
     {
       "name": "readNodeValue",
@@ -20,7 +20,7 @@
     }
   ],
   "requiredSafetyGates": [],
-  "healthCheck": { "type": "opcua-read", "node": "Server_ServerStatus_State" },
+  "healthCheck": { "type": "opcua-read", "node": "ns=0;i=2259" },
   "timeoutMs": 3000,
   "idempotency": "idempotent",
   "evidenceSchema": {

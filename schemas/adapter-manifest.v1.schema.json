@@ -30,13 +30,13 @@
     "protocol": { "type": "string", "minLength": 1 },
     "authenticationRef": {
       "type": "string",
-      "pattern": "^(env:|secret-store:|vault:|none:).+",
+      "pattern": "^(env:[A-Z_][A-Z0-9_]*|(secret-store|vault|none):[A-Za-z0-9_./@-]+)$",
       "description": "A reference to where a credential lives, never the credential itself."
     },
     "sdkCompatibility": {
       "type": "string",
-      "minLength": 1,
-      "description": "A minimum-version constraint, '>=MAJOR.MINOR.PATCH', checked against the installed SDK before any capability call."
+      "pattern": "^>=\\d+\\.\\d+\\.\\d+(\\.\\d+)?$",
+      "description": "A minimum-version constraint, '>=MAJOR.MINOR.PATCH' (optionally with a fourth BUILD component), checked against the installed SDK before any capability call."
     },
     "ownerProject": { "type": "string", "pattern": "^(HYDRA-UMC|URTC)(-[A-Z0-9-]+)?$" },
     "idempotency": { "enum": ["none", "idempotent", "at-least-once", "exactly-once"] },

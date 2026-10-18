@@ -16,7 +16,7 @@ from typing import Any
 
 from . import __version__
 from .certification import CertificationError, certify_adapter, load_certification_records, save_certification_record
-from .registry import build_catalog, catalog_snapshot_version, load_full_manifest, verify_catalog_owners
+from .registry import build_catalog, catalog_snapshot_version, verify_catalog_owners
 from .schema import load_and_validate
 from .sdk_gate import CapabilityCallRequest, CapabilityGateError, SdkUnavailableError, evaluate_capability_call
 
@@ -70,7 +70,7 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
 def _cmd_serve_catalog(args: argparse.Namespace) -> int:
     from .catalog_server import serve_catalog
 
-    server = serve_catalog(args.registry_dir, host=args.host, port=args.port)
+    server = serve_catalog(args.registry_dir, host=args.host, port=args.port, ecosystem_root=args.ecosystem_root)
     print(f"serving read-only catalog for {args.registry_dir!r} on http://{server.server_address[0]}:{server.server_port} (Ctrl+C to stop)")
     try:
         server.serve_forever()
@@ -81,9 +81,16 @@ def _cmd_serve_catalog(args: argparse.Namespace) -> int:
     return 0
 
 
+class _EvidenceFileError(Exception):
+    """The evidence file could not be read as JSON."""
+
+
 def _load_json_file(path: str) -> Any:
-    with open(path, "r", encoding="utf-8") as handle:
-        return json.load(handle)
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except (OSError, ValueError, RecursionError) as exc:
+        raise _EvidenceFileError(f"could not read {path} as JSON: {exc}") from exc
 
 
 def _cmd_gate(args: argparse.Namespace) -> int:
@@ -100,7 +107,11 @@ def _cmd_gate(args: argparse.Namespace) -> int:
         key, _, value = raw.partition("=")
         parameters[key] = value
 
-    evidence = _load_json_file(args.evidence_file) if args.evidence_file else None
+    try:
+        evidence = _load_json_file(args.evidence_file) if args.evidence_file else None
+    except _EvidenceFileError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
 
     try:
         request = CapabilityCallRequest(
@@ -121,6 +132,7 @@ def _cmd_gate(args: argparse.Namespace) -> int:
             cell_mode=args.cell_mode,
             human_confirmed=args.human_confirmed,
             satisfied_safety_gates=frozenset(args.safety_gate or []),
+            observed_machine_state=args.observed_machine_state,
         )
         result = evaluate_capability_call(manifest, request)
     except (CapabilityGateError, SdkUnavailableError) as exc:
@@ -136,7 +148,11 @@ def _cmd_certify(args: argparse.Namespace) -> int:
     if manifest is None or errors:
         print(f"ERROR: {args.manifest_file} is not a valid adapter manifest: {errors}", file=sys.stderr)
         return 1
-    evidence = _load_json_file(args.evidence_file)
+    try:
+        evidence = _load_json_file(args.evidence_file)
+    except _EvidenceFileError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     try:
         record = certify_adapter(
             manifest,
@@ -148,7 +164,11 @@ def _cmd_certify(args: argparse.Namespace) -> int:
     except CertificationError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
-    path = save_certification_record(record, args.out_dir)
+    try:
+        path = save_certification_record(record, args.out_dir)
+    except (CertificationError, OSError) as exc:
+        print(f"ERROR: could not save the certification record: {exc}", file=sys.stderr)
+        return 1
     print(f"CERTIFIED adapterId={record.adapter_id!r} certificationId={record.certification_id!r} -> {path}")
     return 0
 
@@ -185,6 +205,11 @@ def build_parser() -> argparse.ArgumentParser:
     serve_catalog_cmd.add_argument("--registry-dir", required=True, help="Directory scanned (non-recursive) for *.json adapter manifests.")
     serve_catalog_cmd.add_argument("--host", default="127.0.0.1")
     serve_catalog_cmd.add_argument("--port", type=int, default=8801)
+    serve_catalog_cmd.add_argument(
+        "--ecosystem-root",
+        help="Optional: a directory of sibling HYDRA-UMC-*/URTC-* checkouts. When given, only adapters whose ownerProject is "
+        "confirmed by that project's own hydra-umc.project.json are listed; the others appear under 'unverifiedOwners'.",
+    )
     serve_catalog_cmd.set_defaults(func=_cmd_serve_catalog)
 
     gate = subparsers.add_parser("gate", help="Evaluate one capability call against HYDRA-UMC-SDK's own real safety gate.")
@@ -195,6 +220,10 @@ def build_parser() -> argparse.ArgumentParser:
     gate.add_argument("--source", required=True)
     gate.add_argument("--cell-state", required=True, help="One of READY/INHIBITED/FAULT/SAFE_STOP.")
     gate.add_argument("--machine-state", required=True, help="One of OFFLINE/IDLE/RUNNING/HOLDING/FAULT/SAFE_STOP.")
+    gate.add_argument(
+        "--observed-machine-state",
+        help="The machine state as the CALLER observed it (same values as --machine-state). When given, the gate uses it instead of the --machine-state claim.",
+    )
     gate.add_argument("--param", action="append", help="key=value, repeatable.")
     gate.add_argument("--evidence-file", help="Optional path to a JSON evidence payload checked against evidenceSchema.")
     gate.add_argument(

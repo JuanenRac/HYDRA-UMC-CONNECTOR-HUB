@@ -69,14 +69,23 @@ IDEMPOTENCY_VALUES = ("none", "idempotent", "at-least-once", "exactly-once")
 # the wrong tool here too: false positives and false negatives are both
 # real risks a fixed, explicit list avoids).
 AUTHENTICATION_REF_PREFIXES = ("env:", "secret-store:", "vault:", "none:")
+_ENV_NAME_RE = re.compile(r"[A-Z_][A-Z0-9_]*")
+_REF_PATH_RE = re.compile(r"[A-Za-z0-9_./@-]+")
 
-_VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
+# MAJOR.MINOR.PATCH, or MAJOR.MINOR.PATCH.BUILD from 0.8.0 on (the ecosystem's four-component versions).
+_VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?$")
 # Every one of this repo's own 12 real fixtures declares `sdkCompatibility`
 # as exactly ">=X.Y.Z" - the one real operator this ecosystem's own
 # manifests actually use, so it is the one real operator this parser
 # supports (no `==`/`<`/`~=` - adding support for an operator no real
 # fixture uses would be speculative, not real work).
-_SDK_COMPATIBILITY_RE = re.compile(r"^>=(\d+)\.(\d+)\.(\d+)$")
+_SDK_COMPATIBILITY_RE = re.compile(r"^>=(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?$")
+
+
+def _version_tuple(groups: tuple[str | None, ...]) -> tuple[int, int, int, int]:
+    """A version as four integers, so 0.8.0 and 0.8.0.0 are the same version and 0.8.0.1 is newer."""
+    parts = [int(part) if part is not None else 0 for part in groups]
+    return (parts[0], parts[1], parts[2], parts[3])
 
 
 def check_sdk_compatibility(constraint: str, installed_version: str) -> str | None:
@@ -100,14 +109,14 @@ def check_sdk_compatibility(constraint: str, installed_version: str) -> str | No
     if match is None:
         return (
             f"'sdkCompatibility' {constraint!r} is not a real, supported constraint - "
-            "only '>=MAJOR.MINOR.PATCH' is understood"
+            "only '>=MAJOR.MINOR.PATCH' (or with a fourth BUILD component) is understood"
         )
-    required = tuple(int(part) for part in match.groups())
+    required = _version_tuple(match.groups())
 
     installed_match = _VERSION_RE.match(installed_version)
     if installed_match is None:
-        return f"the installed hydra-umc-sdk version {installed_version!r} is not a real 'MAJOR.MINOR.PATCH' string"
-    installed = tuple(int(part) for part in installed_match.groups())
+        return f"the installed hydra-umc-sdk version {installed_version!r} is not a real 'MAJOR.MINOR.PATCH[.BUILD]' string"
+    installed = _version_tuple(installed_match.groups())
 
     if installed < required:
         return (
@@ -250,6 +259,11 @@ def validate_adapter_manifest(data: Any) -> list[str]:
             # let a future catalog silently treat "no reference at all" as
             # a valid one.
             errors.append(f"'authenticationRef' {auth_ref!r} has prefix {matched_prefix!r} but no real identifier after it")
+        elif matched_prefix == "env:" and not _ENV_NAME_RE.fullmatch(auth_ref[len(matched_prefix):]):
+            # The name of an environment variable, never a value: `env:ghp_xxx...` would put a literal secret in the manifest.
+            errors.append(f"'authenticationRef' {auth_ref!r} must name an environment variable (UPPER_CASE letters, digits and '_'), not hold a value")
+        elif not _REF_PATH_RE.fullmatch(auth_ref[len(matched_prefix):]):
+            errors.append(f"'authenticationRef' {auth_ref!r} has characters a secret-store path or identifier never has")
 
     target_kinds = data.get("targetKinds")
     if not isinstance(target_kinds, list) or not target_kinds or not all(isinstance(k, str) and k.strip() for k in target_kinds):
@@ -420,6 +434,8 @@ def validate_against_json_schema_subset(schema: Any, instance: Any, *, path: str
             errors.append(f"{path}: expected {expected_type}, got a boolean")
         elif expected_type == "boolean" and not isinstance(instance, bool):
             errors.append(f"{path}: expected boolean, got {type(instance).__name__}")
+        elif expected_type == "integer" and isinstance(instance, float) and instance.is_integer():
+            pass  # JSON Schema: 1.0 is an integer
         elif expected_type != "boolean" and not isinstance(instance, python_type):
             errors.append(f"{path}: expected {expected_type}, got {type(instance).__name__}")
             return errors  # further object/string checks below would be meaningless on a type mismatch
@@ -494,4 +510,10 @@ def load_and_validate(path: str) -> tuple[dict[str, Any] | None, list[str]]:
         data = json.loads(text)
     except json.JSONDecodeError as exc:
         return None, [f"{path} is not valid JSON: {exc}"]
-    return data, validate_adapter_manifest(data)
+    except RecursionError:
+        # a document nested thousands of levels deep (well under the size cap) is not a manifest
+        return None, [f"{path} is nested too deeply to be a manifest"]
+    try:
+        return data, validate_adapter_manifest(data)
+    except RecursionError:
+        return None, [f"{path} is nested too deeply to be a manifest"]

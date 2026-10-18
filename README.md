@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries 4 of 4">
 </p>
 
-> **Status: v0.1.2, scaffolding - Deliveries 1-4 of 4 (schema/CLI/
+> **Status: v0.1.3, scaffolding - Deliveries 1-4 of 4 (schema/CLI/
 > fixtures, read-only catalog, SDK safety gate, certification records).**
 > `catalog`/`serve-catalog` are real and GET-only (no network write path
 > exists anywhere in this project); `gate` calls straight into
@@ -29,7 +29,7 @@
 > [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) for the exact command
 > surface that exists today.
 
-> **Honesty check - what actually runs today:** the manifest schema/validator (`schema.py`), the read-only catalog (`registry.py`, `catalog_server.py`), the SDK safety-gate integration (`sdk_gate.py`, calling `HYDRA-UMC-SDK`'s own real `evaluate_job()` against a real installed checkout, never a mock), the certification log (`certification.py`), and the CLI (`cli.py`) are real and covered by 143 passing tests (`pytest tests/`, with the optional `[sdk]` extra installed - 31 of them are skipped without it). `certify` records a human-attested evidence payload but explicitly does not independently verify it against real hardware - there is no physical machine behind any of the 10 fixtures, and no adapter here has ever been used to actually talk to a real device. `catalog`/`serve-catalog` are GET-only by construction (`catalog_server.py` has no `do_POST`/`do_PUT` at all). See the Status callout above and `CHANGELOG.md` for exactly what has shipped so far.
+> **Honesty check - what actually runs today:** the manifest schema/validator (`schema.py`), the read-only catalog (`registry.py`, `catalog_server.py`), the SDK safety-gate integration (`sdk_gate.py`, calling `HYDRA-UMC-SDK`'s own real `evaluate_job()` against a real installed checkout, never a mock), the certification log (`certification.py`), and the CLI (`cli.py`) are real and covered by 165 passing tests (`pytest tests/`, with the optional `[sdk]` extra installed - 34 of them are skipped without it). `certify` records a human-attested evidence payload but explicitly does not independently verify it against real hardware - there is no physical machine behind any of the 10 fixtures, and no adapter here has ever been used to actually talk to a real device. `catalog`/`serve-catalog` are GET-only by construction (`catalog_server.py` has no `do_POST`/`do_PUT` at all). See the Status callout above and `CHANGELOG.md` for exactly what has shipped so far.
 
 ---
 
@@ -78,9 +78,9 @@ VALID fixtures/industrial-opcua.json adapterId='industrial-opcua' ownerProject='
 $ hydra-umc-connector-hub catalog --registry-dir fixtures | head -c 200
 {"adapters": [{"adapterId": "cnc-grbl", "protocol": "grbl-serial", ...
 
-$ hydra-umc-connector-hub gate fixtures/cnc-grbl.json --capability sendControlByte \
+$ hydra-umc-connector-hub gate fixtures/cnc-grbl.json --capability grblStatus \
     --job-id j1 --idempotency-key i1 --source studio --cell-state READY --machine-state IDLE
-{"allowed": true, "reason": "cell and external machine are ready", "evidenceErrors": []}
+{"allowed": true, "reason": "read capabilities are not subject to the motion safety gate", "evidenceErrors": []}
 
 $ hydra-umc-connector-hub certify fixtures/cnc-grbl.json --machine-model "Genmitsu 3018-PROVer" \
     --certified-by "Juan Enrique" --evidence-file real-status.json --out-dir certifications/

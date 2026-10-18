@@ -8,7 +8,6 @@ directory, no mocking. These tests prove the one real, honest guarantee
 this module makes: a certification is refused unless its evidence
 actually matches the adapter's own declared evidenceSchema, and every
 accepted record survives a real save/load round trip byte-for-byte."""
-import json
 import tempfile
 import unittest
 from pathlib import Path

@@ -15,6 +15,17 @@ rule set that could silently drift from it.
 Honest scope, stated up front rather than hidden in a docstring nobody
 reads:
 
+- EVERYTHING this gate evaluates is attested by the caller: the permissions
+  held, the human confirmation, the safety gates satisfied, the cell mode,
+  the cell state and the machine state travel in the request, and nothing
+  here checks them against an independent source (HYDRA-UMC-SERVER, the
+  safety zones, an emergency stop). Used as an authorisation, anybody could
+  authorise themselves; used as a check that a caller that DOES hold those
+  facts is honest about the policy the manifest declares, it is useful.
+  Until a caller wires real providers in, treat a decision as ADVISORY. The
+  one fact a caller can often observe is the machine state: pass
+  `observed_machine_state` and the SDK gate uses it instead of the claim.
+
 - A `read` capability is never sent through the SDK gate at all.
   `evaluate_job()` is a motion/write safety gate - it was never designed
   to protect a read, and forcing one through it would not make a read
@@ -92,6 +103,9 @@ from .schema import check_sdk_compatibility, validate_adapter_manifest, validate
 # general "short, bounded window" convention (e.g. HYDRA-UMC-SERVER's own
 # DEFAULT_RESERVATION_TTL_MS for command ownership).
 DEFAULT_MAX_REQUEST_AGE_SECONDS = 30.0
+# A request stamped in the future is not "fresher than fresh": its age would be negative and pass every
+# freshness check. A little clock skew between the machine that built the request and this one is fine.
+MAX_CLOCK_SKEW_SECONDS = 5.0
 
 
 class CapabilityGateError(ValueError):
@@ -141,6 +155,10 @@ class CapabilityCallRequest:
     # stale); a caller that wants to exercise real expiry sets this to a
     # real past timestamp instead.
     requested_at: float = field(default_factory=time.time)
+    # What the CALLER observed of the machine, not what the requester claims: when given, the SDK gate
+    # uses it instead of `machine_state` (see `evaluate_job`). A caller that can read the machine
+    # should always pass it; without it, `machine_state` is only a claim.
+    observed_machine_state: str | None = None
 
     def __post_init__(self) -> None:
         for attr in ("job_id", "idempotency_key", "source", "capability_name", "cell_state", "machine_state"):
@@ -218,6 +236,10 @@ def _policy_denials(manifest: dict[str, Any], capability: dict[str, Any], reques
     # ordinary threshold comparison ever runs.
     if not math.isfinite(age):
         denials.append(f"this request's own age is not a finite number ({age!r}) - refusing to trust it as fresh")
+    elif age < -MAX_CLOCK_SKEW_SECONDS:
+        denials.append(
+            f"this request is dated {-age:.1f}s in the future (more than the {MAX_CLOCK_SKEW_SECONDS}s of clock skew allowed) - refusing to trust it as fresh"
+        )
     elif age > max_age:
         denials.append(
             f"this request's own gate has expired: it was made {age:.1f}s ago, "
@@ -314,6 +336,15 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
                 except ValueError as exc:
                     raise CapabilityGateError(f"unknown machine_state {request.machine_state!r} - expected one of {[s.value for s in MachineState]}") from exc
 
+                observed_state = None
+                if request.observed_machine_state is not None:
+                    try:
+                        observed_state = MachineState(request.observed_machine_state)
+                    except ValueError as exc:
+                        raise CapabilityGateError(
+                            f"unknown observed_machine_state {request.observed_machine_state!r} - expected one of {[s.value for s in MachineState]}"
+                        ) from exc
+
                 phase = JobPhase.ABORT if mode == "abort" else JobPhase.PROCESS
                 try:
                     job = BridgeJob(
@@ -327,7 +358,10 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
                 except BridgeError as exc:
                     raise CapabilityGateError(f"HYDRA-UMC-SDK rejected this request before any gate ran: {exc}") from exc
 
-                decision = evaluate_job(job, cell_state)
+                try:
+                    decision = evaluate_job(job, cell_state) if observed_state is None else evaluate_job(job, cell_state, observed_state)
+                except TypeError as exc:
+                    raise CapabilityGateError("the installed hydra-umc-sdk cannot take an observed machine state: update it") from exc
                 allowed, reason = decision.allowed, decision.reason
 
     evidence_errors: list[str] = []

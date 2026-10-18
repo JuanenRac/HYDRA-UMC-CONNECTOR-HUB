@@ -100,13 +100,20 @@ write attempt gets a real `501 Unsupported method` from
 `BaseHTTPRequestHandler` itself, never a route this project forgot to
 protect. Runs until `Ctrl+C`.
 
-A manifest file that is not valid UTF-8, or larger than 1 MB, is listed
-under `invalidFiles` like any other broken file instead of stopping the
-catalog; if the registry directory disappears while the server runs,
+`--ecosystem-root DIR` (optional) lists only the adapters whose `ownerProject`
+is confirmed by that project's own `hydra-umc.project.json` under `DIR`; the
+others are reported under `unverifiedOwners`. `sourcePath` in the answer is the
+manifest's file name, never a path on the server. A query string or a trailing
+slash does not change the route, and `If-None-Match` may carry a list of tags
+and weak tags.
+
+A manifest file that is not valid UTF-8, larger than 1 MB, or nested thousands of
+levels deep is listed under `invalidFiles` like any other broken file instead of
+stopping the catalog; if the registry directory disappears while the server runs,
 requests get a `503` with a JSON error; and a connection that sends
 nothing for 15 seconds is closed.
 
-## `gate <manifest-file> --capability NAME --job-id ID --idempotency-key KEY --source SRC --cell-state STATE --machine-state STATE [--param k=v ...] [--evidence-file FILE] [--permission PERM ...] [--cell-mode MODE] [--human-confirmed] [--safety-gate GATE ...]`
+## `gate <manifest-file> --capability NAME --job-id ID --idempotency-key KEY --source SRC --cell-state STATE --machine-state STATE [--param k=v ...] [--evidence-file FILE] [--permission PERM ...] [--cell-mode MODE] [--human-confirmed] [--safety-gate GATE ...] [--observed-machine-state STATE]`
 
 Evaluates one real capability call against
 [docs/CAPABILITY_GATE.md](CAPABILITY_GATE.md)'s own contract - a `read`
@@ -123,7 +130,11 @@ best-effort guess). `--cell-mode` is a DIFFERENT, adapter-defined axis
 (e.g. `operational`/`supervised`/`ready`/`any`) checked against the
 capability's own `requiredCellState` - never confuse it with
 `--cell-state` above. `--permission` and `--safety-gate` are each
-repeatable.
+repeatable. Every one of these is attested by the caller, so a decision is
+advisory (see [CAPABILITY_GATE.md](CAPABILITY_GATE.md)); `--observed-machine-state`
+(same values as `--machine-state`) is the state the caller itself observed and,
+when given, replaces the claimed one in the SDK gate. A `--evidence-file` that
+cannot be read as JSON is an `ERROR` (exit `1`).
 
 ```
 hydra-umc-connector-hub gate fixtures/cnc-grbl.json \
