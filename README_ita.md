@@ -34,6 +34,17 @@
 
 ---
 
+## 📋 In breve
+
+| | |
+|---|---|
+| Versione | `0.1.4` |
+| Maturità | Funzionale |
+| Test | 165 (`pytest tests/`) |
+| Tecnologia | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
+| Destinazione | Il PC di chi lo usa |
+| Su hardware reale | Non ancora: per questa versione non risulta alcuna esecuzione su hardware reale |
+
 ## 1. 🛠️ PANORAMICA TECNICA
 
 Oggi, scegliere e configurare quale bridge usa una data cella/macchina è

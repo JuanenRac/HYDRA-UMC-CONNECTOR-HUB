@@ -22,6 +22,17 @@
 
 ---
 
+## 📋 速览
+
+| | |
+|---|---|
+| 版本 | `0.1.4` |
+| 成熟度 | 可用 |
+| 测试 | 165 (`pytest tests/`) |
+| 技术栈 | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
+| 目标 | 使用者的电脑 |
+| 真实硬件 | 尚未：此版本没有在真实硬件上运行的记录 |
+
 ## 1. 🛠️ 技术概述
 
 如今，某个单元/机器该使用哪一个桥接(bridge)，其选择与配置分散在众多真实 bridge 仓库自身的 README、`.env` 文件以及零散脚本之中。HYDRA-UMC-CONNECTOR-HUB 的定位，是成为唯一一个能对任意真实外部机器回答以下三个问题的地方：**它讲哪种协议、它到底能做什么(读取/写入/中止，各自伴随何种风险)，以及本生态系统中哪个已有的真实项目已经实现了它？**

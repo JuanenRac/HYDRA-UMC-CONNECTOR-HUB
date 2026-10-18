@@ -33,6 +33,17 @@
 
 ---
 
+## 📋 ひと目で
+
+| | |
+|---|---|
+| バージョン | `0.1.4` |
+| 成熟度 | 機能する |
+| テスト | 165 (`pytest tests/`) |
+| 技術 | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
+| 対象 | 利用者の PC |
+| 実機での確認 | まだです：このバージョンについて実機での動作記録はありません |
+
 ## 1. 🛠️ 技術概要
 
 現在、あるセル/マシンがどのブリッジを使うかの選択と設定は、多くの実

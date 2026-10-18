@@ -33,6 +33,17 @@
 
 ---
 
+## 📋 Auf einen Blick
+
+| | |
+|---|---|
+| Version | `0.1.4` |
+| Reifegrad | Funktionsfähig |
+| Tests | 165 (`pytest tests/`) |
+| Technik | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
+| Ziel | Der PC der Person, die es benutzt |
+| Auf echter Hardware | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
+
 ## 1. 🛠️ TECHNISCHER ÜBERBLICK
 
 Heute ist die Auswahl und Konfiguration, welche Bridge eine bestimmte
