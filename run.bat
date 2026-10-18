@@ -34,6 +34,10 @@ REM                                           real fixtures under fixtures\
 REM   run.bat validate <file> [<file> ...] - validate specific manifest(s)
 REM This delivery is CLI-only (no GUI, no network, no hardware).
 setlocal enabledelayedexpansion
+rem Keep the window open for people, never in automation (CI / HYDRA_UMC_CI).
+set "KEEP_OPEN=pause"
+if defined CI set "KEEP_OPEN=ver >nul"
+if "%HYDRA_UMC_CI%"=="1" set "KEEP_OPEN=ver >nul"
 cd /d "%~dp0"
 
 if exist .venv\Scripts\python.exe (
@@ -49,4 +53,4 @@ if "%~1"=="" (
     "!HYDRA_UMC_PY!" -m hydra_umc_connector_hub.cli %*
 )
 
-pause
+%KEEP_OPEN%
