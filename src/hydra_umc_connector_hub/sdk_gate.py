@@ -1,7 +1,7 @@
 # =============================================================================
 # HYDRA-UMC-CONNECTOR-HUB - src/hydra_umc_connector_hub/sdk_gate.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """Delivery 3 [P0] - real integration with HYDRA-UMC-SDK's own safety-gate
 contract (`hydra_umc_sdk.bridge_contract`), never a second, competing

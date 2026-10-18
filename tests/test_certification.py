@@ -1,7 +1,7 @@
 # =============================================================================
 # HYDRA-UMC-CONNECTOR-HUB - tests/test_certification.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """Delivery 4 tests - real filesystem writes/reads under a real temp
 directory, no mocking. These tests prove the one real, honest guarantee

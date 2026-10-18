@@ -1,7 +1,7 @@
 # =============================================================================
 # HYDRA-UMC-CONNECTOR-HUB - tests/test_robustness.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """Hostile or odd input: a nested document, a record that is not an object,
 a request dated in the future, a four-component SDK version, a literal secret

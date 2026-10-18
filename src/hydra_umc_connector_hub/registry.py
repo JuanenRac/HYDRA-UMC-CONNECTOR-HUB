@@ -1,7 +1,7 @@
 # =============================================================================
 # HYDRA-UMC-CONNECTOR-HUB - src/hydra_umc_connector_hub/registry.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """Delivery 2: registers the real, already-existing bridges as a real
 read-only catalog - never a second protocol implementation, never a live

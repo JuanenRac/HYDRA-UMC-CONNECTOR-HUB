@@ -1,7 +1,7 @@
 # =============================================================================
 # HYDRA-UMC-CONNECTOR-HUB - src/hydra_umc_connector_hub/certification.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """Delivery 4 [P1][HARDWARE] - the real, honest software half of "certify
 adapters one at a time against their own machine; no universal global

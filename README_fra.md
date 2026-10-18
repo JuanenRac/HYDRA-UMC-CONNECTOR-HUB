@@ -9,13 +9,13 @@
 ### 🧩 Un registre déclaratif et un validateur pour les adaptateurs de machines externes
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Licencia-GPL%203.0-blue.svg" alt="GPL 3.0">
+  <img src="https://img.shields.io/badge/Licencia-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="stdlib-only core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 livraisons sur 4">
 </p>
 
-> **État : v0.1.3, functional - Livraisons 1-4 sur 4 (schéma/CLI/
+> **État : v0.1.4, functional - Livraisons 1-4 sur 4 (schéma/CLI/
 > fixtures, catalogue en lecture seule, barrière de sécurité SDK,
 > registres de certification).** `catalog`/`serve-catalog` sont réels et
 > uniquement GET (aucune route d'écriture réseau n'existe nulle part
@@ -379,4 +379,4 @@ Ce projet fait partie de l'écosystème robotique HYDRA-UMC du même auteur (Jua
 
 ## 📜 LICENCE
 
-GPL-3.0 (logiciel) / CC BY-SA 4.0 (documentation) - voir [LICENSE.md](LICENSE.md).
+GPL-3.0-or-later (logiciel) / CC BY-SA 4.0 (documentation) - voir [LICENSE.md](LICENSE.md).

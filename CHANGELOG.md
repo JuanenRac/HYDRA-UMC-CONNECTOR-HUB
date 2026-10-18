@@ -9,6 +9,11 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
+## [0.1.4]
+
+- Build version synchronized with `hydra-umc.project.json` and the repository-native version source.
+- The licence is written as GPL-3.0-or-later in every header and in the package metadata.
+
 ## [0.1.3] - A gate that says what it is worth, robust against hostile files, four-component SDK versions
 
 - **The capability gate is documented as advisory, and can use an observation.** Every fact it evaluates (permissions, human confirmation, safety gates, cell mode, cell and machine state) is attested by the caller, so a decision is only as good as the caller. The README example that showed a write capability being allowed with no attestation at all is replaced by one that is true, `docs/CAPABILITY_GATE.md` says what a decision is worth, and a caller that can read the machine passes `observed_machine_state` (`--observed-machine-state`), which the SDK gate uses instead of the claim.

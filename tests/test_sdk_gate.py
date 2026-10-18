@@ -1,7 +1,7 @@
 # =============================================================================
 # HYDRA-UMC-CONNECTOR-HUB - tests/test_sdk_gate.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """Delivery 3 tests - against the REAL `hydra_umc_sdk.bridge_contract`
 module (the optional `[sdk]` extra), never a fake/mocked stand-in for

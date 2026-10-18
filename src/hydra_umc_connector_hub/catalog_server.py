@@ -1,7 +1,7 @@
 # =============================================================================
 # HYDRA-UMC-CONNECTOR-HUB - src/hydra_umc_connector_hub/catalog_server.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """Delivery 2's own real read-only catalog endpoint - `http.server` only,
 deliberately no web framework: three GET routes, nothing else. There is

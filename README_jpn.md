@@ -9,13 +9,13 @@
 ### 🧩 外部マシン用アダプターのための宣言的レジストリとバリデーター
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Licencia-GPL%203.0-blue.svg" alt="GPL 3.0">
+  <img src="https://img.shields.io/badge/Licencia-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="stdlib-only core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 件中 4 件の納品完了">
 </p>
 
-> **ステータス: v0.1.3、functional(機能段階) - 4 件の納品のうち全 4 件(スキー
+> **ステータス: v0.1.4、functional(機能段階) - 4 件の納品のうち全 4 件(スキー
 > マ/CLI/フィクスチャ、読み取り専用カタログ、SDK 安全ゲート、認証記
 > 録)完了。** `catalog`/`serve-catalog` は本物で GET のみです(このプ
 > ロジェクトのどこにもネットワーク書き込み経路は存在しません)。
@@ -373,4 +373,4 @@ Windows では: 先に `build.bat`、その後 `run.bat`(引数なしの場合�
 
 ## 📜 ライセンス
 
-GPL-3.0(ソフトウェア)/ CC BY-SA 4.0(ドキュメント)—— 詳細は [LICENSE.md](LICENSE.md) を参照してください。
+GPL-3.0-or-later(ソフトウェア)/ CC BY-SA 4.0(ドキュメント)—— 詳細は [LICENSE.md](LICENSE.md) を参照してください。

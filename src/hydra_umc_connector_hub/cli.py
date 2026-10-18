@@ -1,7 +1,7 @@
 # =============================================================================
 # HYDRA-UMC-CONNECTOR-HUB - src/hydra_umc_connector_hub/cli.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """Real CLI entry point for every delivery this project ships so far:
 `validate` (Delivery 1), `catalog`/`serve-catalog` (Delivery 2), `gate`

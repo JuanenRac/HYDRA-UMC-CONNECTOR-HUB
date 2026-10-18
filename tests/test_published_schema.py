@@ -1,7 +1,7 @@
 # =============================================================================
 # HYDRA-UMC-CONNECTOR-HUB - published JSON Schema stays in step with the validator
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """`schemas/adapter-manifest.v1.schema.json` is documentation a tool can read;
 `schema.py` decides. These tests fail when the two drift apart."""

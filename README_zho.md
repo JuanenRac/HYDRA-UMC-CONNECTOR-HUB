@@ -9,13 +9,13 @@
 ### 🧩 面向外部机器适配器的声明式注册与校验工具
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Licencia-GPL%203.0-blue.svg" alt="GPL 3.0">
+  <img src="https://img.shields.io/badge/Licencia-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Python">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="stdlib-only core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 项交付中已完成 4 项">
 </p>
 
-> **状态：v0.1.3，功能阶段——4 项交付中的全部 4 项(模式定义/CLI/fixture、只读目录、SDK 安全门、认证记录)均已交付。**
+> **状态：v0.1.4，功能阶段——4 项交付中的全部 4 项(模式定义/CLI/fixture、只读目录、SDK 安全门、认证记录)均已交付。**
 > `catalog`/`serve-catalog` 是真实的、仅支持 GET(整个项目中不存在任何网络写入路径)；`gate` 直接调用 HYDRA-UMC-SDK 自身真实的 `evaluate_job()`，绝不是该安全门的第二套实现(见 [docs/CAPABILITY_GATE.md](docs/CAPABILITY_GATE.md))；`certify` 会记录一份真实的、由人类见证的证据，但明确**不会**独立地针对真实硬件去验证它——具体原因见 [docs/CERTIFICATION.md](docs/CERTIFICATION.md)，说明了为什么在没有实体机器在手的情况下这项工作必须保持在范围之外。关于当前真实存在的确切命令面，见 [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)。
 
 > **诚实检查——今天真正可运行的部分：** 清单模式/校验器（`schema.py`）、只读目录（`registry.py`、`catalog_server.py`）、SDK 安全门集成（`sdk_gate.py`，它调用的是 `HYDRA-UMC-SDK` 自身真实的 `evaluate_job()`，针对的是一个真正安装好的检出版本，绝不是模拟）、认证日志（`certification.py`），以及 CLI（`cli.py`）都是真实的，并由 165 个通过的测试覆盖（`pytest tests/`，安装可选的 `[sdk]` 附加包时；没有它则跳过其中 34 个）。`certify` 会记录一份由人类见证的证据，但明确不会针对真实硬件对其进行独立验证——这 10 个 fixture 背后都没有实体机器，这里的任何适配器也从未被用来真正与一台真实设备通信过。`catalog`/`serve-catalog` 从设计上就只支持 GET（`catalog_server.py` 完全没有任何 `do_POST`/`do_PUT`）。详见上方的状态提示框，以及 `CHANGELOG.md` 中目前具体已交付的内容。
@@ -239,4 +239,4 @@ pip install -e ".[sdk]"                    # 仅在对一个 write/abort 能力�
 
 ## 📜 许可证
 
-GPL-3.0（软件）/ CC BY-SA 4.0（文档）—— 详见 [LICENSE.md](LICENSE.md)。
+GPL-3.0-or-later（软件）/ CC BY-SA 4.0（文档）—— 详见 [LICENSE.md](LICENSE.md)。
