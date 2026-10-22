@@ -113,7 +113,7 @@ stopping the catalog; if the registry directory disappears while the server runs
 requests get a `503` with a JSON error; and a connection that sends
 nothing for 15 seconds is closed.
 
-## `gate <manifest-file> --capability NAME --job-id ID --idempotency-key KEY --source SRC --cell-state STATE --machine-state STATE [--param k=v ...] [--evidence-file FILE] [--permission PERM ...] [--cell-mode MODE] [--human-confirmed] [--safety-gate GATE ...] [--observed-machine-state STATE]`
+## `gate <manifest-file> --capability NAME --job-id ID --idempotency-key KEY --source SRC --cell-state STATE --machine-state STATE [--param k=v ...] [--evidence-file FILE] [--permission PERM ...] [--cell-mode MODE] [--human-confirmed] [--safety-gate GATE ...] [--observed-machine-state STATE] [--allow-unobserved]`
 
 Evaluates one real capability call against
 [docs/CAPABILITY_GATE.md](CAPABILITY_GATE.md)'s own contract - a `read`
@@ -133,7 +133,10 @@ capability's own `requiredCellState` - never confuse it with
 repeatable. Every one of these is attested by the caller, so a decision is
 advisory (see [CAPABILITY_GATE.md](CAPABILITY_GATE.md)); `--observed-machine-state`
 (same values as `--machine-state`) is the state the caller itself observed and,
-when given, replaces the claimed one in the SDK gate. A `--evidence-file` that
+when given, replaces the claimed one in the SDK gate. Without it a write is
+refused (the claim is not a reading); `--allow-unobserved` is the explicit
+opt-in of a caller that cannot read the machine, and the answer then says
+`"observed": false`. A `--evidence-file` that
 cannot be read as JSON is an `ERROR` (exit `1`).
 
 ```

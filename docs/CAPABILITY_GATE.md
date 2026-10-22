@@ -23,7 +23,11 @@ advisory.
 
 The one fact a caller can usually observe is the machine state: pass
 `observed_machine_state` (`--observed-machine-state` on the CLI) and the SDK
-gate uses it instead of the `machine_state` the requester claims.
+gate uses it instead of the `machine_state` the requester claims. Without it
+the SDK gate refuses every non-abort write, because the claim travelling in the
+request is not a reading of the machine. A caller that really cannot read the
+machine opts in explicitly with `allow_unobserved=True` (`--allow-unobserved` on
+the CLI); the answer then carries `"observed": false`.
 
 A request dated more than 5 seconds in the future is denied (its age would be
 negative and pass every freshness check); a little clock skew is allowed.

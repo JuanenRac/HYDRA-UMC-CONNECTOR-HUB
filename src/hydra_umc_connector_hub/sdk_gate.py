@@ -24,7 +24,10 @@ reads:
   facts is honest about the policy the manifest declares, it is useful.
   Until a caller wires real providers in, treat a decision as ADVISORY. The
   one fact a caller can often observe is the machine state: pass
-  `observed_machine_state` and the SDK gate uses it instead of the claim.
+  `observed_machine_state` and the SDK gate uses it. Without it the SDK gate
+  REFUSES every non-abort write (the claim in `machine_state` is not a
+  reading); a caller that really has no reading must say so with
+  `allow_unobserved=True`, and the result then says `observed: false`.
 
 - A `read` capability is never sent through the SDK gate at all.
   `evaluate_job()` is a motion/write safety gate - it was never designed
@@ -157,8 +160,11 @@ class CapabilityCallRequest:
     requested_at: float = field(default_factory=time.time)
     # What the CALLER observed of the machine, not what the requester claims: when given, the SDK gate
     # uses it instead of `machine_state` (see `evaluate_job`). A caller that can read the machine
-    # should always pass it; without it, `machine_state` is only a claim.
+    # should always pass it; without it, `machine_state` is only a claim and the SDK gate refuses the call.
     observed_machine_state: str | None = None
+    # The explicit, visible opt-in of a caller that cannot read the machine: the SDK gate then falls back
+    # to the `machine_state` claim, and the result carries `observed: false`. Never the default.
+    allow_unobserved: bool = False
 
     def __post_init__(self) -> None:
         for attr in ("job_id", "idempotency_key", "source", "capability_name", "cell_state", "machine_state"):
@@ -175,6 +181,9 @@ class CapabilityCallRequest:
         # Fail closed on the type instead of trusting the caller's own.
         if not isinstance(self.human_confirmed, bool):
             raise CapabilityGateError(f"human_confirmed must be a real bool, got {self.human_confirmed!r}")
+        # same reasoning: a textual "false" must not read as an opt-in to trust a claim
+        if not isinstance(self.allow_unobserved, bool):
+            raise CapabilityGateError(f"allow_unobserved must be a real bool, got {self.allow_unobserved!r}")
 
 
 @dataclass(frozen=True)
@@ -182,9 +191,12 @@ class CapabilityGateResult:
     allowed: bool
     reason: str
     evidence_errors: list[str]
+    # True when the machine state used by the SDK gate was read by the caller; false when the gate
+    # did not need one or the caller opted in to the claim (`allow_unobserved`).
+    observed: bool = False
 
     def to_dict(self) -> dict[str, Any]:
-        return {"allowed": self.allowed, "reason": self.reason, "evidenceErrors": list(self.evidence_errors)}
+        return {"allowed": self.allowed, "reason": self.reason, "evidenceErrors": list(self.evidence_errors), "observed": self.observed}
 
 
 def _find_capability(manifest: dict[str, Any], capability_name: str) -> dict[str, Any] | None:
@@ -283,7 +295,7 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
 
     capability = _find_capability(manifest, request.capability_name)
     if capability is None:
-        return CapabilityGateResult(False, f"unknown capability {request.capability_name!r} on this adapter", [])
+        return CapabilityGateResult(False, f"unknown capability {request.capability_name!r} on this adapter", [], observed=False)
 
     mode = capability.get("mode")
     if mode == "read":
@@ -359,7 +371,8 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
                     raise CapabilityGateError(f"HYDRA-UMC-SDK rejected this request before any gate ran: {exc}") from exc
 
                 try:
-                    decision = evaluate_job(job, cell_state) if observed_state is None else evaluate_job(job, cell_state, observed_state)
+                    # fail-closed: without a reading the SDK refuses the job, unless the caller opted in explicitly
+                    decision = evaluate_job(job, cell_state, observed_state, allow_unobserved=request.allow_unobserved)
                 except TypeError as exc:
                     raise CapabilityGateError("the installed hydra-umc-sdk cannot take an observed machine state: update it") from exc
                 allowed, reason = decision.allowed, decision.reason
@@ -371,4 +384,4 @@ def evaluate_capability_call(manifest: dict[str, Any], request: CapabilityCallRe
             allowed = False
             reason = f"{reason}; evidence does not match this adapter's own evidenceSchema"
 
-    return CapabilityGateResult(allowed, reason, evidence_errors)
+    return CapabilityGateResult(allowed, reason, evidence_errors, observed=request.observed_machine_state is not None and mode != "read")

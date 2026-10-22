@@ -133,6 +133,7 @@ def _cmd_gate(args: argparse.Namespace) -> int:
             human_confirmed=args.human_confirmed,
             satisfied_safety_gates=frozenset(args.safety_gate or []),
             observed_machine_state=args.observed_machine_state,
+            allow_unobserved=args.allow_unobserved,
         )
         result = evaluate_capability_call(manifest, request)
     except (CapabilityGateError, SdkUnavailableError) as exc:
@@ -223,6 +224,10 @@ def build_parser() -> argparse.ArgumentParser:
     gate.add_argument(
         "--observed-machine-state",
         help="The machine state as the CALLER observed it (same values as --machine-state). When given, the gate uses it instead of the --machine-state claim.",
+    )
+    gate.add_argument(
+        "--allow-unobserved", action="store_true",
+        help="Explicit opt-in for a caller that cannot read the machine: the gate then trusts the --machine-state claim and the answer says observed=false. Without --observed-machine-state or this flag a write is refused.",
     )
     gate.add_argument("--param", action="append", help="key=value, repeatable.")
     gate.add_argument("--evidence-file", help="Optional path to a JSON evidence payload checked against evidenceSchema.")

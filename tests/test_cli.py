@@ -194,6 +194,28 @@ class CliGateTests(unittest.TestCase):
         self.assertFalse(payload["allowed"])
         self.assertIn("cnc.control.send", payload["reason"])
 
+    @unittest.skipUnless(SDK_INSTALLED, "hydra-umc-sdk (optional [sdk] extra) is not installed")
+    def test_gate_on_a_write_refuses_without_a_reading_and_says_so_when_the_caller_opts_in(self):
+        base = [
+            "gate", str(FIXTURES_DIR / "cnc-grbl.json"),
+            "--capability", "sendControlByte", "--job-id", "j1", "--idempotency-key", "i1",
+            "--source", "test", "--cell-state", "READY", "--machine-state", "IDLE",
+            "--permission", "cnc.control.send", "--cell-mode", "supervised", "--human-confirmed",
+            "--safety-gate", "cell.estop.clear", "--safety-gate", "cell.enclosure.closed",
+        ]
+        outcomes = {}
+        for label, extra in (("none", []), ("opt_in", ["--allow-unobserved"]), ("read", ["--observed-machine-state", "IDLE"])):
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                code = main(base + extra)
+            outcomes[label] = (code, json.loads(stdout.getvalue()))
+        self.assertEqual(outcomes["none"][0], 1)
+        self.assertIn("did not read", outcomes["none"][1]["reason"])
+        self.assertEqual(outcomes["opt_in"][0], 0)
+        self.assertFalse(outcomes["opt_in"][1]["observed"])
+        self.assertEqual(outcomes["read"][0], 0)
+        self.assertTrue(outcomes["read"][1]["observed"])
+
 
 class CliCertifyTests(unittest.TestCase):
     def test_certify_then_list_round_trips_through_the_real_cli(self):

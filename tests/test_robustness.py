@@ -232,6 +232,8 @@ class FutureRequestTests(unittest.TestCase):
             satisfied_safety_gates=frozenset({"cell.estop.clear", "cell.enclosure.closed"}),
         )
         defaults.update(overrides)
+        # a caller that read the machine: the reading is what the SDK gate uses (the claim alone is refused)
+        defaults.setdefault("observed_machine_state", defaults["machine_state"])
         return CapabilityCallRequest(**defaults)
 
     def test_a_request_dated_in_the_future_is_denied_without_the_sdk(self):

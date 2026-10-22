@@ -73,6 +73,8 @@ def _authorized_request(**overrides) -> CapabilityCallRequest:
         satisfied_safety_gates=frozenset({"cell.estop.clear", "cell.enclosure.closed"}),
     )
     defaults.update(overrides)
+    # a caller that read the machine: the reading is what the SDK gate uses (the claim alone is refused)
+    defaults.setdefault("observed_machine_state", defaults["machine_state"])
     return CapabilityCallRequest(**defaults)
 
 
@@ -100,6 +102,31 @@ class WriteAndAbortCapabilitiesUseTheRealSdkGateTests(unittest.TestCase):
         manifest = _load("cnc-grbl.json")
         result = evaluate_capability_call(manifest, _authorized_request())
         self.assertTrue(result.allowed)
+
+    def test_a_write_capability_is_refused_when_the_machine_state_was_not_read(self):
+        manifest = _load("cnc-grbl.json")
+        result = evaluate_capability_call(manifest, _authorized_request(observed_machine_state=None))
+        self.assertFalse(result.allowed)
+        self.assertIn("did not read", result.reason)
+        self.assertFalse(result.to_dict()["observed"])
+
+    def test_the_explicit_opt_in_trusts_the_claim_and_says_observed_false(self):
+        manifest = _load("cnc-grbl.json")
+        result = evaluate_capability_call(manifest, _authorized_request(observed_machine_state=None, allow_unobserved=True))
+        self.assertTrue(result.allowed)
+        self.assertFalse(result.to_dict()["observed"])
+        busy = evaluate_capability_call(manifest, _authorized_request(observed_machine_state=None, allow_unobserved=True, machine_state="RUNNING"))
+        self.assertFalse(busy.allowed)
+
+    def test_a_reading_of_the_machine_is_reported_as_observed(self):
+        manifest = _load("cnc-grbl.json")
+        result = evaluate_capability_call(manifest, _authorized_request())
+        self.assertTrue(result.allowed)
+        self.assertTrue(result.to_dict()["observed"])
+
+    def test_allow_unobserved_must_be_a_real_bool(self):
+        with self.assertRaises(CapabilityGateError):
+            _authorized_request(allow_unobserved="false")
 
     def test_a_write_capability_is_denied_when_the_cell_is_not_ready(self):
         manifest = _load("cnc-grbl.json")

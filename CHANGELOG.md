@@ -14,6 +14,7 @@ bumped manually only. See `bump_version.py`.
 - The banner follows the animated style of the ecosystem banners, with the name, the kind and the technologies of the project.
 - Added `tools/hydra_project_tool.py`: the same `validate`, `test`, `version`, `status` and `bump` commands in every repository. The checks run with `HYDRA_UMC_CI=1` and fail if the version changes; only `bump` changes it.
 - The SDK is now fetched at a release tag instead of the main branch, so a change of the SDK cannot break this repository by itself.
+- The SDK is pinned to 0.3.6, whose gate refuses a write when the caller did not read the state of the machine. A write capability now needs `observed_machine_state` (`--observed-machine-state` on the CLI); the claimed `machine_state` alone is refused. A caller that really cannot read the machine opts in explicitly with `allow_unobserved` (`--allow-unobserved`), and every answer now carries `observed` (false for that opt-in). The documentation and the tests cover the refusal, the opt-in and the observed case.
 
 ## [0.1.4]
 
