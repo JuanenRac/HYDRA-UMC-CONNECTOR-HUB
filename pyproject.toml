@@ -25,7 +25,7 @@ dev = ["pytest>=8.0"]
 # own real bridge_contract.py, never a second implementation of that gate.
 # A git dependency (not on PyPI), same pattern every bridge project already
 # uses. `validate`/`catalog`/`serve-catalog`/`certify` need none of this.
-sdk = ["hydra-umc-sdk @ git+https://github.com/JuanenRac/HYDRA-UMC-SDK.git@v0.3.4#subdirectory=clients/python"]
+sdk = ["hydra-umc-sdk @ git+https://github.com/JuanenRac/HYDRA-UMC-SDK.git@v0.3.5#subdirectory=clients/python"]
 
 [project.urls]
 Homepage = "https://github.com/JuanenRac/HYDRA-UMC-CONNECTOR-HUB"
