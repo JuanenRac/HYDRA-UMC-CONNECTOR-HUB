@@ -104,7 +104,7 @@ HYDRA-UMC-CONNECTOR-HUB/
 ├── build.sh / build.bat     # 创建 venv + 可编辑安装 + 编译检查 + 测试
 ├── build-test.sh / .bat     # 仅执行构建校验，不修改任何内容
 ├── run.sh / run.bat         # 真实演示：校验十个 fixture(不带参数时)，或转发一条真实的 CLI 命令
-├── bump_version.py          # 生态系统"里程表"式版本递增（pyproject.toml + __init__.py）
+├── bump_version.py          # 里程表式版本递增（仅由显式 `bump` 命令运行）
 └── bump_manifest_version.py # 将 hydra-umc.project.json 的版本与原生版本同步（--sync）
 ```
 

@@ -201,7 +201,7 @@ HYDRA-UMC-CONNECTOR-HUB/
 ├── build.sh / build.bat     # venv + editierbare Installation + Compile-Check + Tests
 ├── build-test.sh / .bat     # Nur Build-Validierung, ohne etwas zu verändern
 ├── run.sh / run.bat         # Echte Demo: validiert die zehn Fixtures (ohne Argumente), oder leitet einen echten CLI-Befehl weiter
-├── bump_version.py          # "Kilometerzähler"-Inkrement des Ökosystems (pyproject.toml + __init__.py)
+├── bump_version.py          # Versionserhöhung im Kilometerzähler-Stil (nur vom expliziten `bump`-Befehl ausgeführt)
 └── bump_manifest_version.py # Synchronisiert die Version von hydra-umc.project.json mit der nativen (--sync)
 ```
 
