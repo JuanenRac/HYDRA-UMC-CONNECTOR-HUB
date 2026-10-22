@@ -9,6 +9,11 @@ bumped manually only. See `bump_version.py`.
 
 (nothing yet)
 
+## [Unreleased]
+
+- Added `tools/hydra_project_tool.py`: the same `validate`, `test`, `version`, `status` and `bump` commands in every repository. The checks run with `HYDRA_UMC_CI=1` and fail if the version changes; only `bump` changes it.
+- The SDK is now fetched at a release tag instead of the main branch, so a change of the SDK cannot break this repository by itself.
+
 ## [0.1.4]
 
 - Build version synchronized with `hydra-umc.project.json` and the repository-native version source.
