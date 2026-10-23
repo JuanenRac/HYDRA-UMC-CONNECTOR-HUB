@@ -9,6 +9,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **Sealed, hash-chained certification records** (`ledger.py`, opt-in): `certify --key-file FILE` writes each record with its sequence, the sha256 of the previous file and an HMAC-SHA256 seal under the operator's key, plus a sealed `.chain-head.json`; the new `verify-certifications --dir D --key-file FILE [--strict]` fails on an edited record, a record removed from the middle or the start or the end, a forked chain, a rewritten head, a wrong key, and, with `--strict`, a record outside the chain. One writer at a time (a lock file that goes stale). Without a key nothing changes and the sealed files still load with `certifications`. It is an HMAC, not a signature: whoever holds the key can rewrite the chain. 18 new tests (188 in all). Not used against a real certification folder yet.
 - The banner follows the animated style of the ecosystem banners, with the name, the kind and the technologies of the project.
 - Added `tools/hydra_project_tool.py`: the same `validate`, `test`, `version`, `status` and `bump` commands in every repository. The checks run with `HYDRA_UMC_CI=1` and fail if the version changes; only `bump` changes it.
 - The SDK is now fetched at a release tag instead of the main branch, so a change of the SDK cannot break this repository by itself.
