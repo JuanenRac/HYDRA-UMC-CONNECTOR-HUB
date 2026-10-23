@@ -35,6 +35,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from . import ledger
 from .schema import validate_adapter_manifest, validate_against_json_schema_subset
 
 
@@ -140,7 +141,7 @@ def certify_adapter(
     )
 
 
-def save_certification_record(record: CertificationRecord, directory: str) -> str:
+def save_certification_record(record: CertificationRecord, directory: str, *, key: bytes | None = None) -> str:
     """Writes one real, never-overwritten JSON file for `record` under
     `directory` (created if missing) and returns its real path. The file
     name embeds both the adapterId and the record's own unique id, so two
@@ -167,6 +168,15 @@ def save_certification_record(record: CertificationRecord, directory: str) -> st
     """
     _require_safe_path_segment(record.adapter_id, "adapter_id")
     _require_safe_path_segment(record.certification_id, "certification_id")
+
+    if key is not None:
+        # sealed and chained (ledger.py): the record carries its sequence, the hash of the one before and an HMAC
+        try:
+            return ledger.append_sealed(
+                record.to_dict(), directory, f"{record.adapter_id}__{record.certification_id}.json", key
+            )
+        except ledger.LedgerError as exc:
+            raise CertificationError(str(exc)) from exc
 
     target_dir = Path(directory).resolve()
     target_dir.mkdir(parents=True, exist_ok=True)

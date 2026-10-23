@@ -70,5 +70,22 @@ $ hydra-umc-connector-hub certifications --dir certifications/ --adapter-id cnc-
 ]
 ```
 
+## Sealing the records: making "append-only" checkable
+
+Writing a file only once stops this program from editing a record; it does not stop anybody with access to the folder
+from editing or deleting a file by hand. With `certify --key-file FILE` (a secret of 16 or more characters, held by the
+operator) every record is written with a `chain` block - its `sequence` (1, 2, 3, no gap), the `previousHash` (sha256 of
+the whole previous file) and a `seal` (HMAC-SHA256 of the record and those two fields under the key) - and a sealed
+`.chain-head.json` says how long the chain is. `verify-certifications --dir D --key-file FILE` goes through it and fails
+on an edited record (its seal, and the link of the one after it), a record removed from the middle (a gap), the first
+ones removed (it does not start at 1), the newest ones removed (the head), two records with one sequence (a fork), a
+head rewritten without the key, and a wrong key. A record in the folder with no `chain` block (written before sealing,
+or put there by hand) is listed as unsealed and `--strict` makes it a failure. Without `--key-file` records are
+written as before.
+
+This is an HMAC, not a signature: the key verifies and also seals, so whoever holds it can rewrite the whole chain. It
+stops people who can reach the folder and not the key. A chain with asymmetric signatures would need a decision on key
+management that is not made.
+
 See [docs/CLI_REFERENCE.md](CLI_REFERENCE.md) for the full `certify`/
 `certifications` command surface.

@@ -15,6 +15,7 @@ import sys
 from typing import Any
 
 from . import __version__
+from . import ledger
 from .certification import CertificationError, certify_adapter, load_certification_records, save_certification_record
 from .registry import build_catalog, catalog_snapshot_version, verify_catalog_owners
 from .schema import load_and_validate
@@ -165,13 +166,32 @@ def _cmd_certify(args: argparse.Namespace) -> int:
     except CertificationError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
+    key = None
+    if args.key_file:
+        try:
+            key = ledger.load_key(args.key_file)
+        except ledger.LedgerError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 1
     try:
-        path = save_certification_record(record, args.out_dir)
+        path = save_certification_record(record, args.out_dir, key=key)
     except (CertificationError, OSError) as exc:
         print(f"ERROR: could not save the certification record: {exc}", file=sys.stderr)
         return 1
-    print(f"CERTIFIED adapterId={record.adapter_id!r} certificationId={record.certification_id!r} -> {path}")
+    print(f"CERTIFIED adapterId={record.adapter_id!r} certificationId={record.certification_id!r} -> {path}" + (" (sealed in the chain)" if key else ""))
     return 0
+
+
+def _cmd_verify_certifications(args: argparse.Namespace) -> int:
+    try:
+        key = ledger.load_key(args.key_file)
+    except ledger.LedgerError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    report = ledger.verify_chain(args.dir, key, strict=args.strict)
+    print(json.dumps(report.to_dict(), indent=2))
+    print(("CHAIN=PASS" if report.ok else "CHAIN=FAIL") + f" {report.sealed} sealed record(s), {len(report.unsealed)} outside the chain")
+    return 0 if report.ok else 1
 
 
 def _cmd_certifications(args: argparse.Namespace) -> int:
@@ -256,12 +276,25 @@ def build_parser() -> argparse.ArgumentParser:
     certify.add_argument("--evidence-file", required=True, help="Path to a JSON evidence payload matching this adapter's own evidenceSchema.")
     certify.add_argument("--notes", default="")
     certify.add_argument("--out-dir", required=True, help="Directory certification records are saved into, one JSON file per record.")
+    certify.add_argument(
+        "--key-file",
+        help="Optional: a file holding a secret (16+ characters). The record is then sealed with an HMAC and chained to the one before it, "
+        "so editing or removing a record can be detected with verify-certifications. Without it records are written as before.",
+    )
     certify.set_defaults(func=_cmd_certify)
 
     certifications = subparsers.add_parser("certifications", help="List real, previously saved certification records.")
     certifications.add_argument("--dir", required=True)
     certifications.add_argument("--adapter-id", help="Filter to one adapterId; omit to list every record.")
     certifications.set_defaults(func=_cmd_certifications)
+
+    verify = subparsers.add_parser(
+        "verify-certifications", help="Check the sealed chain of a certification folder: seals, links, gaps, the head. Exit 1 on any problem."
+    )
+    verify.add_argument("--dir", required=True)
+    verify.add_argument("--key-file", required=True, help="The same secret the records were sealed with.")
+    verify.add_argument("--strict", action="store_true", help="Also fail when a record in the folder is outside the chain (unsealed).")
+    verify.set_defaults(func=_cmd_verify_certifications)
 
     return parser
 

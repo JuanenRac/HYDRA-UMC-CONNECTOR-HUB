@@ -29,7 +29,7 @@
 > [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) para a superfície exata de
 > comandos que existe hoje.
 
-> **Verificação de honestidade - o que realmente funciona hoje:** o esquema/validador de manifestos (`schema.py`), o catálogo só de leitura (`registry.py`, `catalog_server.py`), a integração da porta de segurança do SDK (`sdk_gate.py`, que chama o `evaluate_job()` real do próprio `HYDRA-UMC-SDK` contra uma cópia real instalada, nunca um simulado), o registo de certificação (`certification.py`) e a CLI (`cli.py`) são reais e estão cobertos por 165 testes a passar (`pytest tests/`, com o extra opcional `[sdk]` instalado - 34 deles são ignorados sem ele). O `certify` regista uma prova atestada por uma pessoa, mas explicitamente não a verifica de forma independente contra hardware real - não há nenhuma máquina física por trás de qualquer um dos 10 dados de teste, e nenhum adaptador aqui foi alguma vez usado para falar de facto com um dispositivo real. `catalog`/`serve-catalog` são só de GET por construção (o `catalog_server.py` não tem sequer `do_POST`/`do_PUT`). Veja a caixa de Estado acima e o `CHANGELOG.md` para saber exatamente o que foi entregue até agora.
+> **Verificação de honestidade - o que realmente funciona hoje:** o esquema/validador de manifestos (`schema.py`), o catálogo só de leitura (`registry.py`, `catalog_server.py`), a integração da porta de segurança do SDK (`sdk_gate.py`, que chama o `evaluate_job()` real do próprio `HYDRA-UMC-SDK` contra uma cópia real instalada, nunca um simulado), o registo de certificação (`certification.py`) e a CLI (`cli.py`) são reais e estão cobertos por 188 testes a passar (`pytest tests/`, com o extra opcional `[sdk]` instalado - 34 deles são ignorados sem ele). O `certify` regista uma prova atestada por uma pessoa, mas explicitamente não a verifica de forma independente contra hardware real - não há nenhuma máquina física por trás de qualquer um dos 10 dados de teste, e nenhum adaptador aqui foi alguma vez usado para falar de facto com um dispositivo real. `catalog`/`serve-catalog` são só de GET por construção (o `catalog_server.py` não tem sequer `do_POST`/`do_PUT`). Veja a caixa de Estado acima e o `CHANGELOG.md` para saber exatamente o que foi entregue até agora.
 
 ---
 
@@ -41,7 +41,7 @@
 |---|---|
 | Versão | `0.1.4` |
 | Maturidade | Funcional |
-| Testes | 165 (`pytest tests/`) |
+| Testes | 188 (`pytest tests/`) |
 | Tecnologia | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | Destino | O PC de quem o usa |
 | Em hardware real | Ainda não: não há registo de execução em hardware real para esta versão |
