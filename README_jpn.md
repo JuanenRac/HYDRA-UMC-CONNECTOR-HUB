@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 件中 4 件の納品完了">
 </p>
 
-> **ステータス: v0.1.4、functional(機能段階) - 4 件の納品のうち全 4 件(スキー
+> **ステータス: v0.1.5、functional(機能段階) - 4 件の納品のうち全 4 件(スキー
 > マ/CLI/フィクスチャ、読み取り専用カタログ、SDK 安全ゲート、認証記
 > 録)完了。** `catalog`/`serve-catalog` は本物で GET のみです(このプ
 > ロジェクトのどこにもネットワーク書き込み経路は存在しません)。
@@ -39,9 +39,9 @@
 
 | | |
 |---|---|
-| バージョン | `0.1.4` |
+| バージョン | `0.1.5` |
 | 成熟度 | 機能する |
-| テスト | 188 (`pytest tests/`) |
+| テスト | 165 (`pytest tests/`) |
 | 技術 | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | 対象 | 利用者の PC |
 | 実機での確認 | まだです：このバージョンについて実機での動作記録はありません |

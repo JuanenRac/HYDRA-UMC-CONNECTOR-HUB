@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 consegne su 4">
 </p>
 
-> **Stato: v0.1.4, functional - Consegne 1-4 di 4 (schema/CLI/fixture,
+> **Stato: v0.1.5, functional - Consegne 1-4 di 4 (schema/CLI/fixture,
 > catalogo di sola lettura, cancello di sicurezza SDK, registri di
 > certificazione).** `catalog`/`serve-catalog` sono reali e solo GET
 > (non esiste alcuna rotta di scrittura di rete in nessuna parte di
@@ -40,9 +40,9 @@
 
 | | |
 |---|---|
-| Versione | `0.1.4` |
+| Versione | `0.1.5` |
 | Maturità | Funzionale |
-| Test | 188 (`pytest tests/`) |
+| Test | 165 (`pytest tests/`) |
 | Tecnologia | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | Destinazione | Il PC di chi lo usa |
 | Su hardware reale | Non ancora: per questa versione non risulta alcuna esecuzione su hardware reale |

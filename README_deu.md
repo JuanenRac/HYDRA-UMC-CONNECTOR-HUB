@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 von 4 Lieferungen">
 </p>
 
-> **Status: v0.1.4, funktional - Lieferungen 1-4 von 4 (Schema/CLI/
+> **Status: v0.1.5, funktional - Lieferungen 1-4 von 4 (Schema/CLI/
 > Fixtures, schreibgeschützter Katalog, SDK-Sicherheitsschranke,
 > Zertifizierungsdatensätze).** `catalog`/`serve-catalog` sind echt und
 > nur GET (es gibt nirgendwo im Projekt einen Schreib-Netzwerkpfad);
@@ -39,9 +39,9 @@
 
 | | |
 |---|---|
-| Version | `0.1.4` |
+| Version | `0.1.5` |
 | Reifegrad | Funktionsfähig |
-| Tests | 188 (`pytest tests/`) |
+| Tests | 165 (`pytest tests/`) |
 | Technik | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | Ziel | Der PC der Person, die es benutzt |
 | Auf echter Hardware | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
