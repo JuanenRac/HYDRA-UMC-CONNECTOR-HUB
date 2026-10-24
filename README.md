@@ -174,12 +174,14 @@ command surface.
 ```
 HYDRA-UMC-CONNECTOR-HUB/
 ├── src/hydra_umc_connector_hub/
+│   ├── __init__.py          # Package version
 │   ├── schema.py            # The real adapter-manifest contract + structural validator + JSON-Schema-subset checker
 │   ├── registry.py          # Delivery 2: scans a directory into a real, stable, sorted catalog
 │   ├── catalog_server.py    # Delivery 2: real GET-only http.server exposing the catalog
 │   ├── sdk_gate.py          # Delivery 3: real HYDRA-UMC-SDK evaluate_job() integration
 │   ├── certification.py     # Delivery 4: real, append-only, human-attested certification log
-│   └── cli.py               # validate/catalog/serve-catalog/gate/certify/certifications entry point
+│   ├── cli.py               # validate/catalog/serve-catalog/gate/certify/certifications entry point
+│   └── ledger.py            # A sealed, hash-chained certification record, so that "append-only" can be checked and not only promised
 ├── fixtures/                # Ten real, valid adapter manifests (one per existing bridge)
 │   └── invalid/             # Five real invalid manifests, each demonstrating one rejection reason
 ├── tests/                   # Real tests: fixtures, a real http.server on an ephemeral port, the real installed hydra-umc-sdk, and a real temp-dir certification log
@@ -187,11 +189,16 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── ADAPTER_MANIFEST.md  # The full real contract, field by field
 │   ├── CAPABILITY_GATE.md   # Delivery 3's own real gate contract and its one named simplification
 │   ├── CERTIFICATION.md     # Delivery 4's own real contract and its honest hardware-verification gap
-│   └── CLI_REFERENCE.md     # Every subcommand, its output shapes, exit codes
+│   ├── CLI_REFERENCE.md     # Every subcommand, its output shapes, exit codes
+│   └── MATURITY_CRITERIA.md # Maturity exit criteria (what must be true to move up a level)
+├── schemas/             # adapter-manifest.v1.schema.json: the JSON schema of an adapter manifest
 ├── images/                  # Media and app icons
 ├── tools/
 │   ├── build_test.py        # Non-versioning build/compile check
-│   └── ci_validate.py       # Manifest/CHANGELOG/docs validation used by CI
+│   ├── ci_validate.py       # Manifest/CHANGELOG/docs validation used by CI
+│   ├── _doc_policy.py       # Documentation rules shared by the family (a copy of HYDRA-UMC-SDK's, kept in sync)
+│   ├── _readme_parity.py    # Check that the eight READMEs share one structure (a copy of HYDRA-UMC-SDK's, kept in sync)
+│   └── hydra_project_tool.py # The same commands in every repository: validate, test, ci, version, status, bump
 ├── build.sh / build.bat     # venv + editable install + compile-check + tests
 ├── build-test.sh / .bat     # Non-mutating build validation only
 ├── run.sh / run.bat         # Real demo: validates the ten fixtures (no arguments), or forwards a real CLI command

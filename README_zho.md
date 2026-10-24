@@ -96,12 +96,14 @@ CERTIFIED adapterId='cnc-grbl' certificationId='...' -> certifications/cnc-grbl_
 ```
 HYDRA-UMC-CONNECTOR-HUB/
 ├── src/hydra_umc_connector_hub/
+│   ├── __init__.py          # 包版本
 │   ├── schema.py            # 真实的 adapter-manifest 契约 + 结构性校验器 + JSON-Schema 子集检查器
 │   ├── registry.py          # 交付 2：将一个目录扫描为一份真实、稳定、有序的目录清单
 │   ├── catalog_server.py    # 交付 2：暴露目录清单的真实、仅 GET 的 http.server
 │   ├── sdk_gate.py          # 交付 3：与 HYDRA-UMC-SDK evaluate_job() 的真实集成
 │   ├── certification.py     # 交付 4：真实的、仅追加的、由人类见证的认证日志
-│   └── cli.py               # validate/catalog/serve-catalog/gate/certify/certifications 入口点
+│   ├── cli.py               # validate/catalog/serve-catalog/gate/certify/certifications 入口点
+│   └── ledger.py            # 带封印、按哈希链接的认证记录,使"只追加"可以被检验而不只是承诺
 ├── fixtures/                # 十份真实、有效的适配器清单(每个已有 bridge 对应一份)
 │   └── invalid/             # 五份真实的无效清单，每一份都展示一种具体的拒绝原因
 ├── tests/                   # 真实测试：fixture、运行在临时端口上的真实 http.server、真实安装的 hydra-umc-sdk，以及运行在临时目录中的真实认证日志
@@ -109,11 +111,16 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── ADAPTER_MANIFEST.md  # 完整的真实契约，逐字段说明
 │   ├── CAPABILITY_GATE.md   # 交付 3 自身真实的安全门契约及其唯一一处明确说明的简化
 │   ├── CERTIFICATION.md     # 交付 4 自身真实的契约及其诚实说明的硬件验证空白
-│   └── CLI_REFERENCE.md     # 每个子命令、其输出形态、退出码契约
+│   ├── CLI_REFERENCE.md     # 每个子命令、其输出形态、退出码契约
+│   └── MATURITY_CRITERIA.md # 成熟度退出标准 (升一级必须满足的条件)
+├── schemas/             # adapter-manifest.v1.schema.json: 适配器清单的 JSON 模式
 ├── images/                  # 媒体资源与应用图标
 ├── tools/
 │   ├── build_test.py        # 不涉及版本变更的构建/编译检查
-│   └── ci_validate.py       # CI 使用的清单/CHANGELOG/文档校验
+│   ├── ci_validate.py       # CI 使用的清单/CHANGELOG/文档校验
+│   ├── _doc_policy.py       # 家族共享的文档规则 (HYDRA-UMC-SDK 的副本,保持同步)
+│   ├── _readme_parity.py    # 检查八个 README 结构一致 (HYDRA-UMC-SDK 的副本,保持同步)
+│   └── hydra_project_tool.py # 每个仓库相同的命令: validate、test、ci、version、status、bump
 ├── build.sh / build.bat     # 创建 venv + 可编辑安装 + 编译检查 + 测试
 ├── build-test.sh / .bat     # 仅执行构建校验，不修改任何内容
 ├── run.sh / run.bat         # 真实演示：校验十个 fixture(不带参数时)，或转发一条真实的 CLI 命令

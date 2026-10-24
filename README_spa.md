@@ -188,12 +188,14 @@ la superficie de comandos completa y real.
 ```
 HYDRA-UMC-CONNECTOR-HUB/
 ├── src/hydra_umc_connector_hub/
+│   ├── __init__.py          # Versión del paquete
 │   ├── schema.py            # El contrato real de adapter-manifest + validador estructural + comprobador de subconjunto JSON-Schema
 │   ├── registry.py          # Entrega 2: escanea un directorio y construye un catálogo real, estable y ordenado
 │   ├── catalog_server.py    # Entrega 2: http.server real de solo GET que expone el catálogo
 │   ├── sdk_gate.py          # Entrega 3: integración real con evaluate_job() de HYDRA-UMC-SDK
 │   ├── certification.py     # Entrega 4: registro de certificación real, de solo-anexar y atestiguado por un humano
-│   └── cli.py               # Punto de entrada validate/catalog/serve-catalog/gate/certify/certifications
+│   ├── cli.py               # Punto de entrada validate/catalog/serve-catalog/gate/certify/certifications
+│   └── ledger.py            # Registro de certificación sellado y encadenado por hash, para poder comprobar el "solo se añade" y no solo prometerlo
 ├── fixtures/                # Diez manifiestos de adaptador reales y válidos (uno por cada bridge existente)
 │   └── invalid/             # Cinco manifiestos inválidos reales, cada uno demostrando un motivo de rechazo
 ├── tests/                   # Tests reales: fixtures, un http.server real en un puerto efímero, el hydra-umc-sdk real instalado, y un registro de certificación real en un directorio temporal
@@ -201,11 +203,16 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── ADAPTER_MANIFEST.md  # El contrato real completo, campo a campo
 │   ├── CAPABILITY_GATE.md   # El propio contrato real de la puerta de la Entrega 3 y su única simplificación nombrada
 │   ├── CERTIFICATION.md     # El propio contrato real de la Entrega 4 y su hueco honesto de verificación de hardware
-│   └── CLI_REFERENCE.md     # Cada subcomando, sus formas de salida, el contrato de códigos de salida
+│   ├── CLI_REFERENCE.md     # Cada subcomando, sus formas de salida, el contrato de códigos de salida
+│   └── MATURITY_CRITERIA.md # Criterios de salida de madurez (lo que debe cumplirse para subir de nivel)
+├── schemas/             # adapter-manifest.v1.schema.json: el esquema JSON del manifiesto de un adaptador
 ├── images/                  # Medios e iconos de la app
 ├── tools/
 │   ├── build_test.py        # Comprobación de build/compilación sin versionado
-│   └── ci_validate.py       # Validación de manifiesto/CHANGELOG/docs usada por la CI
+│   ├── ci_validate.py       # Validación de manifiesto/CHANGELOG/docs usada por la CI
+│   ├── _doc_policy.py       # Reglas de documentación compartidas por la familia (copia de la de HYDRA-UMC-SDK, mantenida en sincronía)
+│   ├── _readme_parity.py    # Comprobación de que los ocho README comparten estructura (copia de la de HYDRA-UMC-SDK, mantenida en sincronía)
+│   └── hydra_project_tool.py # Los mismos comandos en todos los repositorios: validate, test, ci, version, status, bump
 ├── build.sh / build.bat     # venv + instalación editable + compile-check + tests
 ├── build-test.sh / .bat     # Solo validación de build, sin mutar nada
 ├── run.sh / run.bat         # Demo real: valida las diez fixtures (sin argumentos), o reenvía un comando CLI real

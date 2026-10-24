@@ -193,12 +193,14 @@ echte Befehlsoberfläche.
 ```
 HYDRA-UMC-CONNECTOR-HUB/
 ├── src/hydra_umc_connector_hub/
+│   ├── __init__.py          # Paketversion
 │   ├── schema.py            # Der echte adapter-manifest-Vertrag + struktureller Validator + JSON-Schema-Teilmengenprüfer
 │   ├── registry.py          # Lieferung 2: durchsucht ein Verzeichnis zu einem echten, stabilen, sortierten Katalog
 │   ├── catalog_server.py    # Lieferung 2: echter, nur-GET http.server, der den Katalog bereitstellt
 │   ├── sdk_gate.py          # Lieferung 3: echte evaluate_job()-Integration von HYDRA-UMC-SDK
 │   ├── certification.py     # Lieferung 4: echtes, nur anfügendes, von einem Menschen bezeugtes Zertifizierungsprotokoll
-│   └── cli.py               # Einstiegspunkt validate/catalog/serve-catalog/gate/certify/certifications
+│   ├── cli.py               # Einstiegspunkt validate/catalog/serve-catalog/gate/certify/certifications
+│   └── ledger.py            # Versiegelter, per Hash verketteter Zertifizierungsnachweis, damit "nur anhängen" geprüft und nicht nur versprochen werden kann
 ├── fixtures/                # Zehn echte, gültige Adapter-Manifeste (eines pro existierender Bridge)
 │   └── invalid/             # Fünf echte ungültige Manifeste, jedes mit einem eigenen Ablehnungsgrund
 ├── tests/                   # Echte Tests: Fixtures, ein echter http.server auf einem ephemeren Port, das echte installierte hydra-umc-sdk, und ein echtes Zertifizierungsprotokoll in einem temporären Verzeichnis
@@ -206,11 +208,16 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── ADAPTER_MANIFEST.md  # Der vollständige echte Vertrag, Feld für Feld
 │   ├── CAPABILITY_GATE.md   # Der eigene echte Schrankenvertrag von Lieferung 3 und seine eine benannte Vereinfachung
 │   ├── CERTIFICATION.md     # Der eigene echte Vertrag von Lieferung 4 und seine ehrliche Hardware-Verifizierungslücke
-│   └── CLI_REFERENCE.md     # Jeder Unterbefehl, seine Ausgabeformen, der Exit-Code-Vertrag
+│   ├── CLI_REFERENCE.md     # Jeder Unterbefehl, seine Ausgabeformen, der Exit-Code-Vertrag
+│   └── MATURITY_CRITERIA.md # Austrittskriterien der Reifestufe (was gelten muss, um eine Stufe aufzusteigen)
+├── schemas/             # adapter-manifest.v1.schema.json: das JSON-Schema eines Adapter-Manifests
 ├── images/                  # Medien und App-Icons
 ├── tools/
 │   ├── build_test.py        # Build-/Kompilierungsprüfung ohne Versionierung
-│   └── ci_validate.py       # Manifest-/CHANGELOG-/Doku-Validierung, die von der CI verwendet wird
+│   ├── ci_validate.py       # Manifest-/CHANGELOG-/Doku-Validierung, die von der CI verwendet wird
+│   ├── _doc_policy.py       # Von der Familie geteilte Dokumentationsregeln (Kopie der von HYDRA-UMC-SDK, synchron gehalten)
+│   ├── _readme_parity.py    # Prüfung, dass die acht READMEs dieselbe Struktur haben (Kopie der von HYDRA-UMC-SDK, synchron gehalten)
+│   └── hydra_project_tool.py # Dieselben Befehle in jedem Repository: validate, test, ci, version, status, bump
 ├── build.sh / build.bat     # venv + editierbare Installation + Compile-Check + Tests
 ├── build-test.sh / .bat     # Nur Build-Validierung, ohne etwas zu verändern
 ├── run.sh / run.bat         # Echte Demo: validiert die zehn Fixtures (ohne Argumente), oder leitet einen echten CLI-Befehl weiter

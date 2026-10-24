@@ -189,12 +189,14 @@ comandi completa e reale.
 ```
 HYDRA-UMC-CONNECTOR-HUB/
 ├── src/hydra_umc_connector_hub/
+│   ├── __init__.py          # Versione del pacchetto
 │   ├── schema.py            # Il vero contratto adapter-manifest + validatore strutturale + controllore di sottoinsieme JSON-Schema
 │   ├── registry.py          # Consegna 2: scansiona una directory in un vero catalogo stabile e ordinato
 │   ├── catalog_server.py    # Consegna 2: vero http.server solo GET che espone il catalogo
 │   ├── sdk_gate.py          # Consegna 3: vera integrazione evaluate_job() di HYDRA-UMC-SDK
 │   ├── certification.py     # Consegna 4: vero registro di certificazione solo in aggiunta, attestato da un umano
-│   └── cli.py               # Punto di ingresso validate/catalog/serve-catalog/gate/certify/certifications
+│   ├── cli.py               # Punto di ingresso validate/catalog/serve-catalog/gate/certify/certifications
+│   └── ledger.py            # Registro di certificazione sigillato e concatenato con hash, così che il "solo aggiunta" si possa verificare e non solo promettere
 ├── fixtures/                # Dieci veri manifesti adattatore validi (uno per ogni bridge esistente)
 │   └── invalid/             # Cinque veri manifesti invalidi, ognuno che dimostra una ragione di rifiuto
 ├── tests/                   # Test reali: fixture, un vero http.server su una porta effimera, il vero hydra-umc-sdk installato, e un vero registro di certificazione in una directory temporanea
@@ -202,11 +204,16 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── ADAPTER_MANIFEST.md  # Il contratto reale completo, campo per campo
 │   ├── CAPABILITY_GATE.md   # Il proprio contratto reale del cancello della Consegna 3 e la sua unica semplificazione nominata
 │   ├── CERTIFICATION.md     # Il proprio contratto reale della Consegna 4 e la sua onesta lacuna di verifica hardware
-│   └── CLI_REFERENCE.md     # Ogni sottocomando, le sue forme di output, il contratto dei codici di uscita
+│   ├── CLI_REFERENCE.md     # Ogni sottocomando, le sue forme di output, il contratto dei codici di uscita
+│   └── MATURITY_CRITERIA.md # Criteri di uscita della maturità (ciò che deve valere per salire di livello)
+├── schemas/             # adapter-manifest.v1.schema.json: lo schema JSON del manifesto di un adattatore
 ├── images/                  # Media e icone dell'app
 ├── tools/
 │   ├── build_test.py        # Controllo di build/compilazione senza versionamento
-│   └── ci_validate.py       # Validazione manifesto/CHANGELOG/docs usata dalla CI
+│   ├── ci_validate.py       # Validazione manifesto/CHANGELOG/docs usata dalla CI
+│   ├── _doc_policy.py       # Regole di documentazione condivise dalla famiglia (copia di quella di HYDRA-UMC-SDK, mantenuta sincronizzata)
+│   ├── _readme_parity.py    # Verifica che gli otto README abbiano la stessa struttura (copia di quella di HYDRA-UMC-SDK, mantenuta sincronizzata)
+│   └── hydra_project_tool.py # Gli stessi comandi in ogni repository: validate, test, ci, version, status, bump
 ├── build.sh / build.bat     # venv + installazione editabile + compile-check + test
 ├── build-test.sh / .bat     # Solo validazione di build, senza modificare nulla
 ├── run.sh / run.bat         # Demo reale: valida le dieci fixture (senza argomenti), oppure inoltra un vero comando CLI

@@ -185,12 +185,14 @@ CERTIFIED adapterId='cnc-grbl' certificationId='...' -> certifications/cnc-grbl_
 ```
 HYDRA-UMC-CONNECTOR-HUB/
 ├── src/hydra_umc_connector_hub/
+│   ├── __init__.py          # パッケージバージョン
 │   ├── schema.py            # 本物の adapter-manifest 契約 + 構造バリデーター + JSON-Schema サブセットチェッカー
 │   ├── registry.py          # 納品 2: ディレクトリを本物で安定してソートされたカタログにスキャン
 │   ├── catalog_server.py    # 納品 2: カタログを公開する本物の GET のみの http.server
 │   ├── sdk_gate.py          # 納品 3: HYDRA-UMC-SDK evaluate_job() との本物の統合
 │   ├── certification.py     # 納品 4: 人間が証言する、追記のみの本物の認証記録
-│   └── cli.py               # validate/catalog/serve-catalog/gate/certify/certifications エントリーポイント
+│   ├── cli.py               # validate/catalog/serve-catalog/gate/certify/certifications エントリーポイント
+│   └── ledger.py            # 封印されハッシュで連鎖した認証記録。「追記のみ」を約束ではなく検証できるようにする
 ├── fixtures/                # 10 件の本物で有効なアダプターマニフェスト(既存の各ブリッジに 1 件)
 │   └── invalid/             # 5 件の本物で無効なマニフェスト、それぞれが 1 つの拒否理由を示す
 ├── tests/                   # 本物のテスト: フィクスチャ、一時的なポート上の本物の http.server、実際にインストールされた hydra-umc-sdk、一時ディレクトリ内の本物の認証記録
@@ -198,11 +200,16 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── ADAPTER_MANIFEST.md  # 完全な本物の契約、フィールドごとの説明
 │   ├── CAPABILITY_GATE.md   # 納品 3 自身の本物のゲート契約とその唯一の明示された単純化
 │   ├── CERTIFICATION.md     # 納品 4 自身の本物の契約とその正直なハードウェア検証のギャップ
-│   └── CLI_REFERENCE.md     # すべてのサブコマンド、その出力形、終了コード契約
+│   ├── CLI_REFERENCE.md     # すべてのサブコマンド、その出力形、終了コード契約
+│   └── MATURITY_CRITERIA.md # 成熟度の終了基準 (一段上がるために満たすべき条件)
+├── schemas/             # adapter-manifest.v1.schema.json: アダプターマニフェストの JSON スキーマ
 ├── images/                  # メディアとアプリアイコン
 ├── tools/
 │   ├── build_test.py        # バージョン管理を伴わないビルド/コンパイルチェック
-│   └── ci_validate.py       # CI が使用するマニフェスト/CHANGELOG/ドキュメントの検証
+│   ├── ci_validate.py       # CI が使用するマニフェスト/CHANGELOG/ドキュメントの検証
+│   ├── _doc_policy.py       # ファミリー共通のドキュメント規則 (HYDRA-UMC-SDK のコピーで、同期を維持)
+│   ├── _readme_parity.py    # 8つの README が同じ構造であることの検査 (HYDRA-UMC-SDK のコピーで、同期を維持)
+│   └── hydra_project_tool.py # すべてのリポジトリで共通のコマンド: validate、test、ci、version、status、bump
 ├── build.sh / build.bat     # venv + 編集可能インストール + コンパイルチェック + テスト
 ├── build-test.sh / .bat     # 何も変更しない、ビルド検証のみ
 ├── run.sh / run.bat         # 本物のデモ: 10 件のフィクスチャを検証(引数なしの場合)、または本物の CLI コマンドを転送

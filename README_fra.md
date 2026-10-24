@@ -190,12 +190,14 @@ pour la surface de commandes complète et réelle.
 ```
 HYDRA-UMC-CONNECTOR-HUB/
 ├── src/hydra_umc_connector_hub/
+│   ├── __init__.py          # Version du paquet
 │   ├── schema.py            # Le vrai contrat adapter-manifest + validateur structurel + vérificateur de sous-ensemble JSON-Schema
 │   ├── registry.py          # Livraison 2 : scanne un répertoire vers un vrai catalogue stable et trié
 │   ├── catalog_server.py    # Livraison 2 : vrai http.server uniquement GET exposant le catalogue
 │   ├── sdk_gate.py          # Livraison 3 : vraie intégration evaluate_job() de HYDRA-UMC-SDK
 │   ├── certification.py     # Livraison 4 : vrai journal de certification en ajout seul, attesté par un humain
-│   └── cli.py               # Point d'entrée validate/catalog/serve-catalog/gate/certify/certifications
+│   ├── cli.py               # Point d'entrée validate/catalog/serve-catalog/gate/certify/certifications
+│   └── ledger.py            # Registre de certification scellé et chaîné par hachage, pour que le "ajout seulement" puisse être vérifié et pas seulement promis
 ├── fixtures/                # Dix vrais manifestes d'adaptateur valides (un par bridge existant)
 │   └── invalid/             # Cinq vrais manifestes invalides, chacun démontrant une raison de rejet
 ├── tests/                   # Vrais tests : fixtures, un vrai http.server sur un port éphémère, le vrai hydra-umc-sdk installé, et un vrai journal de certification dans un répertoire temporaire
@@ -203,11 +205,16 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── ADAPTER_MANIFEST.md  # Le contrat réel complet, champ par champ
 │   ├── CAPABILITY_GATE.md   # Le propre contrat réel de la barrière de la Livraison 3 et son unique simplification nommée
 │   ├── CERTIFICATION.md     # Le propre contrat réel de la Livraison 4 et son manque honnête de vérification matérielle
-│   └── CLI_REFERENCE.md     # Chaque sous-commande, ses formes de sortie, le contrat des codes de sortie
+│   ├── CLI_REFERENCE.md     # Chaque sous-commande, ses formes de sortie, le contrat des codes de sortie
+│   └── MATURITY_CRITERIA.md # Critères de sortie de maturité (ce qui doit être vrai pour monter d'un niveau)
+├── schemas/             # adapter-manifest.v1.schema.json : le schéma JSON du manifeste d'un adaptateur
 ├── images/                  # Médias et icônes de l'application
 ├── tools/
 │   ├── build_test.py        # Vérification de build/compilation sans versionnage
-│   └── ci_validate.py       # Validation manifeste/CHANGELOG/docs utilisée par la CI
+│   ├── ci_validate.py       # Validation manifeste/CHANGELOG/docs utilisée par la CI
+│   ├── _doc_policy.py       # Règles de documentation partagées par la famille (copie de celle de HYDRA-UMC-SDK, tenue synchronisée)
+│   ├── _readme_parity.py    # Contrôle que les huit README partagent la même structure (copie de celui de HYDRA-UMC-SDK, tenue synchronisée)
+│   └── hydra_project_tool.py # Les mêmes commandes dans chaque dépôt : validate, test, ci, version, status, bump
 ├── build.sh / build.bat     # venv + installation éditable + compile-check + tests
 ├── build-test.sh / .bat     # Validation de build uniquement, sans rien modifier
 ├── run.sh / run.bat         # Démo réelle : valide les dix fixtures (sans argument), ou relaie une vraie commande CLI
