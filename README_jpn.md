@@ -42,7 +42,7 @@ GPL-3.0-or-later - see LICENSE
 
 > **誠実性チェック - 今日実際に動くもの:** マニフェストのスキーマ/バリデータ（`schema.py`）、読み取り専用カタログ（`registry.py`、`catalog_server.py`）、SDK 安全ゲート統合（`sdk_gate.py`。実際にインストールされたチェックアウトに対して `HYDRA-UMC-SDK` 自身の本物の `evaluate_job()` を呼び出しており、モックでは決してない）、認証ログ（`certification.py`）、そして CLI（`cli.py`）は本物であり、188件の通過するテストで検証されている（`pytest tests/`。オプションの `[sdk]` エクストラをインストールした場合で、なければそのうち34件はスキップされる）。`certify` は人間が証言したエビデンスを記録するが、それを実際のハードウェアに対して独立に検証することは明示的に行わない - 10個のフィクスチャのどれの背後にも物理的な機械は存在せず、ここにあるどのアダプタも実際のデバイスと本当に通信するために使われたことは一度もない。`catalog`/`serve-catalog` は構造上 GET のみである（`catalog_server.py` には `do_POST`/`do_PUT` が一切ない）。詳細は上記のステータス欄と、これまでに実際に出荷された内容を記す `CHANGELOG.md` を参照。
 
-> **安全性とセキュリティの現状:** このエコシステムは認証された安全システムではありません。ハードウェアの E-STOP 経路、ファームウェアが強制する制限やインターロック、検証済みの動作コマンドはまだありません。ファームウェアイメージは CRC32 と共有鍵の HMAC-SHA256 で検査しており、非対称署名ではありません。TLS と相互 TLS は任意で、既定では無効です。独自基板はまだ実装も試験もされていません。ここに書かれた内容を人の安全のために頼る前に、[セキュリティベースライン](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md)と[脅威モデル](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md)をお読みください。
+> **安全性とセキュリティの現状:** このエコシステムは認証された安全システムではありません。ハードウェアの E-STOP 経路、ファームウェアが強制する制限やインターロック、検証済みの動作コマンドはまだありません。ファームウェアイメージは CRC-32 と Ed25519 署名で検査し、リリースビルドは公開済みの開発用鍵を拒否します(リレーの先のツールヘッドと拡張ボードは引き続き URTC のブートローダーを使い、署名ではなく共有鍵の HMAC-SHA256 を使います)。TLS と相互 TLS は任意で、既定では無効です。独自基板はまだ実装も試験もされていません。ここに書かれた内容を人の安全のために頼る前に、[セキュリティベースライン](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md)と[脅威モデル](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md)をお読みください。
 
 ---
 

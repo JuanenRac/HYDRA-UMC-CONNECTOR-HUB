@@ -31,7 +31,7 @@ GPL-3.0-or-later - see LICENSE
 
 > **诚实检查——今天真正可运行的部分：** 清单模式/校验器（`schema.py`）、只读目录（`registry.py`、`catalog_server.py`）、SDK 安全门集成（`sdk_gate.py`，它调用的是 `HYDRA-UMC-SDK` 自身真实的 `evaluate_job()`，针对的是一个真正安装好的检出版本，绝不是模拟）、认证日志（`certification.py`），以及 CLI（`cli.py`）都是真实的，并由 188 个通过的测试覆盖（`pytest tests/`，安装可选的 `[sdk]` 附加包时；没有它则跳过其中 34 个）。`certify` 会记录一份由人类见证的证据，但明确不会针对真实硬件对其进行独立验证——这 10 个 fixture 背后都没有实体机器，这里的任何适配器也从未被用来真正与一台真实设备通信过。`catalog`/`serve-catalog` 从设计上就只支持 GET（`catalog_server.py` 完全没有任何 `do_POST`/`do_PUT`）。详见上方的状态提示框，以及 `CHANGELOG.md` 中目前具体已交付的内容。
 
-> **安全与安防现状:**本生态系统不是经认证的安全系统。目前尚无硬件 E-STOP 通路,没有由固件强制执行的限位或联锁,也没有经过验证的运动指令;固件映像使用 CRC32 和共享密钥的 HMAC-SHA256 校验,而非非对称签名;TLS 与双向 TLS 均为可选项,默认关闭;自制电路板尚未组装或测试。在依赖此处任何说法来保障人身安全之前,请先阅读[安全基线](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md)和[威胁模型](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md)。
+> **安全与安防现状:**本生态系统不是经认证的安全系统。目前尚无硬件 E-STOP 通路,没有由固件强制执行的限位或联锁,也没有经过验证的运动指令;固件映像使用 CRC-32 和 Ed25519 签名校验,发布构建会拒绝已公开的开发密钥(中继之后的工具头和扩展板仍运行 URTC 的引导程序,它们使用共享密钥的 HMAC-SHA256 而不是签名);TLS 与双向 TLS 均为可选项,默认关闭;自制电路板尚未组装或测试。在依赖此处任何说法来保障人身安全之前,请先阅读[安全基线](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md)和[威胁模型](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md)。
 
 ---
 
