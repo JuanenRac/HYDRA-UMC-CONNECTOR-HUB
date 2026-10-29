@@ -15,6 +15,8 @@ from pathlib import Path
 
 from hydra_umc_connector_hub import schema as reference
 
+import _schema_subset
+
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED = json.loads((ROOT / "schemas" / "adapter-manifest.v1.schema.json").read_text(encoding="utf-8"))
 
@@ -64,6 +66,32 @@ class PublishedSchemaTests(unittest.TestCase):
             except json.JSONDecodeError:
                 continue  # malformed.json: not even JSON
             self.assertTrue(reference.validate_adapter_manifest(manifest), path.name)
+
+class PublishedSchemaAgainstFixturesTests(unittest.TestCase):
+    """The published schema and the validator are run on the same files and must agree."""
+
+    def test_the_published_schema_accepts_every_valid_fixture(self):
+        for path in sorted((ROOT / "fixtures").glob("*.json")):
+            manifest = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(_schema_subset.errors(manifest, PUBLISHED), [], path.name)
+
+    def test_the_published_schema_rejects_every_invalid_fixture_the_validator_rejects(self):
+        for path in sorted((ROOT / "fixtures" / "invalid").glob("*.json")):
+            try:
+                manifest = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            self.assertTrue(reference.validate_adapter_manifest(manifest), path.name)
+            self.assertTrue(_schema_subset.errors(manifest, PUBLISHED), f"{path.name}: the schema accepts what the validator refuses")
+
+    def test_the_subset_evaluator_itself_refuses_a_keyword_it_does_not_know(self):
+        with self.assertRaises(ValueError):
+            _schema_subset.errors({}, {"type": "object", "oneOf": []})
+
+    def test_the_subset_evaluator_checks_conditional_requirements(self):
+        schema = {"type": "object", "if": {"properties": {"m": {"enum": ["w"]}}, "required": ["m"]}, "then": {"required": ["x"]}}
+        self.assertTrue(_schema_subset.errors({"m": "w"}, schema))
+        self.assertEqual(_schema_subset.errors({"m": "r"}, schema), [])
 
 
 if __name__ == "__main__":
