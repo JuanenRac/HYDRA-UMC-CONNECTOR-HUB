@@ -1,0 +1,116 @@
+{
+  "repo": "HYDRA-UMC-CONNECTOR-HUB",
+  "ecosystem": "hydra",
+  "tagline": "Adapter manifests in, a read-only catalogue, the SDK gate and a sealed certification record out.",
+  "description": "HYDRA-UMC-CONNECTOR-HUB is a registry of adapter manifests for external machines. It validates each manifest against one contract, serves the catalogue read only, passes a requested capability through the real evaluate_job gate of HYDRA-UMC-SDK and records a human-attested certification in a hash-chained log. It never touches a machine: it has no network write path and does not check the evidence against real hardware.",
+  "columns": [
+    "WHO USES IT",
+    "THIS REPOSITORY",
+    "WHAT IT DEPENDS ON"
+  ],
+  "nodes": [
+    {
+      "id": "ops",
+      "column": 0,
+      "level": "external",
+      "title": "Integrator, dashboards",
+      "lines": [
+        "validate, catalog, gate and",
+        "certify on the command line"
+      ],
+      "title_size": 12
+    },
+    {
+      "id": "cat",
+      "column": 1,
+      "level": "contract",
+      "title": "schema.py, registry.py",
+      "lines": [
+        "one manifest contract, ten",
+        "real fixtures, GET-only catalogue"
+      ],
+      "code": [
+        "src/hydra_umc_connector_hub/schema.py::MAX_MANIFEST_BYTES",
+        "src/hydra_umc_connector_hub/registry.py",
+        "src/hydra_umc_connector_hub/catalog_server.py"
+      ]
+    },
+    {
+      "id": "gate",
+      "column": 1,
+      "level": "contract",
+      "title": "sdk_gate.py",
+      "lines": [
+        "calls the SDK evaluate_job();",
+        "no second gate"
+      ],
+      "code": [
+        "src/hydra_umc_connector_hub/sdk_gate.py::DEFAULT_MAX_REQUEST_AGE_SECONDS"
+      ]
+    },
+    {
+      "id": "cert",
+      "column": 1,
+      "level": "untested",
+      "title": "certification.py, ledger.py",
+      "lines": [
+        "human-attested record in a",
+        "keyed hash chain"
+      ],
+      "code": [
+        "src/hydra_umc_connector_hub/certification.py",
+        "src/hydra_umc_connector_hub/ledger.py::MIN_KEY_LENGTH"
+      ]
+    },
+    {
+      "id": "sdk",
+      "column": 2,
+      "level": "external",
+      "title": "HYDRA-UMC-SDK",
+      "lines": [
+        "the evaluate_job() gate (the",
+        "optional `sdk` extra)"
+      ]
+    },
+    {
+      "id": "hw",
+      "column": 2,
+      "level": "untested",
+      "title": "A real machine",
+      "lines": [
+        "not touched; the evidence is",
+        "never checked against it"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "ops",
+      "to": "cat",
+      "level": "tested"
+    },
+    {
+      "from": "cat",
+      "to": "gate",
+      "level": "tested"
+    },
+    {
+      "from": "gate",
+      "to": "cert",
+      "level": "tested"
+    },
+    {
+      "from": "gate",
+      "to": "sdk",
+      "label": "evaluate_job",
+      "level": "contract"
+    },
+    {
+      "from": "cert",
+      "to": "hw",
+      "label": "attested",
+      "level": "untested"
+    }
+  ],
+  "footer": "Nothing here talks to a machine: the certification stores what a person attests."
+}

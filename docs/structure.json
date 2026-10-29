@@ -1,0 +1,364 @@
+{
+  "repo": "HYDRA-UMC-CONNECTOR-HUB",
+  "ecosystem": "hydra",
+  "svg": "en",
+  "cards": [
+    {
+      "name": "src/hydra_umc_connector_hub/",
+      "span": 3,
+      "accent": "a",
+      "sub": {
+        "en": "the library and command line, in Python",
+        "es": "la biblioteca y la línea de órdenes, en Python",
+        "de": "Bibliothek und Kommandozeile in Python",
+        "fr": "la bibliothèque et la ligne de commande, en Python",
+        "it": "la libreria e la riga di comando, in Python",
+        "ja": "Python のライブラリとコマンドライン",
+        "zh": "用 Python 编写的库与命令行",
+        "pt": "a biblioteca e a linha de comandos, em Python"
+      },
+      "rows": [
+        {
+          "name": "schema.py",
+          "desc": {
+            "en": "the adapter-manifest contract and its validator",
+            "es": "el contrato del manifiesto de adaptador y su validador",
+            "de": "der Adapter-Manifest-Vertrag und sein Prüfer",
+            "fr": "le contrat du manifeste d'adaptateur et son validateur",
+            "it": "il contratto del manifesto di adattatore e il suo validatore",
+            "ja": "アダプターマニフェストの契約と検証器",
+            "zh": "适配器清单的契约及其校验器",
+            "pt": "o contrato do manifesto de adaptador e o seu validador"
+          }
+        },
+        {
+          "name": "registry.py",
+          "desc": {
+            "en": "registers the real bridges as adapters",
+            "es": "registra los bridges reales como adaptadores",
+            "de": "meldet die echten Bridges als Adapter an",
+            "fr": "enregistre les vrais bridges comme adaptateurs",
+            "it": "registra i veri bridge come adattatori",
+            "ja": "実際のブリッジをアダプターとして登録",
+            "zh": "把真实的桥接登记为适配器",
+            "pt": "regista os bridges reais como adaptadores"
+          }
+        },
+        {
+          "name": "catalog_server.py",
+          "desc": {
+            "en": "the GET-only catalogue endpoint",
+            "es": "el endpoint de catálogo solo GET",
+            "de": "der Katalog-Endpunkt nur mit GET",
+            "fr": "le point d'accès du catalogue en GET seul",
+            "it": "l'endpoint del catalogo solo GET",
+            "ja": "GET 専用のカタログエンドポイント",
+            "zh": "仅 GET 的目录端点",
+            "pt": "o endpoint do catálogo só GET"
+          }
+        },
+        {
+          "name": "sdk_gate.py",
+          "desc": {
+            "en": "calls the SDK's own evaluate_job()",
+            "es": "llama al evaluate_job() propio del SDK",
+            "de": "ruft das eigene evaluate_job() des SDK auf",
+            "fr": "appelle le evaluate_job() propre du SDK",
+            "it": "chiama l'evaluate_job() proprio dell'SDK",
+            "ja": "SDK 自身の evaluate_job() を呼ぶ",
+            "zh": "调用 SDK 自己的 evaluate_job()",
+            "pt": "chama o próprio evaluate_job() do SDK"
+          }
+        },
+        {
+          "name": "certification.py, ledger.py",
+          "desc": {
+            "en": "certification records in a sealed hash chain",
+            "es": "registros de certificación en una cadena de hash sellada",
+            "de": "Zertifizierungsprotokolle in einer versiegelten Hash-Kette",
+            "fr": "enregistrements de certification dans une chaîne de hachage scellée",
+            "it": "registri di certificazione in una catena di hash sigillata",
+            "ja": "封印されたハッシュチェーンの認証記録",
+            "zh": "封存哈希链中的认证记录",
+            "pt": "registos de certificação numa cadeia de hash selada"
+          },
+          "tree_name": "certification.py ledger.py"
+        },
+        {
+          "name": "cli.py",
+          "desc": {
+            "en": "validate, catalog, serve-catalog, gate, certify",
+            "es": "validate, catalog, serve-catalog, gate, certify",
+            "de": "validate, catalog, serve-catalog, gate, certify",
+            "fr": "validate, catalog, serve-catalog, gate, certify",
+            "it": "validate, catalog, serve-catalog, gate, certify",
+            "ja": "validate, catalog, serve-catalog, gate, certify",
+            "zh": "validate, catalog, serve-catalog, gate, certify",
+            "pt": "validate, catalog, serve-catalog, gate, certify"
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "tests, docs and tools",
+        "es": "pruebas, docs y herramientas",
+        "de": "Tests, Doku und Werkzeuge",
+        "fr": "tests, docs et outils",
+        "it": "test, documenti e strumenti",
+        "ja": "テスト・文書・ツール",
+        "zh": "测试、文档和工具",
+        "pt": "testes, docs e ferramentas"
+      },
+      "kind": "group",
+      "span": 3,
+      "accent": "b",
+      "columns": 2,
+      "rows": [
+        {
+          "name": "tests/",
+          "desc": {
+            "en": "188 tests",
+            "es": "188 pruebas",
+            "de": "188 Tests",
+            "fr": "188 tests",
+            "it": "188 test",
+            "ja": "188 件",
+            "zh": "188 项测试",
+            "pt": "188 testes"
+          }
+        },
+        {
+          "name": "docs/",
+          "desc": {
+            "en": "manifest, gate, certification and maturity guides",
+            "es": "guías de manifiesto, puerta, certificación y madurez",
+            "de": "Leitfäden zu Manifest, Tor, Zertifizierung und Reife",
+            "fr": "guides du manifeste, de la porte, de la certification et de la maturité",
+            "it": "guide su manifesto, porta, certificazione e maturità",
+            "ja": "マニフェスト、ゲート、認証、成熟度のガイド",
+            "zh": "清单、关口、认证与成熟度指南",
+            "pt": "guias de manifesto, porta, certificação e maturidade"
+          }
+        },
+        {
+          "name": "fixtures/",
+          "desc": {
+            "en": "ten real adapter manifests and the invalid ones",
+            "es": "diez manifiestos de adaptador reales y los inválidos",
+            "de": "zehn echte Adapter-Manifeste und die ungültigen",
+            "fr": "dix vrais manifestes d'adaptateur et les invalides",
+            "it": "dieci veri manifesti di adattatore e quelli non validi",
+            "ja": "実際のアダプターマニフェスト 10 件と無効な例",
+            "zh": "十个真实的适配器清单及无效示例",
+            "pt": "dez manifestos de adaptador reais e os inválidos"
+          }
+        },
+        {
+          "name": "schemas/",
+          "desc": {
+            "en": "the published JSON Schema",
+            "es": "el JSON Schema publicado",
+            "de": "das veröffentlichte JSON-Schema",
+            "fr": "le JSON Schema publié",
+            "it": "il JSON Schema pubblicato",
+            "ja": "公開された JSON スキーマ",
+            "zh": "已发布的 JSON Schema",
+            "pt": "o JSON Schema publicado"
+          }
+        },
+        {
+          "name": "tools/",
+          "desc": {
+            "en": "project tools, CI checks, version bump",
+            "es": "herramientas del proyecto, comprobaciones de CI, subida de versión",
+            "de": "Projektwerkzeuge, CI-Prüfungen, Versionserhöhung",
+            "fr": "outils du projet, vérifications CI, montée de version",
+            "it": "strumenti del progetto, controlli CI, aumento di versione",
+            "ja": "プロジェクトのツール、CI の検査、バージョンの引き上げ",
+            "zh": "项目工具、CI 检查、版本提升",
+            "pt": "ferramentas do projeto, verificações de CI, subida de versão"
+          },
+          "tree_desc": {
+            "en": "build and test runner, version bump, CI validator, README and picture generators and checks",
+            "es": "ejecutor de compilación y pruebas, subida de versión, validador de CI, generadores y comprobaciones de README e imágenes",
+            "de": "Build- und Testläufer, Versionserhöhung, CI-Prüfer, README- und Bildgeneratoren samt Prüfungen",
+            "fr": "exécuteur de build et de tests, montée de version, validateur CI, générateurs et vérifications des README et des images",
+            "it": "esecutore di build e test, aumento di versione, validatore CI, generatori e controlli di README e immagini",
+            "ja": "ビルド・テスト実行、バージョン引き上げ、CI 検証、README と図の生成・検査",
+            "zh": "构建与测试运行器、版本提升、CI 校验、README 与图片的生成和检查",
+            "pt": "executor de compilação e testes, subida de versão, validador de CI, geradores e verificações de README e imagens"
+          }
+        },
+        {
+          "name": "images/",
+          "desc": {
+            "en": "banner and the pictures of the README",
+            "es": "banner y las imágenes del README",
+            "de": "Banner und die Bilder der README",
+            "fr": "bannière et images du README",
+            "it": "banner e immagini del README",
+            "ja": "バナーと README の図",
+            "zh": "横幅图与 README 的图片",
+            "pt": "faixa e imagens do README"
+          }
+        },
+        {
+          "name": ".github/",
+          "desc": {
+            "en": "CI workflow and issue templates",
+            "es": "flujo de CI y plantillas de incidencias",
+            "de": "CI-Workflow und Issue-Vorlagen",
+            "fr": "workflow CI et modèles de tickets",
+            "it": "workflow CI e modelli di segnalazione",
+            "ja": "CI ワークフローと Issue テンプレート",
+            "zh": "CI 工作流和 Issue 模板",
+            "pt": "fluxo de CI e modelos de questões"
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "project files",
+        "es": "ficheros del proyecto",
+        "de": "Projektdateien",
+        "fr": "fichiers du projet",
+        "it": "file del progetto",
+        "ja": "プロジェクトのファイル",
+        "zh": "项目文件",
+        "pt": "ficheiros do projeto"
+      },
+      "kind": "group",
+      "span": 3,
+      "accent": "c",
+      "columns": 2,
+      "rows": [
+        {
+          "name": "pyproject.toml",
+          "desc": {
+            "en": "package metadata and dependencies",
+            "es": "metadatos del paquete y dependencias",
+            "de": "Paketmetadaten und Abhängigkeiten",
+            "fr": "métadonnées du paquet et dépendances",
+            "it": "metadati del pacchetto e dipendenze",
+            "ja": "パッケージのメタデータと依存関係",
+            "zh": "包元数据与依赖",
+            "pt": "metadados do pacote e dependências"
+          }
+        },
+        {
+          "name": "hydra-umc.project.json",
+          "desc": {
+            "en": "manifest: version, maturity, family",
+            "es": "manifiesto: versión, madurez, familia",
+            "de": "Manifest: Version, Reifegrad, Familie",
+            "fr": "manifeste : version, maturité, famille",
+            "it": "manifesto: versione, maturità, famiglia",
+            "ja": "マニフェスト：バージョン・成熟度・ファミリー",
+            "zh": "清单：版本、成熟度、系列",
+            "pt": "manifesto: versão, maturidade, família"
+          }
+        },
+        {
+          "name": "CHANGELOG.md",
+          "desc": {
+            "en": "what changed in each version",
+            "es": "qué cambió en cada versión",
+            "de": "was sich in jeder Version geändert hat",
+            "fr": "ce qui a changé à chaque version",
+            "it": "cosa è cambiato in ogni versione",
+            "ja": "各バージョンの変更点",
+            "zh": "每个版本的变化",
+            "pt": "o que mudou em cada versão"
+          }
+        },
+        {
+          "name": "build.sh  build.bat",
+          "tree_name": "build.sh build.bat",
+          "desc": {
+            "en": "build scripts (they never change the version)",
+            "es": "scripts de compilación (nunca cambian la versión)",
+            "de": "Build-Skripte (ändern die Version nie)",
+            "fr": "scripts de build (ils ne changent jamais la version)",
+            "it": "script di build (non cambiano mai la versione)",
+            "ja": "ビルドスクリプト（バージョンは変えません）",
+            "zh": "构建脚本（从不改变版本）",
+            "pt": "scripts de compilação (nunca mudam a versão)"
+          }
+        },
+        {
+          "name": "build-test.sh  build-test.bat",
+          "tree_name": "build-test.sh build-test.bat",
+          "desc": {
+            "en": "build scripts (they never change the version)",
+            "es": "scripts de compilación (nunca cambian la versión)",
+            "de": "Build-Skripte (ändern die Version nie)",
+            "fr": "scripts de build (ils ne changent jamais la version)",
+            "it": "script di build (non cambiano mai la versione)",
+            "ja": "ビルドスクリプト（バージョンは変えません）",
+            "zh": "构建脚本（从不改变版本）",
+            "pt": "scripts de compilação (nunca mudam a versão)"
+          }
+        },
+        {
+          "name": "test.sh  test.bat",
+          "tree_name": "test.sh test.bat",
+          "desc": {
+            "en": "run the tests",
+            "es": "ejecutan las pruebas",
+            "de": "führen die Tests aus",
+            "fr": "lancent les tests",
+            "it": "eseguono i test",
+            "ja": "テストを実行",
+            "zh": "运行测试",
+            "pt": "executam os testes"
+          }
+        },
+        {
+          "name": "bump_version.py",
+          "desc": {
+            "en": "explicit version bump",
+            "es": "subida de versión explícita",
+            "de": "ausdrückliche Versionserhöhung",
+            "fr": "montée de version explicite",
+            "it": "aumento di versione esplicito",
+            "ja": "明示的なバージョン引き上げ",
+            "zh": "显式的版本提升",
+            "pt": "subida de versão explícita"
+          },
+          "tree_name": "bump_version.py / bump_manifest_version.py"
+        },
+        {
+          "name": "run.sh  run.bat",
+          "desc": {
+            "en": "the demo and the commands",
+            "es": "la demostración y las órdenes",
+            "de": "die Demo und die Befehle",
+            "fr": "la démonstration et les commandes",
+            "it": "la dimostrazione e i comandi",
+            "ja": "デモとコマンド",
+            "zh": "演示与命令",
+            "pt": "a demonstração e os comandos"
+          },
+          "tree_name": "run.sh run.bat"
+        },
+        {
+          "name": "SECURITY  SUPPORT  CONTRIBUTING  LICENSE",
+          "tree_name": "SECURITY.md SUPPORT.md CONTRIBUTING.md CODE_OF_CONDUCT.md LICENSE LICENSE.md",
+          "desc": {
+            "en": "community and licence files",
+            "es": "comunidad y licencia",
+            "de": "Community und Lizenz",
+            "fr": "communauté et licence",
+            "it": "comunità e licenza",
+            "ja": "コミュニティとライセンス",
+            "zh": "社区与许可证",
+            "pt": "comunidade e licença"
+          },
+          "tree_desc": ""
+        }
+      ]
+    }
+  ]
+}

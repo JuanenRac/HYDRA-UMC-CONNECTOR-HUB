@@ -1,3 +1,9 @@
+<!-- =============================================================================
+HYDRA-UMC-CONNECTOR-HUB - Adapter-manifest registry
+Copyright (C) JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
+GPL-3.0-or-later - see LICENSE
+============================================================================= -->
+
 <p align="center">
   <img src="images/HYDRA_UMC_BANNER.svg" alt="HYDRA-UMC-CONNECTOR-HUB banner" width="100%">
 </p>
@@ -9,11 +15,16 @@
 ### 🧩 Un registre déclaratif et un validateur pour les adaptateurs de machines externes
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Licencia-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
-  <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Python">
-  <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="stdlib-only core">
-  <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="4 livraisons sur 4">
+  <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
+  <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Language">
+  <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
+  <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
+  <img src="https://img.shields.io/badge/Tests-188%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Version-0.1.5-0f6cbd.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
+
+---
 
 > **État : v0.1.5, functional - Livraisons 1-4 sur 4 (schéma/CLI/
 > fixtures, catalogue en lecture seule, barrière de sécurité SDK,
@@ -32,9 +43,9 @@
 
 > **Vérification d'honnêteté - ce qui fonctionne réellement aujourd'hui :** le schéma/validateur de manifeste (`schema.py`), le catalogue en lecture seule (`registry.py`, `catalog_server.py`), l'intégration de la porte de sécurité du SDK (`sdk_gate.py`, appelant le propre `evaluate_job()` réel de `HYDRA-UMC-SDK` sur un checkout réellement installé, jamais une simulation), le journal de certification (`certification.py`), et la CLI (`cli.py`) sont réels et couverts par 188 tests qui passent (`pytest tests/`, avec l'extra optionnel `[sdk]` installé - 34 sont ignorés sans lui). `certify` enregistre une évidence attestée par un humain mais ne la vérifie explicitement pas de façon indépendante contre du matériel réel - il n'y a aucune machine physique derrière aucune des 10 fixtures, et aucun adaptateur ici n'a jamais été utilisé pour réellement parler à un vrai appareil. `catalog`/`serve-catalog` sont GET-only par construction (`catalog_server.py` n'a aucun `do_POST`/`do_PUT`). Voir l'encart Statut ci-dessus et `CHANGELOG.md` pour ce qui a été exactement livré jusqu'à présent.
 
----
-
 > **État de la sûreté et de la cybersécurité :** cet écosystème n'est pas un système de sécurité certifié. Il n'existe pas encore de chaîne d'E-STOP matérielle, ni de limites ou de verrouillages imposés par le firmware, ni de commande de mouvement vérifiée ; les images de firmware sont contrôlées par CRC32 et un HMAC-SHA256 à clé partagée, pas par une signature asymétrique ; TLS et TLS mutuel sont optionnels et désactivés par défaut ; aucune carte propre n'a encore été assemblée ni testée. Lisez la [base de sécurité](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md) et le [modèle de menaces](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md) avant de vous fier à une affirmation d'ici pour la sécurité d'une personne.
+
+---
 
 ## 📋 En un coup d'œil
 
@@ -42,10 +53,12 @@
 |---|---|
 | Version | `0.1.5` |
 | Maturité | Fonctionnel |
-| Tests | 165 (`pytest tests/`) |
+| Tests | 188 (`python -m pytest -q tests`) |
 | Technologie | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | Cible | Le PC de la personne qui l'utilise |
 | Sur matériel réel | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
+
+**Aller à :** [Présentation](#-présentation) · [Architecture](#-architecture) · [Sécurité et protection](#-sécurité-et-protection) · [Interfaces](#-interfaces) · [Configuration](#-configuration) · [Démarrage rapide](#-démarrage-rapide) · [Tests](#-tests) · [Dépannage](#-dépannage) · [Structure du dépôt](#-structure-du-dépôt) · [Projets liés](#-projets-liés)
 
 ## 🚦 État du projet
 
@@ -56,11 +69,11 @@ Chaque ligne est une partie de ce dépôt et le feu dit où elle en est aujourd'
 | Domaine | État | Ce que cela veut dire ici |
 |---|---|---|
 | Logiciel | 🟡 | Fonctionne pour son usage principal ; la vérification d'honnêteté ci-dessus liste ce qui manque encore |
-| Tests | 🟢 | 165 tests automatiques, exécutés à chaque modification |
+| Tests | 🟢 | 188 tests automatiques, exécutés à chaque modification |
 | Matériel réel | 🔴 | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
 | Documentation | 🟢 | README en huit langues, vérifié par rapport au manifeste à chaque modification |
 
-## 1. 🛠️ VUE TECHNIQUE
+## 🎯 Présentation
 
 Aujourd'hui, choisir et configurer quel bridge utilise une cellule/
 machine donnée est réparti entre des README, des fichiers `.env` et des
@@ -123,7 +136,17 @@ Il n'existe ni invocation par défaut/sans argument ni GUI nulle part
 dans ce projet - voir [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)
 pour la surface de commandes complète et réelle.
 
-## 2. 🧱 ARCHITECTURE ET DÉCISIONS DE CONCEPTION
+## 🧩 Rôle dans HYDRA-UMC
+
+**HYDRA-UMC-CONNECTOR-HUB** décrit comment des machines extérieures se raccordent à l'écosystème, sans se connecter à aucune. Un adaptateur dit dans un manifeste ce qu'il est, ce qu'il sait faire (lire, écrire, abandonner) et comment il s'authentifie ; le hub le valide, le liste, fait passer une capacité demandée par la vraie porte du SDK et garde trace de qui a certifié quoi.
+
+## 🏛️ Architecture
+
+<p align="center">
+  <img src="images/architecture.svg" alt="HYDRA-UMC-CONNECTOR-HUB architecture" width="100%">
+</p>
+
+**Pourquoi il est construit ainsi**
 
 - **Un validateur écrit à la main, pas `jsonschema`.** Le propre
   contrat de la Livraison 1 est assez petit (14 champs de premier
@@ -185,44 +208,35 @@ pour la surface de commandes complète et réelle.
   vérifications structurelles, et `http.server`. Seul `gate` sur une
   capacité `write`/`abort` nécessite l'extra optionnel `[sdk]`.
 
-## 📂 STRUCTURE DES RÉPERTOIRES
+## 🔒 Sécurité et protection
 
-```
-HYDRA-UMC-CONNECTOR-HUB/
-├── src/hydra_umc_connector_hub/
-│   ├── __init__.py          # Version du paquet
-│   ├── schema.py            # Le vrai contrat adapter-manifest + validateur structurel + vérificateur de sous-ensemble JSON-Schema
-│   ├── registry.py          # Livraison 2 : scanne un répertoire vers un vrai catalogue stable et trié
-│   ├── catalog_server.py    # Livraison 2 : vrai http.server uniquement GET exposant le catalogue
-│   ├── sdk_gate.py          # Livraison 3 : vraie intégration evaluate_job() de HYDRA-UMC-SDK
-│   ├── certification.py     # Livraison 4 : vrai journal de certification en ajout seul, attesté par un humain
-│   ├── cli.py               # Point d'entrée validate/catalog/serve-catalog/gate/certify/certifications
-│   └── ledger.py            # Registre de certification scellé et chaîné par hachage, pour que le "ajout seulement" puisse être vérifié et pas seulement promis
-├── fixtures/                # Dix vrais manifestes d'adaptateur valides (un par bridge existant)
-│   └── invalid/             # Cinq vrais manifestes invalides, chacun démontrant une raison de rejet
-├── tests/                   # Vrais tests : fixtures, un vrai http.server sur un port éphémère, le vrai hydra-umc-sdk installé, et un vrai journal de certification dans un répertoire temporaire
-├── docs/
-│   ├── ADAPTER_MANIFEST.md  # Le contrat réel complet, champ par champ
-│   ├── CAPABILITY_GATE.md   # Le propre contrat réel de la barrière de la Livraison 3 et son unique simplification nommée
-│   ├── CERTIFICATION.md     # Le propre contrat réel de la Livraison 4 et son manque honnête de vérification matérielle
-│   ├── CLI_REFERENCE.md     # Chaque sous-commande, ses formes de sortie, le contrat des codes de sortie
-│   └── MATURITY_CRITERIA.md # Critères de sortie de maturité (ce qui doit être vrai pour monter d'un niveau)
-├── schemas/             # adapter-manifest.v1.schema.json : le schéma JSON du manifeste d'un adaptateur
-├── images/                  # Médias et icônes de l'application
-├── tools/
-│   ├── build_test.py        # Vérification de build/compilation sans versionnage
-│   ├── ci_validate.py       # Validation manifeste/CHANGELOG/docs utilisée par la CI
-│   ├── _doc_policy.py       # Règles de documentation partagées par la famille (copie de celle de HYDRA-UMC-SDK, tenue synchronisée)
-│   ├── _readme_parity.py    # Contrôle que les huit README partagent la même structure (copie de celui de HYDRA-UMC-SDK, tenue synchronisée)
-│   └── hydra_project_tool.py # Les mêmes commandes dans chaque dépôt : validate, test, ci, version, status, bump
-├── build.sh / build.bat     # venv + installation éditable + compile-check + tests
-├── build-test.sh / .bat     # Validation de build uniquement, sans rien modifier
-├── run.sh / run.bat         # Démo réelle : valide les dix fixtures (sans argument), ou relaie une vraie commande CLI
-├── bump_version.py          # Incrément de version type compteur kilométrique (exécuté seulement par la commande `bump` explicite)
-└── bump_manifest_version.py # Synchronise la version de hydra-umc.project.json avec la native (--sync)
-```
+| Menace | Défense | Où |
+|---|---|---|
+| Un adaptateur qui se fait passer pour un autre projet | Le projet propriétaire doit respecter `^(HYDRA-UMC\|URTC)(-[A-Z0-9-]+)?$` et, avec `--ecosystem-root`, il est contrôlé contre le `hydra-umc.project.json` de ce dépôt | `schema.py`, `cli.py` |
+| Des identifiants dans un manifeste, un manifeste énorme, un mode inconnu | `authenticationRef` n'accepte que les préfixes `env:`, `secret-store:`, `vault:` ou `none:` (jamais le secret lui-même) ; un manifeste fait 1 000 000 octets au plus ; les modes de capacité sont `read`, `write` et `abort`, l'idempotence est `none`, `idempotent`, `at-least-once` ou `exactly-once` | `schema.py` |
+| Appeler un adaptateur sans la porte, une requête ancienne | `gate` appelle le `evaluate_job()` propre du SDK et jamais une seconde implémentation ; il exige `--allow-unobserved` pour croire un état déclaré, et `--human-confirmed`, `--safety-gate` et `--permission` selon le manifeste ; une requête de plus de 30 secondes ou en avance de plus de 5 secondes est refusée | `sdk_gate.py`, `cli.py` |
+| Des enregistrements de certification altérés et une écriture par le réseau | Les enregistrements forment une chaîne de hachage scellée par une clé d'au moins 16 caractères (`.chain-head.json`, `.chain.lock`) et `verify --strict` échoue devant un enregistrement hors de la chaîne ; `catalog` et `serve-catalog` sont en GET seul : aucun chemin d'écriture par le réseau n'existe dans le projet | `ledger.py`, `catalog_server.py` |
 
-## ⚙️ COMPILATION ET EXÉCUTION
+**Ce qu'il ne fait jamais :** il ne touche jamais une machine, et une certification garde ce qu'une personne atteste : la preuve n'est pas vérifiée contre du matériel réel (voir `docs/CERTIFICATION.md`).
+
+## 🔌 Interfaces
+
+La commande `hydra-umc-connector-hub` (ou `./run.sh`) ; la référence complète est `docs/CLI_REFERENCE.md`. Le catalogue est aussi servi en HTTP, GET seul, sur `127.0.0.1:8801` par défaut.
+
+| Topic ou route | Ce qu'il porte |
+|---|---|
+| `validate MANIFEST...` | contrôler des manifestes contre le contrat |
+| `catalog --registry-dir DIR`, `serve-catalog --registry-dir DIR --port 8801` | lister les adaptateurs, ou servir la même liste en GET (`--ecosystem-root` contrôle aussi les projets propriétaires) |
+| `gate MANIFEST --capability ... --job-id ... --idempotency-key ... --source ... --cell-state ... --machine-state ...` | faire passer une capacité par la porte du SDK (`--param k=v`, `--evidence-file`, `--allow-unobserved`, `--human-confirmed`, `--safety-gate`, `--permission`) |
+| `certify`, `certifications`, `verify --strict` | enregistrer l'attestation d'une personne dans la chaîne de hachage, lister les enregistrements, vérifier la chaîne |
+
+## ⚙️ Configuration
+
+Il n'y a pas de variables d'environnement propres : le dossier du registre, l'hôte et le port du catalogue (`--registry-dir`, `--host`, `--port`) et la clé de la chaîne de certification (16 caractères au minimum) sont des arguments de la ligne de commande. Les identifiants d'un adaptateur ne sont jamais écrits dans son manifeste, seulement une référence à leur emplacement.
+
+## 🚀 Démarrage rapide
+
+Nécessite Python 3.11 ou plus récent ; le cœur n'utilise que la bibliothèque standard (l'extra `sdk`, `pip install -e ".[sdk]"`, n'est nécessaire que pour `gate` sur une capacité d'écriture ou d'abandon).
 
 ```bash
 chmod +x build.sh   # une seule fois
@@ -272,7 +286,65 @@ suite de tests locale complète.
   [docs/CERTIFICATION.md](docs/CERTIFICATION.md) pour les valeurs/formes
   exactes attendues.
 
-## 🚀 FEUILLE DE ROUTE
+## 🧪 Tests
+
+188 tests automatiques s'exécutent avec `python -m pytest -q tests` (39 d'entre eux exigent l'extra `sdk` et sont ignorés sans lui) : le schéma et le JSON Schema publié, le catalogue, la porte du SDK, la chaîne de certification, la ligne de commande et les entrées hostiles. Ni matériel ni réseau extérieur.
+
+La CI exécute `HYDRA_UMC_CI=1 python tools/ci_validate.py`, qui vérifie le manifeste, les documents, les huit README et les images.
+
+## 🏗️ Compilation et publication
+
+Il n'y a rien à compiler pour une publication : `build.sh` / `build.bat` créent l'environnement virtuel, installent le paquet en mode éditable et lancent les tests, et `build-test` ne fait que vérifier. Construire ne change jamais la version ; seul `python tools/hydra_project_tool.py bump` la monte, et il fait avancer aussi le journal des modifications. La version du paquet, du manifeste et du journal doit concorder, sinon `ci_validate.py` échoue.
+
+## 🩺 Dépannage
+
+| Vous voyez | Parce que | Faites |
+|---|---|---|
+| `INVALID` on a manifest | Le manifeste viole le contrat : un mauvais projet propriétaire, un secret dans `authenticationRef`, un mode inconnu ou plus de 1 000 000 octets | Lisez le message de `validate` ; `./run.sh validate fixtures/invalid/*.json` montre chaque type d'échec |
+| `gate` refuses a write or abort capability | Le SDK n'est pas installé, ou l'état n'a pas été observé, ou une confirmation exigée par le manifeste manque | `pip install -e ".[sdk]"` ; donnez `--observed-machine-state`, ou `--allow-unobserved` si vous acceptez l'état déclaré ; ajoutez `--human-confirmed`, `--safety-gate` et `--permission` selon la demande |
+| `verify --strict` fails | Un enregistrement de certification est hors de la chaîne de hachage ou la clé est fausse | Utilisez la clé avec laquelle la chaîne a été scellée (16 caractères au minimum) ; un enregistrement ajouté ou modifié à la main est hors de la chaîne par construction |
+
+## 📂 Structure du dépôt
+
+<p align="center">
+  <img src="images/repository-structure.svg" alt="Repository structure of HYDRA-UMC-CONNECTOR-HUB" width="100%">
+</p>
+
+<details>
+<summary>Version texte de l'arborescence</summary>
+
+```text
+HYDRA-UMC-CONNECTOR-HUB/
+├── src/hydra_umc_connector_hub/
+│   ├── schema.py                                le contrat du manifeste d'adaptateur et son validateur
+│   ├── registry.py                              enregistre les vrais bridges comme adaptateurs
+│   ├── catalog_server.py                        le point d'accès du catalogue en GET seul
+│   ├── sdk_gate.py                              appelle le evaluate_job() propre du SDK
+│   ├── certification.py ledger.py               enregistrements de certification dans une chaîne de hachage scellée
+│   └── cli.py                                   validate, catalog, serve-catalog, gate, certify
+├── tests/                                       188 tests
+├── docs/                                        guides du manifeste, de la porte, de la certification et de la maturité
+├── fixtures/                                    dix vrais manifestes d'adaptateur et les invalides
+├── schemas/                                     le JSON Schema publié
+├── tools/                                       exécuteur de build et de tests, montée de version, validateur CI, générateurs et vérifications des README et des images
+├── images/                                      bannière et images du README
+├── .github/                                     workflow CI et modèles de tickets
+├── pyproject.toml                               métadonnées du paquet et dépendances
+├── hydra-umc.project.json                       manifeste : version, maturité, famille
+├── CHANGELOG.md                                 ce qui a changé à chaque version
+├── build.sh build.bat                           scripts de build (ils ne changent jamais la version)
+├── build-test.sh build-test.bat                 scripts de build (ils ne changent jamais la version)
+├── test.sh test.bat                             lancent les tests
+├── bump_version.py / bump_manifest_version.py   montée de version explicite
+├── run.sh run.bat                               la démonstration et les commandes
+└── SECURITY.md SUPPORT.md CONTRIBUTING.md CODE_OF_CONDUCT.md LICENSE LICENSE.md
+```
+
+</details>
+
+## 🗺️ Feuille de route et limites connues
+
+**Limites connues aujourd'hui**
 
 Les quatre livraisons du plan nommé dans le propre manifeste et
 CHANGELOG de ce projet expédient maintenant du code réel et testé. Ce
@@ -304,7 +376,11 @@ qui reste, dit honnêtement :
   connues - il n'existe ici aucun chemin de code qui les récupère en
   direct depuis HYDRA-UMC-SERVER ou un service de zones de sécurité.
 
-## 🔗 Projets Liés
+## 🌍 Langues
+
+Ce README et les documents du dépôt existent en huit langues : anglais, espagnol, allemand, français, italien, japonais, chinois et portugais (Portugal). Ils sont écrits ensemble et la CI vérifie que les huit fichiers ont les mêmes sections et les mêmes liens. Ce dépôt n'a ni écran ni catalogue de messages propre, il n'y a donc aucune chaîne d'interface à traduire.
+
+## 🔗 Projets liés
 
 Ce projet fait partie de l'écosystème robotique HYDRA-UMC du même auteur (JuanenRac / Electro Hobby 3D). Bon à savoir, car une demande pourrait en réalité concerner l'un de ceux-ci plutôt que ce dépôt.
 
@@ -393,24 +469,31 @@ Ce projet fait partie de l'écosystème robotique HYDRA-UMC du même auteur (Jua
 - **[URTC-SMART-RACK](https://github.com/JuanenRac/URTC-SMART-RACK)** — firmware pour un rack de montage de cartes avec décodage réel d'ID d'outil et logique de préchauffage Smart Idle.
 - **[URTC-VISION-TOOL](https://github.com/JuanenRac/URTC-VISION-TOOL)** — firmware plus un vrai compagnon de vision Python pour une tête d'outil d'inspection thermique/RGB.
 
----
+## 📚 Documentation
 
-## 📚 Documentation & Communauté
+Où lire la suite :
 
-- **[docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md)** — le contrat réel complet, champ par champ, et pourquoi `authenticationRef` est une référence.
-- **[docs/CAPABILITY_GATE.md](docs/CAPABILITY_GATE.md)** — la propre intégration réelle de la Livraison 3 avec la barrière de sécurité de HYDRA-UMC-SDK et son unique simplification nommée.
-- **[docs/CERTIFICATION.md](docs/CERTIFICATION.md)** — le propre contrat réel de journal de certification de la Livraison 4 et son manque honnête de vérification matérielle.
-- **[docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md)** — chaque sous-commande, ses formes de sortie, et le contrat des codes de sortie.
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — pile technologique et lignes directrices de codage pour une pull request.
-- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** — les normes de comportement attendues dans cette communauté.
-- **[SECURITY.md](SECURITY.md)** — comment signaler une vulnérabilité, et les véritables axes de sécurité de ce projet.
-- **[SUPPORT.md](SUPPORT.md)** — où poser des questions et signaler des bugs.
+* [docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md) - le contrat du manifeste d'adaptateur champ par champ
+* [docs/CAPABILITY_GATE.md](docs/CAPABILITY_GATE.md) - comment une capacité passe la porte du SDK
+* [docs/CERTIFICATION.md](docs/CERTIFICATION.md) - ce qu'est et n'est pas un enregistrement de certification
+* [docs/MATURITY_CRITERIA.md](docs/MATURITY_CRITERIA.md) - quand un adaptateur compte comme plus mûr
+* [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) - chaque commande et option, avec des sorties réelles capturées
+* [Base de sécurité de l'écosystème](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md)
+* [Modèle de menaces de l'écosystème](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md)
+* [Journal des modifications de ce dépôt](CHANGELOG.md)
+* [Licence de ce dépôt](LICENSE.md)
+
+## 🤝 Contribuer et communauté
+
+* Avant une pull request, exécutez `HYDRA_UMC_CI=1 py -3 tools/ci_validate.py` (ou `HYDRA_UMC_CI=1 python3 tools/ci_validate.py`) : il doit afficher `CI_VALIDATION=PASS`. N'exécutez pas `build.sh` ni `build.bat` pour cette vérification ; compiler n'est pas vérifier.
+* Les huit README sont écrits à partir d'une source unique dans HYDRA-UMC-DOCS ; ne les modifiez pas à la main. Changez la source et réécrivez-les avec `tools/make_readmes.py`.
+* N'affirmez pas dans un README ce qui n'a pas tourné : écrivez « simulé » ou « non essayé sur matériel » quand c'est la vérité.
+* Voir [CONTRIBUTING.md](CONTRIBUTING.md), le [code de conduite](CODE_OF_CONDUCT.md), [SECURITY.md](SECURITY.md) et [SUPPORT.md](SUPPORT.md).
 
 ## 👤 AUTEUR
-**JuanenRac** (Electro Hobby 3D)
-📧 electrohobby3d@gmail.com
-📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
+
+**JuanenRac (Electro Hobby 3D)** · electrohobby3d@gmail.com
 
 ## 📜 LICENCE
 
-GPL-3.0-or-later (logiciel) / CC BY-SA 4.0 (documentation) - voir [LICENSE.md](LICENSE.md).
+GPL-3.0-or-later - [LICENSE](LICENSE).

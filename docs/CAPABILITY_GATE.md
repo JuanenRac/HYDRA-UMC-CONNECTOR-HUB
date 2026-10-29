@@ -64,7 +64,7 @@ negative and pass every freshness check); a little clock skew is allowed.
    or cell-mode restrictions declares `requiresHumanConfirmation: false`/
    `requiredCellState: "any"` for it (every real fixture in this repo
    already does exactly that); the code itself never assumes "abort is
-   exempt" (found while auditing the code).
+   exempt" (found while reading the code).
 5. **Only then does `write`/`abort` go through the real SDK gate.** A
    real `BridgeJob` is built from the request and passed to
    HYDRA-UMC-SDK's own `evaluate_job(job, cell_state)`:

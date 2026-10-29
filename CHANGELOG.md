@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **README in the universal layout:** the README and its seven translations follow the layout that the four families share (22 sections in a fixed order), with an architecture picture and a repository-structure picture drawn from `docs/architecture.json` and `docs/structure.json`; the CI validator checks both pictures and the file tree. Where the repository has a service or an MQTT transport, the README now says how to start it and which environment variables it reads.
+
 - **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.
 - The README in the eight languages says that the four planned deliveries are shipped in six parts, as the list that follows shows.
 
@@ -17,10 +19,6 @@ All notable changes to this project are documented here.
 - Added `tools/hydra_project_tool.py`: the same `validate`, `test`, `version`, `status` and `bump` commands in every repository. The checks run with `HYDRA_UMC_CI=1` and fail if the version changes; only `bump` changes it.
 - The SDK is now fetched at a release tag instead of the main branch, so a change of the SDK cannot break this repository by itself.
 - The SDK is pinned to 0.3.6, whose gate refuses a write when the caller did not read the state of the machine. A write capability now needs `observed_machine_state` (`--observed-machine-state` on the CLI); the claimed `machine_state` alone is refused. A caller that really cannot read the machine opts in explicitly with `allow_unobserved` (`--allow-unobserved`), and every answer now carries `observed` (false for that opt-in). The documentation and the tests cover the refusal, the opt-in and the observed case.
-
-## [Unreleased]
-
-(nothing yet)
 
 ## [0.1.4]
 
