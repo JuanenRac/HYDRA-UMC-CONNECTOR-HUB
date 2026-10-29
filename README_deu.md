@@ -70,7 +70,7 @@ sie, was kann sie wirklich tun (lesen/schreiben/abbrechen, mit welchem
 Risiko), und welches echte, bereits existierende Projekt dieses
 Ökosystems implementiert das bereits?**
 
-Diese Version liefert alle vier geplanten Lieferungen:
+Diese Version liefert alle vier geplanten Lieferungen, in sechs Teilen:
 
 1. **Ein echter, fester Vertrag** ([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md)) -
    das "CONTRATO MINIMO DE ADAPTADOR" dieses Ökosystems,

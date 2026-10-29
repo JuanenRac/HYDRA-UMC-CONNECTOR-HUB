@@ -70,7 +70,7 @@ domande: **quale protocollo parla, cosa può davvero fare
 (leggere/scrivere/abortire, con quale rischio), e quale progetto reale
 già esistente di questo ecosistema lo implementa già?**
 
-Questa versione spedisce tutte e quattro le consegne previste:
+Questa versione spedisce tutte e quattro le consegne previste, in sei parti:
 
 1. **Un contratto reale e fisso** ([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md)) -
    il "CONTRATO MINIMO DE ADAPTADOR" di questo

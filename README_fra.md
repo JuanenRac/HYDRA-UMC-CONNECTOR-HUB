@@ -71,7 +71,7 @@ protocole parle-t-elle, que peut-elle vraiment faire (lire/écrire/
 avorter, avec quel risque), et quel projet réel déjà existant de cet
 écosystème l'implémente déjà ?**
 
-Cette version expédie les quatre livraisons prévues :
+Cette version expédie les quatre livraisons prévues, en six parties :
 
 1. **Un contrat réel et fixe** ([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md)) -
    le "CONTRATO MINIMO DE ADAPTADOR" de cet écosystème,

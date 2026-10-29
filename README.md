@@ -69,7 +69,7 @@ questions: **what protocol does it speak, what can it actually do
 (read/write/abort, at what risk), and which existing real project of
 this ecosystem already implements that?**
 
-This version ships all four planned deliveries:
+This version ships all four planned deliveries, in six parts:
 
 1. **A real, fixed contract** ([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md)) -
    this ecosystem's "CONTRATO MINIMO

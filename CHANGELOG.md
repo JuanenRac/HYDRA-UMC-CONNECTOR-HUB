@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- The README in the eight languages says that the four planned deliveries are shipped in six parts, as the list that follows shows.
+
 ## [0.1.5] - Building no longer changes the version; raising it is the explicit `bu
 
 - Building no longer changes the version; raising it is the explicit `bump` command (`python tools/hydra_project_tool.py bump`). The build scripts only report the version they built, and CI fails if a build script runs a bump.

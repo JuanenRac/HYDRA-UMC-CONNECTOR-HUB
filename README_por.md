@@ -69,7 +69,7 @@ perguntas: **que protocolo fala, o que consegue realmente fazer
 (ler/escrever/abortar, com que risco) e que projeto real já existente deste
 ecossistema o implementa?**
 
-Esta versão entrega as quatro entregas planeadas:
+Esta versão entrega as quatro entregas planeadas, em seis partes:
 
 1. **Um contrato real e fixo** ([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md)) -
    o "CONTRATO MINIMO

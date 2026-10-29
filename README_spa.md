@@ -69,7 +69,7 @@ externa real, a tres preguntas: **¿qué protocolo habla, qué puede hacer
 de verdad (leer/escribir/abortar, con qué riesgo), y qué proyecto real ya
 existente de este ecosistema lo implementa?**
 
-Esta versión envía las cuatro entregas previstas:
+Esta versión envía las cuatro entregas previstas, en seis partes:
 
 1. **Un contrato real y fijo** ([docs/ADAPTER_MANIFEST.md](docs/ADAPTER_MANIFEST.md)) -
    el "CONTRATO MINIMO DE ADAPTADOR" de este
