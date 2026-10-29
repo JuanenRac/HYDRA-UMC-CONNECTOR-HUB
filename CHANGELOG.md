@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.
 - The README in the eight languages says that the four planned deliveries are shipped in six parts, as the list that follows shows.
 
 ## [0.1.5] - Building no longer changes the version; raising it is the explicit `bu
