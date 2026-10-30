@@ -20,13 +20,13 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
   <img src="https://img.shields.io/badge/Tests-188%20passing-2ea44f.svg" alt="Tests">
-  <img src="https://img.shields.io/badge/Version-0.1.5-0f6cbd.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.1.6-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
 
 ---
 
-> **Status: v0.1.5, functional - Deliveries 1-4 of 4 (schema/CLI/
+> **Status: v0.1.6, functional - Deliveries 1-4 of 4 (schema/CLI/
 > fixtures, read-only catalog, SDK safety gate, certification records).**
 > `catalog`/`serve-catalog` are real and GET-only (no network write path
 > exists anywhere in this project); `gate` calls straight into
@@ -50,7 +50,7 @@ GPL-3.0-or-later - see LICENSE
 
 | | |
 |---|---|
-| Version | `0.1.5` |
+| Version | `0.1.6` |
 | Maturity | Functional |
 | Tests | 188 (`python -m pytest -q tests`) |
 | Stack | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |

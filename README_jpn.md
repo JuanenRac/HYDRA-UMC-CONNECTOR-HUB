@@ -20,13 +20,13 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
   <img src="https://img.shields.io/badge/Tests-188%20passing-2ea44f.svg" alt="Tests">
-  <img src="https://img.shields.io/badge/Version-0.1.5-0f6cbd.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.1.6-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
 
 ---
 
-> **ステータス: v0.1.5、functional(機能段階) - 4 件の納品のうち全 4 件(スキー
+> **ステータス: v0.1.6、functional(機能段階) - 4 件の納品のうち全 4 件(スキー
 > マ/CLI/フィクスチャ、読み取り専用カタログ、SDK 安全ゲート、認証記
 > 録)完了。** `catalog`/`serve-catalog` は本物で GET のみです(このプ
 > ロジェクトのどこにもネットワーク書き込み経路は存在しません)。
@@ -50,7 +50,7 @@ GPL-3.0-or-later - see LICENSE
 
 | | |
 |---|---|
-| バージョン | `0.1.5` |
+| バージョン | `0.1.6` |
 | 成熟度 | 機能する |
 | テスト | 188 (`python -m pytest -q tests`) |
 | 技術 | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
