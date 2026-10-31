@@ -79,11 +79,6 @@ class CertificationRecord:
         )
 
 
-def _require_non_empty(value: Any, field_name: str) -> None:
-    if not isinstance(value, str) or not value.strip():
-        raise CertificationError(f"{field_name!r} must be a non-empty string")
-
-
 def _require_safe_path_segment(value: Any, field_name: str) -> None:
     """
     `adapter_id`/`certification_id` become part of a real filename under
