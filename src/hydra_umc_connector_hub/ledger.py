@@ -136,7 +136,7 @@ class _Lock:
                 except OSError:
                     continue
                 if time.monotonic() > deadline:
-                    raise LedgerError("another process is writing to the certification chain")
+                    raise LedgerError("another process is writing to the certification chain")  # noqa: B904
                 time.sleep(0.05)
                 continue
             os.close(descriptor)

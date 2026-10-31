@@ -194,7 +194,7 @@ def save_certification_record(record: CertificationRecord, directory: str, *, ke
     except FileExistsError:
         if path.read_text(encoding="utf-8") == payload:
             return str(path)  # identical content re-saved - a real, harmless no-op
-        raise CertificationError(
+        raise CertificationError(  # noqa: B904
             f"refusing to overwrite {path.name} - a DIFFERENT certification record already exists on disk "
             "under this certification_id; this store is append-only and is never mutated in place"
         )

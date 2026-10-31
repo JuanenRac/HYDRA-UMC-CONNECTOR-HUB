@@ -72,7 +72,7 @@ def _cmd_serve_catalog(args: argparse.Namespace) -> int:
     from .catalog_server import serve_catalog
 
     server = serve_catalog(args.registry_dir, host=args.host, port=args.port, ecosystem_root=args.ecosystem_root)
-    print(f"serving read-only catalog for {args.registry_dir!r} on http://{server.server_address[0]}:{server.server_port} (Ctrl+C to stop)")
+    print(f"serving read-only catalog for {args.registry_dir!r} on http://{server.server_address[0]}:{server.server_port} (Ctrl+C to stop)")  # type: ignore[str-bytes-safe]
     try:
         server.serve_forever()
     except KeyboardInterrupt:
