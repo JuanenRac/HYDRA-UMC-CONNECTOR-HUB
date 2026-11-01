@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **`GET /metrics` in the text format of Prometheus:** the version, the uptime, the responses by class of status (2xx to 5xx) and the health, the aggregate of the checks of the service (the registry directory is still there); only numbers about the service, never a path, an address, a token or a body. Open like `/health`. The code is the canonical `service_metrics.py` of HYDRA-UMC-SDK, copied byte for byte. 3 tests against a real server.
+
 ## [0.1.6] - The published JSON Schema is run on the fixtures and the README says what is shipped
 
 - **The published JSON Schema is run on the fixtures:** besides the checks that its fields and patterns match the validator, the tests now evaluate `schemas/adapter-manifest.v1.schema.json` itself (with a small built-in evaluator, no new dependency; a keyword it does not know fails) against every valid fixture, which must pass, and every invalid one, which it must refuse as the validator does.

@@ -4,7 +4,7 @@
 # GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """Delivery 2's own real read-only catalog endpoint - `http.server` only,
-deliberately no web framework: three GET routes, nothing else. There is
+deliberately no web framework: three GET routes and the numbers of the service on /metrics, nothing else. There is
 no `do_POST`/`do_PUT`/`do_DELETE` anywhere in this module, so any write
 attempt gets `BaseHTTPRequestHandler`'s own honest 501, never a route
 this project forgot to protect. A real client (Server/Studio/Suite/
@@ -16,11 +16,14 @@ separate, explicitly-gated `sdk_gate.py`)."""
 from __future__ import annotations
 
 import json
+import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import urlsplit
 
+from . import __version__
 from .registry import build_catalog, catalog_snapshot_version, load_full_manifest, verify_catalog_owners
+from .service_metrics import MetricsHandlerMixin
 
 
 def _etag_matches(header: str, version: str) -> bool:
@@ -37,8 +40,10 @@ def _etag_matches(header: str, version: str) -> bool:
 
 
 def _make_handler(registry_dir: str, ecosystem_root: str | None = None) -> type[BaseHTTPRequestHandler]:
-    class CatalogRequestHandler(BaseHTTPRequestHandler):
+    class CatalogRequestHandler(MetricsHandlerMixin, BaseHTTPRequestHandler):
         server_version = "HydraUmcConnectorHubCatalog"
+        metrics_service = "hydra-umc-connector-hub"
+        metrics_version = __version__
         # A client that connects and then goes quiet must not hold a thread forever.
         timeout = 15.0
 
@@ -52,7 +57,13 @@ def _make_handler(registry_dir: str, ecosystem_root: str | None = None) -> type[
             self.end_headers()
             self.wfile.write(body)
 
+        def metrics_checks(self) -> dict[str, bool]:
+            """The registry directory the catalog is built from is still there."""
+            return {"registry_directory": os.path.isdir(registry_dir)}
+
         def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler's own naming
+            if self.serve_metrics():
+                return
             try:
                 self._route()
             except (NotADirectoryError, FileNotFoundError, PermissionError) as exc:
