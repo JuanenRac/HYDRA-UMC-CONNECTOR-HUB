@@ -44,7 +44,7 @@ GPL-3.0-or-later - see LICENSE
 | 测试 | 192 (`python -m pytest -q tests`) |
 | 技术栈 | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | 目标 | 使用者的电脑 |
-| 真实硬件 | 尚未：此版本没有在真实硬件上运行的记录 |
+| 真实硬件 | 不适用：这里的内容不在硬件上运行 |
 
 **跳转：** [概述](#-概述) · [架构](#-架构) · [安全与防护](#-安全与防护) · [接口](#-接口) · [配置](#-配置) · [快速开始](#-快速开始) · [测试](#-测试) · [故障排除](#-故障排除) · [仓库结构](#-仓库结构) · [相关项目](#-相关项目)
 
@@ -58,7 +58,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|---|
 | 软件 | 🟡 | 主要用途可用；上面的诚实性检查列出了仍然缺少的内容 |
 | 测试 | 🟢 | 192 项自动测试，每次变更都会运行 |
-| 真实硬件 | 🔴 | 尚未：此版本没有在真实硬件上运行的记录 |
+| 真实硬件 | 🟢 | 不适用：这里的内容不在硬件上运行 |
 | 文档 | 🟢 | 八种语言的 README，每次变更都会与清单核对 |
 
 ## 🎯 概述
