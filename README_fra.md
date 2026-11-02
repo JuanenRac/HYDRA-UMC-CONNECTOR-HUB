@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Language">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
-  <img src="https://img.shields.io/badge/Tests-192%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-214%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.1.6-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -53,7 +53,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | Version | `0.1.6` |
 | Maturité | Fonctionnel |
-| Tests | 192 (`python -m pytest -q tests`) |
+| Tests | 214 (`python -m pytest -q tests`) |
 | Technologie | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | Cible | Le PC de la personne qui l'utilise |
 | Sur matériel réel | Sans objet : rien ici ne s'exécute sur du matériel |
@@ -69,7 +69,7 @@ Chaque ligne est une partie de ce dépôt et le feu dit où elle en est aujourd'
 | Domaine | État | Ce que cela veut dire ici |
 |---|---|---|
 | Logiciel | 🟡 | Fonctionne pour son usage principal ; la vérification d'honnêteté ci-dessus liste ce qui manque encore |
-| Tests | 🟢 | 192 tests automatiques, exécutés à chaque modification |
+| Tests | 🟢 | 214 tests automatiques, exécutés à chaque modification |
 | Matériel réel | 🟢 | Sans objet : rien ici ne s'exécute sur du matériel |
 | Déploiement | 🟠 | Publié comme release ; l'installation sur une machine propre est documentée mais non consignée |
 | Documentation | 🟢 | README en huit langues, vérifié par rapport au manifeste à chaque modification |
@@ -235,6 +235,8 @@ La commande `hydra-umc-connector-hub` (ou `./run.sh`) ; la référence complète
 
 Il n'y a pas de variables d'environnement propres : le dossier du registre, l'hôte et le port du catalogue (`--registry-dir`, `--host`, `--port`) et la clé de la chaîne de certification (16 caractères au minimum) sont des arguments de la ligne de commande. Les identifiants d'un adaptateur ne sont jamais écrits dans son manifeste, seulement une référence à leur emplacement.
 
+Trois ajouts, aucun actif par défaut. `probe` (et `serve-catalog --endpoints-file`, qui ajoute `GET /probe/<adapterId>`) exécute le `healthCheck` qu'un manifeste déclare contre l'endroit qu'un opérateur indique dans un profil : HTTP, TCP, un MQTT CONNECT et le Hello OPC UA sont exécutés, tout ce qui exige du matériel est signalé comme non pris en charge. `collect` rassemble dans le registre les manifestes que les bridges publient dans `docs/adapter-manifest.json` de leurs propres dépôts, seulement quand le propriétaire est celui que dit le dossier. `serve-gate` sert la porte de capacités en HTTP (`POST /gate/evaluate`) derrière un jeton Bearer obligatoire, écrit chaque décision dans un fichier d'audit chaîné par hachage, éventuellement scellé, avant de répondre, et lit lui-même l'état de la cellule quand `--cell-state-url` est donné.
+
 ## 🚀 Démarrage rapide
 
 Nécessite Python 3.11 ou plus récent ; le cœur n'utilise que la bibliothèque standard (l'extra `sdk`, `pip install -e ".[sdk]"`, n'est nécessaire que pour `gate` sur une capacité d'écriture ou d'abandon).
@@ -289,7 +291,7 @@ suite de tests locale complète.
 
 ## 🧪 Tests
 
-192 tests automatiques s'exécutent avec `python -m pytest -q tests` (39 d'entre eux exigent l'extra `sdk` et sont ignorés sans lui) : le schéma et le JSON Schema publié, le catalogue, la porte du SDK, la chaîne de certification, la ligne de commande et les entrées hostiles. Ni matériel ni réseau extérieur.
+214 tests automatiques s'exécutent avec `python -m pytest -q tests` (39 d'entre eux exigent l'extra `sdk` et sont ignorés sans lui) : le schéma et le JSON Schema publié, le catalogue, la porte du SDK, la chaîne de certification, la ligne de commande et les entrées hostiles. Ni matériel ni réseau extérieur.
 
 La CI exécute `HYDRA_UMC_CI=1 python tools/ci_validate.py`, qui vérifie le manifeste, les documents, les huit README et les images.
 

@@ -186,3 +186,21 @@ does not verify it against real hardware. See
 [docs/CERTIFICATION.md](CERTIFICATION.md) for exactly why that stays out
 of this project's real, honest scope without the physical machine in
 hand.
+
+## `probe`
+
+`hydra-umc-connector-hub probe --registry-dir DIR --endpoints-file FILE [--adapter-id ID] [--timeout SECONDS]` runs the `healthCheck` declared by the manifests against the places of the endpoints file, a JSON object `{"<adapterId>": {"host": "...", "port": 1234, "scheme": "http"}}` (`scheme` is `http` or `https`, only used by `http-get`). Exit code 1 when any result is not healthy. The result of each adapter has `type`, `supported`, `healthy`, `detail`, `latencyMs` and `checked` (`http`, `tcp`, `mqtt-connack` or `opcua-hello`: what the check proved and nothing more). See [`health_probe.py`](../src/hydra_umc_connector_hub/health_probe.py) for what each type does.
+
+`serve-catalog --endpoints-file FILE` adds `GET /probe/<adapterId>` for the adapters of that file (answers cached for five seconds, 404 for any other adapter); without the file the catalog stays read-only and the route answers 404.
+
+## `collect`
+
+`hydra-umc-connector-hub collect --ecosystem-root DIR --registry-dir DIR [--apply]` gathers the manifests that the projects publish in `docs/adapter-manifest.json` or `docs/adapter-manifests/*.json` of their own checkouts. Without `--apply` it reports what it would write. The report lists `collected`, `unchanged` and `skipped` (with the reasons); exit code 1 when anything was skipped.
+
+## `serve-gate`
+
+`hydra-umc-connector-hub serve-gate --registry-dir DIR --token-file FILE --audit-file FILE [--audit-key-file FILE] [--cell-state-url URL --cell-state-token-file FILE --cell-state-max-age-s 5] [--datalake-url URL --datalake-token-file FILE] [--host 127.0.0.1] [--port 8802]`
+
+- `POST /gate/evaluate` takes `adapterId`, `capability`, `jobId`, `source`, and optionally `idempotencyKey`, `machineState`, `observedMachineState`, `allowUnobserved`, `cellState` (used only without a cell-state provider), `grantedPermissions`, `cellMode`, `humanConfirmed`, `satisfiedSafetyGates`, `parameters` and `evidence`. It answers `200` with `allowed`, `reason`, `evidenceErrors`, `observed`, `cellStateSource` (`observed` or `attested`) and `auditSeq`; a denial is also a `200`. A decision that could not be recorded is a `503` with `allowed: false`.
+- `GET /gate/audit` gives the head of the chain (keep it elsewhere to notice a cut tail), the counts and the newest decisions. `GET /health` is open.
+- Every line of the audit file has `seq`, `at`, the decision, `prevHash` and `hash`, and `seal` with a key. Opening a file that does not verify stops the start.

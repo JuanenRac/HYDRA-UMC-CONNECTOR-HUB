@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Language">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
-  <img src="https://img.shields.io/badge/Tests-192%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-214%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.1.6-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -40,7 +40,7 @@ GPL-3.0-or-later - see LICENSE
 > 今日実在する正確なコマンド面については
 > [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) を参照してください。
 
-> **誠実性チェック - 今日実際に動くもの:** マニフェストのスキーマ/バリデータ（`schema.py`）、読み取り専用カタログ（`registry.py`、`catalog_server.py`）、SDK 安全ゲート統合（`sdk_gate.py`。実際にインストールされたチェックアウトに対して `HYDRA-UMC-SDK` 自身の本物の `evaluate_job()` を呼び出しており、モックでは決してない）、認証ログ（`certification.py`）、そして CLI（`cli.py`）は本物であり、192件の通過するテストで検証されている（`pytest tests/`。オプションの `[sdk]` エクストラをインストールした場合で、なければそのうち34件はスキップされる）。`certify` は人間が証言したエビデンスを記録するが、それを実際のハードウェアに対して独立に検証することは明示的に行わない - 10個のフィクスチャのどれの背後にも物理的な機械は存在せず、ここにあるどのアダプタも実際のデバイスと本当に通信するために使われたことは一度もない。`catalog`/`serve-catalog` は構造上 GET のみである（`catalog_server.py` には `do_POST`/`do_PUT` が一切ない）。詳細は上記のステータス欄と、これまでに実際に出荷された内容を記す `CHANGELOG.md` を参照。
+> **誠実性チェック - 今日実際に動くもの:** マニフェストのスキーマ/バリデータ（`schema.py`）、読み取り専用カタログ（`registry.py`、`catalog_server.py`）、SDK 安全ゲート統合（`sdk_gate.py`。実際にインストールされたチェックアウトに対して `HYDRA-UMC-SDK` 自身の本物の `evaluate_job()` を呼び出しており、モックでは決してない）、認証ログ（`certification.py`）、そして CLI（`cli.py`）は本物であり、214件の通過するテストで検証されている（`pytest tests/`。オプションの `[sdk]` エクストラをインストールした場合で、なければそのうち34件はスキップされる）。`certify` は人間が証言したエビデンスを記録するが、それを実際のハードウェアに対して独立に検証することは明示的に行わない - 10個のフィクスチャのどれの背後にも物理的な機械は存在せず、ここにあるどのアダプタも実際のデバイスと本当に通信するために使われたことは一度もない。`catalog`/`serve-catalog` は構造上 GET のみである（`catalog_server.py` には `do_POST`/`do_PUT` が一切ない）。詳細は上記のステータス欄と、これまでに実際に出荷された内容を記す `CHANGELOG.md` を参照。
 
 > **安全性とセキュリティの現状:** このエコシステムは認証された安全システムではありません。ハードウェアの E-STOP 経路、ファームウェアが強制する制限やインターロック、検証済みの動作コマンドはまだありません。ファームウェアイメージは CRC-32 と Ed25519 署名で検査し、リリースビルドは公開済みの開発用鍵を拒否します(リレーの先のツールヘッドと拡張ボードは引き続き URTC のブートローダーを使い、署名ではなく共有鍵の HMAC-SHA256 を使います)。TLS と相互 TLS は任意で、既定では無効です。独自基板はまだ実装も試験もされていません。ここに書かれた内容を人の安全のために頼る前に、[セキュリティベースライン](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md)と[脅威モデル](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md)をお読みください。
 
@@ -52,7 +52,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | バージョン | `0.1.6` |
 | 成熟度 | 機能する |
-| テスト | 192 (`python -m pytest -q tests`) |
+| テスト | 214 (`python -m pytest -q tests`) |
 | 技術 | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | 対象 | 利用者の PC |
 | 実機での確認 | 対象外：ここにあるものはハードウェア上では動きません |
@@ -68,7 +68,7 @@ GPL-3.0-or-later - see LICENSE
 | 領域 | 状態 | ここでの意味 |
 |---|---|---|
 | ソフトウェア | 🟡 | 主な目的では動作します。足りない点は上の正直さの確認に書かれています |
-| テスト | 🟢 | 自動テスト 192 件。変更のたびに実行されます |
+| テスト | 🟢 | 自動テスト 214 件。変更のたびに実行されます |
 | 実機 | 🟢 | 対象外：ここにあるものはハードウェア上では動きません |
 | デプロイ | 🟠 | リリースとして公開されています。新しい環境へのインストールは文書化されていますが記録はありません |
 | ドキュメント | 🟢 | 8 言語の README。変更のたびにマニフェストと照合されます |
@@ -230,6 +230,8 @@ CERTIFIED adapterId='cnc-grbl' certificationId='...' -> certifications/cnc-grbl_
 
 専用の環境変数はありません。レジストリのフォルダー、カタログのホストとポート（`--registry-dir`、`--host`、`--port`）、認証チェーンの鍵（16 文字以上）はコマンドライン引数です。アダプターの認証情報はマニフェストに書かれず、置き場所への参照だけが書かれます。
 
+いずれも初期状態ではオフの追加が三つあります。`probe`（および `GET /probe/<adapterId>` を加える `serve-catalog --endpoints-file`）は、マニフェストが宣言する `healthCheck` を、運用者がプロファイルに挙げた場所に対して実行します。HTTP、TCP、MQTT CONNECT、OPC UA Hello は実行され、ハードウェアが必要なものは未対応と報告されます。`collect` は、各ブリッジが自分のリポジトリの `docs/adapter-manifest.json` に公開したマニフェストを、所有者がフォルダー名どおりの場合に限ってレジストリへ集めます。`serve-gate` はケイパビリティゲートを HTTP（`POST /gate/evaluate`）で提供し、Bearer トークンを必須とし、応答の前にすべての判断をハッシュ連鎖（任意で封印）の監査ファイルへ書き、`--cell-state-url` を指定するとセル状態を自分で読みます。
+
 ## 🚀 クイックスタート
 
 Python 3.11 以上が必要です。コアは標準ライブラリだけを使います（追加パッケージ `sdk`、`pip install -e ".[sdk]"` が必要なのは、書き込み・中止の機能に対する `gate` のときだけです）。
@@ -284,7 +286,7 @@ Windows では: 先に `build.bat`、その後 `run.bat`(引数なしの場合�
 
 ## 🧪 テスト
 
-`python -m pytest -q tests` で自動テスト 192 件を実行します（うち 39 件は追加パッケージ `sdk` が必要で、なければスキップされます）。スキーマと公開 JSON スキーマ、カタログ、SDK のゲート、認証チェーン、コマンドライン、悪意ある入力が対象で、ハードウェアも外部ネットワークも不要です。
+`python -m pytest -q tests` で自動テスト 214 件を実行します（うち 39 件は追加パッケージ `sdk` が必要で、なければスキップされます）。スキーマと公開 JSON スキーマ、カタログ、SDK のゲート、認証チェーン、コマンドライン、悪意ある入力が対象で、ハードウェアも外部ネットワークも不要です。
 
 CI は `HYDRA_UMC_CI=1 python tools/ci_validate.py` を実行し、マニフェスト、文書、8 つの README、図を検査します。
 

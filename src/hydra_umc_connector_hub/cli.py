@@ -71,8 +71,91 @@ def _cmd_catalog(args: argparse.Namespace) -> int:
 def _cmd_serve_catalog(args: argparse.Namespace) -> int:
     from .catalog_server import serve_catalog
 
-    server = serve_catalog(args.registry_dir, host=args.host, port=args.port, ecosystem_root=args.ecosystem_root)
+    places = None
+    if args.endpoints_file:
+        from .health_probe import ProbeProfileError, load_profile
+
+        try:
+            places = load_profile(args.endpoints_file)
+        except ProbeProfileError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 1
+    server = serve_catalog(args.registry_dir, host=args.host, port=args.port, ecosystem_root=args.ecosystem_root, places=places)
     print(f"serving read-only catalog for {args.registry_dir!r} on http://{server.server_address[0]}:{server.server_port} (Ctrl+C to stop)")  # type: ignore[str-bytes-safe]
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
+
+
+def _cmd_probe(args: argparse.Namespace) -> int:
+    from .health_probe import ProbeProfileError, load_profile, run_health_check
+    from .registry import load_full_manifest
+
+    try:
+        places = load_profile(args.endpoints_file)
+    except ProbeProfileError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    wanted = [args.adapter_id] if args.adapter_id else sorted(places)
+    results = []
+    for adapter_id in wanted:
+        manifest = load_full_manifest(args.registry_dir, adapter_id)
+        place = places.get(adapter_id)
+        if manifest is None or place is None:
+            print(f"ERROR: {adapter_id!r} is not both in the registry and in the endpoints file", file=sys.stderr)
+            return 1
+        try:
+            results.append(run_health_check(manifest, place, timeout=args.timeout).to_dict())
+        except ProbeProfileError as exc:
+            print(f"ERROR: {adapter_id}: {exc}", file=sys.stderr)
+            return 1
+    print(json.dumps({"results": results}, indent=2))
+    return 0 if all(item["healthy"] for item in results) else 1
+
+
+def _cmd_collect(args: argparse.Namespace) -> int:
+    from .collect import collect_manifests
+
+    try:
+        report = collect_manifests(args.ecosystem_root, args.registry_dir, apply=args.apply)
+    except NotADirectoryError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    payload = report.to_dict()
+    payload["applied"] = bool(args.apply)
+    print(json.dumps(payload, indent=2))
+    return 0 if not report.skipped else 1
+
+
+def _cmd_serve_gate(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from .gate_audit import GateAudit, GateAuditError, load_key
+    from .gate_server import GateServiceConfig, http_cell_state_provider, serve_gate
+
+    try:
+        token = Path(args.token_file).read_text(encoding="utf-8").strip()
+        key = load_key(args.audit_key_file) if args.audit_key_file else None
+        audit = GateAudit(args.audit_file, key)
+        lake_token = Path(args.datalake_token_file).read_text(encoding="utf-8").strip() if args.datalake_token_file else None
+        cell_token = Path(args.cell_state_token_file).read_text(encoding="utf-8").strip() if args.cell_state_token_file else None
+        cell_state = (
+            http_cell_state_provider(args.cell_state_url, cell_token, max_age_s=args.cell_state_max_age_s) if args.cell_state_url else None
+        )
+        config = GateServiceConfig(args.registry_dir, token, audit, cell_state, args.datalake_url, lake_token)
+    except (OSError, ValueError, GateAuditError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    if key is None:
+        print("WARNING: no --audit-key-file: the audit chain is tamper-evident but not sealed", file=sys.stderr)
+    if cell_state is None:
+        print("WARNING: no --cell-state-url: the cell state is whatever the caller says it is (attested)", file=sys.stderr)
+    server = serve_gate(config, host=args.host, port=args.port)
+    print(f"serving the capability gate for {args.registry_dir!r} on http://{server.server_address[0]}:{server.server_port} (Ctrl+C to stop)")  # type: ignore[str-bytes-safe]
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -231,7 +314,39 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional: a directory of sibling HYDRA-UMC-*/URTC-* checkouts. When given, only adapters whose ownerProject is "
         "confirmed by that project's own hydra-umc.project.json are listed; the others appear under 'unverifiedOwners'.",
     )
+    serve_catalog_cmd.add_argument(
+        "--endpoints-file",
+        help="Optional: a JSON file {adapterId: {host, port, scheme}} with the places of the adapters. With it GET /probe/<adapterId> runs the healthCheck of the manifest "
+        "against that place (cached for 5 seconds). Without it the route answers 404 and the catalog stays read-only.",
+    )
     serve_catalog_cmd.set_defaults(func=_cmd_serve_catalog)
+
+    probe = subparsers.add_parser("probe", help="Run the healthCheck declared by the adapters against the places listed in an endpoints file. Exit 1 if any is unhealthy.")
+    probe.add_argument("--registry-dir", required=True)
+    probe.add_argument("--endpoints-file", required=True, help="JSON {adapterId: {host, port, scheme}}.")
+    probe.add_argument("--adapter-id", help="Only this adapter; omit to probe every entry of the endpoints file.")
+    probe.add_argument("--timeout", type=float, help="Seconds to wait (default: the timeoutMs of the manifest).")
+    probe.set_defaults(func=_cmd_probe)
+
+    collect = subparsers.add_parser("collect", help="Gather the manifests the bridges publish in their own checkouts (docs/adapter-manifest.json) into the registry directory.")
+    collect.add_argument("--ecosystem-root", required=True, help="Directory of sibling HYDRA-UMC-*/URTC-* checkouts.")
+    collect.add_argument("--registry-dir", required=True)
+    collect.add_argument("--apply", action="store_true", help="Write the registry; without it only report what would be collected.")
+    collect.set_defaults(func=_cmd_collect)
+
+    serve_gate_cmd = subparsers.add_parser("serve-gate", help="Serve the capability gate over HTTP (POST /gate/evaluate), every decision recorded.")
+    serve_gate_cmd.add_argument("--registry-dir", required=True)
+    serve_gate_cmd.add_argument("--token-file", required=True, help="File with the bearer token (16+ characters) every request but /health must carry.")
+    serve_gate_cmd.add_argument("--audit-file", required=True, help="JSON-lines file of the decisions (hash chain).")
+    serve_gate_cmd.add_argument("--audit-key-file", help="Optional: a secret (16+ characters) that seals each line of the audit chain.")
+    serve_gate_cmd.add_argument("--cell-state-url", help="Optional: GET URL that answers the safety state of the cell; the service then reads it itself and ignores the caller's claim.")
+    serve_gate_cmd.add_argument("--cell-state-token-file")
+    serve_gate_cmd.add_argument("--cell-state-max-age-s", type=float, default=5.0)
+    serve_gate_cmd.add_argument("--datalake-url", help="Optional: send each decision to this HYDRA-UMC-DATALAKE (http://host:port).")
+    serve_gate_cmd.add_argument("--datalake-token-file")
+    serve_gate_cmd.add_argument("--host", default="127.0.0.1")
+    serve_gate_cmd.add_argument("--port", type=int, default=8802)
+    serve_gate_cmd.set_defaults(func=_cmd_serve_gate)
 
     gate = subparsers.add_parser("gate", help="Evaluate one capability call against HYDRA-UMC-SDK's own real safety gate.")
     gate.add_argument("manifest_file")

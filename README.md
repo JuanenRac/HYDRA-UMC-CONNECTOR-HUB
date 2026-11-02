@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Language">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
-  <img src="https://img.shields.io/badge/Tests-192%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-214%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.1.6-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -52,7 +52,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | Version | `0.1.6` |
 | Maturity | Functional |
-| Tests | 192 (`python -m pytest -q tests`) |
+| Tests | 214 (`python -m pytest -q tests`) |
 | Stack | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | Target | The PC of the person using it |
 | On real hardware | Not applicable: nothing here runs on hardware |
@@ -68,7 +68,7 @@ Each line is one part of this repository and the light says how far it is today.
 | Area | State | What it means here |
 |---|---|---|
 | Software | 🟡 | Works for its main purpose; the honesty check above lists what is still missing |
-| Tests | 🟢 | 192 automated tests, run on every change |
+| Tests | 🟢 | 214 automated tests, run on every change |
 | Real hardware | 🟢 | Not applicable: nothing here runs on hardware |
 | Deployment | 🟠 | Published as a release; installing it on a clean machine is documented but not recorded |
 | Documentation | 🟢 | README in eight languages, checked against the manifest on every change |
@@ -219,6 +219,8 @@ The command `hydra-umc-connector-hub` (or `./run.sh`); the full reference is `do
 
 There are no environment variables of its own: the registry folder, the host and port of the catalogue (`--registry-dir`, `--host`, `--port`) and the key of the certification chain (at least 16 characters) are command-line arguments. The credentials of an adapter are never written in its manifest, only a reference to where they live.
 
+Three additions, none on by default. `probe` (and `serve-catalog --endpoints-file`, which adds `GET /probe/<adapterId>`) runs the `healthCheck` a manifest declares against the place an operator lists in a profile: HTTP, TCP, an MQTT CONNECT and the OPC UA Hello are run, anything that needs hardware is reported as unsupported. `collect` gathers the manifests that the bridges publish in `docs/adapter-manifest.json` of their own repositories into the registry, only when the owner is who the folder says. `serve-gate` serves the capability gate over HTTP (`POST /gate/evaluate`) behind a required bearer token, writes every decision to a hash-chained, optionally sealed audit file before it answers, and reads the cell state itself when `--cell-state-url` is given.
+
 ## 🚀 Quick start
 
 Requires Python 3.11 or newer; the core uses only the standard library (the `sdk` extra, `pip install -e ".[sdk]"`, is needed only for `gate` on a write or abort capability).
@@ -270,7 +272,7 @@ version or CHANGELOG - it does NOT run the test suite itself; CI runs
 
 ## 🧪 Testing
 
-192 automated tests run with `python -m pytest -q tests` (39 of them need the `sdk` extra and are skipped without it): the schema and the published JSON Schema, the catalogue, the SDK gate, the certification chain, the command line and hostile inputs. No hardware and no outside network.
+214 automated tests run with `python -m pytest -q tests` (39 of them need the `sdk` extra and are skipped without it): the schema and the published JSON Schema, the catalogue, the SDK gate, the certification chain, the command line and hostile inputs. No hardware and no outside network.
 
 The CI runs `HYDRA_UMC_CI=1 python tools/ci_validate.py`, which checks the manifest, the documents, the eight READMEs and the pictures.
 

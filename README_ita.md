@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Language">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
-  <img src="https://img.shields.io/badge/Tests-192%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-214%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.1.6-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -53,7 +53,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | Versione | `0.1.6` |
 | Maturità | Funzionale |
-| Test | 192 (`python -m pytest -q tests`) |
+| Test | 214 (`python -m pytest -q tests`) |
 | Tecnologia | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | Destinazione | Il PC di chi lo usa |
 | Su hardware reale | Non applicabile: nulla qui gira su hardware |
@@ -69,7 +69,7 @@ Ogni riga è una parte di questo repository e il semaforo dice a che punto è og
 | Area | Stato | Cosa significa qui |
 |---|---|---|
 | Software | 🟡 | Funziona per il suo scopo principale; la verifica di onestà qui sopra elenca ciò che manca ancora |
-| Test | 🟢 | 192 test automatici, eseguiti a ogni modifica |
+| Test | 🟢 | 214 test automatici, eseguiti a ogni modifica |
 | Hardware reale | 🟢 | Non applicabile: nulla qui gira su hardware |
 | Distribuzione | 🟠 | Pubblicato come release; l'installazione su una macchina pulita è documentata ma non registrata |
 | Documentazione | 🟢 | README in otto lingue, verificato rispetto al manifesto a ogni modifica |
@@ -234,6 +234,8 @@ Il comando `hydra-umc-connector-hub` (o `./run.sh`); il riferimento completo è 
 
 Non ci sono variabili d'ambiente proprie: la cartella del registro, host e porta del catalogo (`--registry-dir`, `--host`, `--port`) e la chiave della catena di certificazione (almeno 16 caratteri) sono argomenti della riga di comando. Le credenziali di un adattatore non si scrivono mai nel suo manifesto, solo un riferimento a dove si trovano.
 
+Tre aggiunte, nessuna attiva per impostazione predefinita. `probe` (e `serve-catalog --endpoints-file`, che aggiunge `GET /probe/<adapterId>`) esegue l'`healthCheck` dichiarato da un manifesto contro il luogo che un operatore indica in un profilo: vengono eseguiti HTTP, TCP, un MQTT CONNECT e l'Hello OPC UA, ciò che richiede hardware è segnalato come non supportato. `collect` raccoglie nel registro i manifesti che i bridge pubblicano in `docs/adapter-manifest.json` dei propri repository, solo quando il proprietario è quello che dice la cartella. `serve-gate` serve la porta delle capacità via HTTP (`POST /gate/evaluate`) dietro un token Bearer obbligatorio, scrive ogni decisione in un file di audit concatenato per hash, facoltativamente sigillato, prima di rispondere, e legge da sé lo stato della cella quando viene dato `--cell-state-url`.
+
 ## 🚀 Avvio rapido
 
 Richiede Python 3.11 o successivo; il nucleo usa solo la libreria standard (l'extra `sdk`, `pip install -e ".[sdk]"`, serve solo per `gate` su una capacità di scrittura o interruzione).
@@ -286,7 +288,7 @@ tests/` direttamente) per la suite di test locale completa.
 
 ## 🧪 Test
 
-192 test automatici si eseguono con `python -m pytest -q tests` (39 richiedono l'extra `sdk` e vengono saltati senza): lo schema e il JSON Schema pubblicato, il catalogo, la porta dell'SDK, la catena di certificazione, la riga di comando e input ostili. Né hardware né rete esterna.
+214 test automatici si eseguono con `python -m pytest -q tests` (39 richiedono l'extra `sdk` e vengono saltati senza): lo schema e il JSON Schema pubblicato, il catalogo, la porta dell'SDK, la catena di certificazione, la riga di comando e input ostili. Né hardware né rete esterna.
 
 La CI esegue `HYDRA_UMC_CI=1 python tools/ci_validate.py`, che controlla il manifesto, i documenti, gli otto README e le immagini.
 

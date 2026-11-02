@@ -22,6 +22,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from . import __version__
+from .health_probe import Place, ProbeCache, ProbeProfileError, run_health_check
 from .registry import build_catalog, catalog_snapshot_version, load_full_manifest, verify_catalog_owners
 from .service_metrics import MetricsHandlerMixin
 
@@ -39,7 +40,14 @@ def _etag_matches(header: str, version: str) -> bool:
     return False
 
 
-def _make_handler(registry_dir: str, ecosystem_root: str | None = None) -> type[BaseHTTPRequestHandler]:
+def _make_handler(
+    registry_dir: str,
+    ecosystem_root: str | None = None,
+    places: dict[str, Place] | None = None,
+    probe_cache_s: float = 5.0,
+) -> type[BaseHTTPRequestHandler]:
+    probe_cache = ProbeCache(probe_cache_s)
+
     class CatalogRequestHandler(MetricsHandlerMixin, BaseHTTPRequestHandler):
         server_version = "HydraUmcConnectorHubCatalog"
         metrics_service = "hydra-umc-connector-hub"
@@ -114,6 +122,24 @@ def _make_handler(registry_dir: str, ecosystem_root: str | None = None) -> type[
                     payload["unverifiedOwners"] = unverified
                 self._send_json(200, payload, etag=version)
                 return
+            if route.startswith("/probe/"):
+                # Runs the healthCheck the manifest declares, against the place the operator listed for it (--endpoints-file). Off without that file.
+                if places is None:
+                    self._send_json(404, {"error": "health probes are off: start the catalog with --endpoints-file"})
+                    return
+                adapter_id = route[len("/probe/"):]
+                place = places.get(adapter_id)
+                manifest = load_full_manifest(registry_dir, adapter_id)
+                if manifest is None or place is None:
+                    self._send_json(404, {"error": f"no probe is configured for {adapter_id!r}"})
+                    return
+                try:
+                    result = probe_cache.get_or_run(adapter_id, lambda: run_health_check(manifest, place))
+                except ProbeProfileError as exc:
+                    self._send_json(500, {"error": str(exc)})
+                    return
+                self._send_json(200, result.to_dict())
+                return
             if route.startswith("/catalog/"):
                 adapter_id = route[len("/catalog/"):]
                 manifest = load_full_manifest(registry_dir, adapter_id)
@@ -136,7 +162,13 @@ def _make_handler(registry_dir: str, ecosystem_root: str | None = None) -> type[
     return CatalogRequestHandler
 
 
-def serve_catalog(registry_dir: str, host: str = "127.0.0.1", port: int = 0, ecosystem_root: str | None = None) -> ThreadingHTTPServer:
+def serve_catalog(
+    registry_dir: str,
+    host: str = "127.0.0.1",
+    port: int = 0,
+    ecosystem_root: str | None = None,
+    places: dict[str, Place] | None = None,
+) -> ThreadingHTTPServer:
     """Builds and returns a real, already-bound `ThreadingHTTPServer` -
     the caller decides whether to call `.serve_forever()` (the real CLI
     path) or drive it manually with `.handle_request()` (what this
@@ -149,5 +181,5 @@ def serve_catalog(registry_dir: str, host: str = "127.0.0.1", port: int = 0, eco
     `ecosystem_root`, when given, makes the catalog list only the adapters whose
     `ownerProject` is confirmed by that project's own manifest under that
     directory; the others are reported under `unverifiedOwners`."""
-    handler_cls = _make_handler(registry_dir, ecosystem_root)
+    handler_cls = _make_handler(registry_dir, ecosystem_root, places)
     return ThreadingHTTPServer((host, port), handler_cls)

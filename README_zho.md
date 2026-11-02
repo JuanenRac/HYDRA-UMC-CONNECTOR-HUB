@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Language">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
-  <img src="https://img.shields.io/badge/Tests-192%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-214%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.1.6-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -41,7 +41,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | 版本 | `0.1.6` |
 | 成熟度 | 可用 |
-| 测试 | 192 (`python -m pytest -q tests`) |
+| 测试 | 214 (`python -m pytest -q tests`) |
 | 技术栈 | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | 目标 | 使用者的电脑 |
 | 真实硬件 | 不适用：这里的内容不在硬件上运行 |
@@ -57,7 +57,7 @@ GPL-3.0-or-later - see LICENSE
 | 领域 | 状态 | 在这里的含义 |
 |---|---|---|
 | 软件 | 🟡 | 主要用途可用；上面的诚实性检查列出了仍然缺少的内容 |
-| 测试 | 🟢 | 192 项自动测试，每次变更都会运行 |
+| 测试 | 🟢 | 214 项自动测试，每次变更都会运行 |
 | 真实硬件 | 🟢 | 不适用：这里的内容不在硬件上运行 |
 | 部署 | 🟠 | 已作为发布版本公开；在干净机器上安装有文档，但没有记录 |
 | 文档 | 🟢 | 八种语言的 README，每次变更都会与清单核对 |
@@ -141,6 +141,8 @@ CERTIFIED adapterId='cnc-grbl' certificationId='...' -> certifications/cnc-grbl_
 
 没有自己的环境变量：注册表文件夹、目录的主机和端口（`--registry-dir`、`--host`、`--port`）以及认证链的密钥（至少 16 个字符）都是命令行参数。适配器的凭据从不写在清单里，只写它们存放位置的引用。
 
+新增三项，默认全部关闭。`probe`（以及增加 `GET /probe/<adapterId>` 的 `serve-catalog --endpoints-file`）针对运维人员在配置文件中列出的位置，运行清单声明的 `healthCheck`：会运行 HTTP、TCP、MQTT CONNECT 和 OPC UA Hello，需要硬件的检查会报告为不支持。`collect` 把各桥接在自己仓库的 `docs/adapter-manifest.json` 中发布的清单收集到注册表，仅当所有者与文件夹所述一致时才收集。`serve-gate` 通过 HTTP 提供能力门（`POST /gate/evaluate`），必须带 Bearer 令牌，在回答之前把每个决定写入哈希链式（可选封印）的审计文件，并在给出 `--cell-state-url` 时自行读取单元状态。
+
 ## 🚀 快速开始
 
 需要 Python 3.11 或更高版本；核心只用标准库（仅对写入或中止能力使用 `gate` 时才需要附加包 `sdk`，即 `pip install -e ".[sdk]"`）。
@@ -173,7 +175,7 @@ pip install -e ".[sdk]"                    # 仅在对一个 write/abort 能力�
 
 ## 🧪 测试
 
-运行 `python -m pytest -q tests` 会执行 192 个自动测试（其中 39 个需要附加包 `sdk`，没有它会被跳过）：模式与已发布的 JSON Schema、目录、SDK 关口、认证链、命令行和恶意输入。不需要硬件和外部网络。
+运行 `python -m pytest -q tests` 会执行 214 个自动测试（其中 39 个需要附加包 `sdk`，没有它会被跳过）：模式与已发布的 JSON Schema、目录、SDK 关口、认证链、命令行和恶意输入。不需要硬件和外部网络。
 
 CI 运行 `HYDRA_UMC_CI=1 python tools/ci_validate.py`，检查清单、文档、八个 README 和图片。
 
