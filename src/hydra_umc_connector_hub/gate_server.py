@@ -44,7 +44,7 @@ from urllib.parse import urlsplit
 
 from . import __version__
 from .gate_audit import GateAudit, GateAuditError
-from .identity import DECIDE_ROLES, LOOPBACK_ROLE, MIN_KEY_LENGTH, Identity, IdentityError, is_loopback, require_role, verify_token
+from .identity import DECIDE_ROLES, LOOPBACK_ROLE, MIN_KEY_LENGTH, Identity, IdentityError, TokenVerifier, is_loopback, require_role
 from .registry import load_full_manifest
 from .sdk_gate import CapabilityCallRequest, CapabilityGateError, SdkUnavailableError, evaluate_capability_call
 from .service_metrics import MetricsHandlerMixin
@@ -163,7 +163,7 @@ def _decide(config: "GateServiceConfig", body: dict[str, Any], caller: Identity 
 
 
 class GateServiceConfig:
-    """`identity_key`: the key that verifies the tokens of the SERVER (at least 32 characters). `allow_loopback_no_identity`: the explicit switch, off by
+    """`identity_key`: the HS256 key that verifies the tokens of the SERVER (at least 32 characters); `token_verifier`: a `TokenVerifier` (HS256 and/or the EdDSA key set), which wins. `allow_loopback_no_identity`: the explicit switch, off by
     default, that lets a caller on a loopback address be answered without a token. With neither the service cannot answer anybody, so it does not start."""
 
     def __init__(
@@ -172,6 +172,7 @@ class GateServiceConfig:
         audit: GateAudit,
         *,
         identity_key: bytes | None = None,
+        token_verifier: TokenVerifier | None = None,
         allow_loopback_no_identity: bool = False,
         cell_state: CellStateProvider | None = None,
         datalake_url: str | None = None,
@@ -179,8 +180,11 @@ class GateServiceConfig:
     ) -> None:
         if identity_key is not None and len(identity_key) < MIN_KEY_LENGTH:
             raise ValueError(f"the identity key must have at least {MIN_KEY_LENGTH} characters")
-        if identity_key is None and not allow_loopback_no_identity:
-            raise ValueError("an identity key is required (the key that verifies the tokens of HYDRA-UMC-SERVER); without one the service refuses everybody")
+        if token_verifier is None and identity_key is not None:
+            token_verifier = TokenVerifier(hs256_key=identity_key)
+        if token_verifier is None and not allow_loopback_no_identity:
+            raise ValueError("an identity key or a key set address is required (what verifies the tokens of HYDRA-UMC-SERVER); without one the service refuses everybody")
+        self.token_verifier = token_verifier
         self.registry_dir = registry_dir
         self.identity_key = identity_key
         self.allow_loopback_no_identity = bool(allow_loopback_no_identity)
@@ -243,8 +247,8 @@ def make_handler(config: GateServiceConfig) -> type[BaseHTTPRequestHandler]:
             header = self.headers.get("Authorization", "")
             token = header[len("Bearer "):].strip() if header.startswith("Bearer ") else None
             try:
-                if token and config.identity_key is not None:
-                    identity = verify_token(token, config.identity_key)
+                if token and config.token_verifier is not None:
+                    identity = config.token_verifier.verify(token)
                 elif config.allow_loopback_no_identity and is_loopback(self.client_address[0]):
                     identity = Identity(None, LOOPBACK_ROLE, "loopback")
                 else:

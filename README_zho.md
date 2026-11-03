@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Language">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
-  <img src="https://img.shields.io/badge/Tests-238%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-253%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.1.8-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -41,7 +41,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | 版本 | `0.1.8` |
 | 成熟度 | 可用 |
-| 测试 | 238 (`python -m pytest -q tests`) |
+| 测试 | 253 (`python -m pytest -q tests`) |
 | 技术栈 | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | 目标 | 使用者的电脑 |
 | 真实硬件 | 不适用：这里的内容不在硬件上运行 |
@@ -57,7 +57,7 @@ GPL-3.0-or-later - see LICENSE
 | 领域 | 状态 | 在这里的含义 |
 |---|---|---|
 | 软件 | 🟡 | 主要用途可用；上面的诚实性检查列出了仍然缺少的内容 |
-| 测试 | 🟢 | 238 项自动测试，每次变更都会运行 |
+| 测试 | 🟢 | 253 项自动测试，每次变更都会运行 |
 | 真实硬件 | 🟢 | 不适用：这里的内容不在硬件上运行 |
 | 部署 | 🟠 | 已作为发布版本公开；在干净机器上安装有文档，但没有记录 |
 | 文档 | 🟢 | 八种语言的 README，每次变更都会与清单核对 |
@@ -175,7 +175,7 @@ pip install -e ".[sdk]"                    # 仅在对一个 write/abort 能力�
 
 ## 🧪 测试
 
-运行 `python -m pytest -q tests` 会执行 238 个自动测试（其中 39 个需要附加包 `sdk`，没有它会被跳过）：模式与已发布的 JSON Schema、目录、SDK 关口、认证链、命令行和恶意输入。不需要硬件和外部网络。
+运行 `python -m pytest -q tests` 会执行 253 个自动测试（其中 39 个需要附加包 `sdk`，没有它会被跳过）：模式与已发布的 JSON Schema、目录、SDK 关口、认证链、命令行和恶意输入。不需要硬件和外部网络。
 
 CI 运行 `HYDRA_UMC_CI=1 python tools/ci_validate.py`，检查清单、文档、八个 README 和图片。
 
@@ -208,6 +208,7 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── catalog_server.py                        仅 GET 的目录端点
 │   ├── sdk_gate.py                              调用 SDK 自己的 evaluate_job()
 │   ├── identity.py                              调用方：SERVER 的签名令牌
+│   ├── jwks.py                                  用于 EdDSA 令牌的 SERVER 公钥（带缓存）
 │   ├── certification.py ledger.py               封存哈希链中的认证记录
 │   └── cli.py                                   validate, catalog, serve-catalog, gate, certify
 ├── tests/                                       188 项测试

@@ -84,6 +84,19 @@
           }
         },
         {
+          "name": "jwks.py",
+          "desc": {
+            "en": "the SERVER's public keys for EdDSA tokens, cached",
+            "es": "las claves públicas del SERVER para tokens EdDSA, en caché",
+            "de": "die öffentlichen SERVER-Schlüssel für EdDSA-Token, zwischengespeichert",
+            "fr": "les clés publiques du SERVER pour les jetons EdDSA, en cache",
+            "it": "le chiavi pubbliche del SERVER per i token EdDSA, in cache",
+            "ja": "EdDSA トークン用の SERVER 公開鍵（キャッシュ付き）",
+            "zh": "用于 EdDSA 令牌的 SERVER 公钥（带缓存）",
+            "pt": "as chaves públicas do SERVER para tokens EdDSA, em cache"
+          }
+        },
+        {
           "name": "certification.py, ledger.py",
           "desc": {
             "en": "certification records in a sealed hash chain",

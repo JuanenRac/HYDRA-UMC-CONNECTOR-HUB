@@ -5,7 +5,8 @@
 # =============================================================================
 """Who is asking: the identity of the caller of the gate service, taken from the signed token that HYDRA-UMC-SERVER issues at login.
 
-The format is the one the SERVER already uses and nothing else: a JWT (RFC 7519) signed with HS256, whose key is the SERVER's `JWT_SECRET`, with the claims
+Two algorithms, chosen by the configuration and never by the token: HS256 with the shared key (`TokenVerifier`, `--identity-key-file`; while `identity.accept_hs256`
+is on) and EdDSA verified with the public keys of the SERVER's key set (`jwks.py`, `identity.jwks_url`). The HS256 format is: a JWT (RFC 7519) signed with HS256, whose key is the SERVER's `JWT_SECRET`, with the claims
 `username` (text), `role` (`admin`, `operator` or `viewer`) and `exp` (seconds since the epoch, required). The hub only VERIFIES such a token; it never
 issues one. The key is read from a file the operator names (never from the command line), at least 32 characters, the same minimum as the SERVER.
 
@@ -28,6 +29,8 @@ import math
 import time
 from dataclasses import dataclass
 from hashlib import sha256
+
+from .jwks import JwksClient, JwksError, ed25519_verify
 
 MIN_KEY_LENGTH = 32
 ROLES = ("admin", "operator", "viewer")
@@ -78,23 +81,11 @@ def _json_part(segment: str) -> dict:
     return value
 
 
-def verify_token(token: str | None, key: bytes, *, now: float | None = None) -> Identity:
-    """The identity in a signed token, or IdentityError saying why there is none."""
-    if not token:
-        raise IdentityError("a signed token of HYDRA-UMC-SERVER is required")
-    if len(token) > MAX_TOKEN_CHARS:
-        raise IdentityError("the token is malformed")
-    parts = token.split(".")
-    if len(parts) != 3 or not all(parts):
-        raise IdentityError("the token is malformed")
-    header = _json_part(parts[0])
-    if header.get("alg") != "HS256":
-        raise IdentityError("the token algorithm is not accepted (only HS256)")
-    expected = hmac.new(key, f"{parts[0]}.{parts[1]}".encode("ascii", "replace"), sha256).digest()
-    if not hmac.compare_digest(expected, _b64(parts[2])):
-        raise IdentityError("the token signature is not valid")
-    claims = _json_part(parts[1])
-    moment = time.time() if now is None else now
+IAT_SKEW_S = 5   # clock difference tolerated for an `iat` in the future, as the SERVER does
+
+
+def _claims_identity(claims: dict, moment: float) -> Identity:
+    """The checks on the claims that every accepted algorithm shares."""
     exp = claims.get("exp")
     if isinstance(exp, bool) or not isinstance(exp, (int, float)) or not math.isfinite(exp):   # NaN compares false with everything: it would never expire
         raise IdentityError("the token has no expiry")
@@ -103,12 +94,74 @@ def verify_token(token: str | None, key: bytes, *, now: float | None = None) -> 
     nbf = claims.get("nbf")
     if nbf is not None and (isinstance(nbf, bool) or not isinstance(nbf, (int, float)) or not math.isfinite(nbf) or nbf > moment):
         raise IdentityError("the token is not valid yet")
+    iat = claims.get("iat")
+    if iat is not None and (isinstance(iat, bool) or not isinstance(iat, (int, float)) or not math.isfinite(iat) or iat > moment + IAT_SKEW_S):
+        raise IdentityError("the token was issued in the future")
     username, role = claims.get("username"), claims.get("role")
     if not isinstance(username, str) or not username:
         raise IdentityError("the token names no user")
     if role not in ROLES:
         raise IdentityError("the token carries no known role")
     return Identity(username, role, "token")
+
+
+def _split(token: str | None) -> tuple[list[str], dict]:
+    if not token:
+        raise IdentityError("a signed token of HYDRA-UMC-SERVER is required")
+    if len(token) > MAX_TOKEN_CHARS:
+        raise IdentityError("the token is malformed")
+    parts = token.split(".")
+    if len(parts) != 3 or not all(parts):
+        raise IdentityError("the token is malformed")
+    return parts, _json_part(parts[0])
+
+
+def verify_token(token: str | None, key: bytes, *, now: float | None = None) -> Identity:
+    """The identity in an HS256 token signed with `key`, or IdentityError saying why there is none."""
+    parts, header = _split(token)
+    if header.get("alg") != "HS256":
+        raise IdentityError("the token algorithm is not accepted (only HS256)")
+    expected = hmac.new(key, f"{parts[0]}.{parts[1]}".encode("ascii", "replace"), sha256).digest()
+    if not hmac.compare_digest(expected, _b64(parts[2])):
+        raise IdentityError("the token signature is not valid")
+    return _claims_identity(_json_part(parts[1]), time.time() if now is None else now)
+
+
+class TokenVerifier:
+    """Which tokens of the SERVER are accepted, decided by the configuration and never by the token.
+
+    * `jwks`: a `JwksClient` -> EdDSA tokens are verified with the public key published under their `kid`.
+    * `hs256_key` and `accept_hs256` -> HS256 tokens are verified with that key (the transition: `accept_hs256` is on by default, as in the SERVER).
+    The header `alg` only selects among what the configuration allows; `none`, HS384, RS/ES and the rest are refused, and an HS256 token is never checked
+    against a public key (no key confusion). An unreadable key set is a refusal (fail-closed)."""
+
+    def __init__(self, *, hs256_key: bytes | None = None, jwks: "JwksClient | None" = None, accept_hs256: bool = True) -> None:
+        if hs256_key is not None and len(hs256_key) < MIN_KEY_LENGTH:
+            raise ValueError(f"the identity key must have at least {MIN_KEY_LENGTH} characters")
+        self.jwks = jwks
+        self.hs256_key = hs256_key if accept_hs256 else None
+        if self.jwks is None and self.hs256_key is None:
+            raise ValueError("a token verifier needs a key set address (identity.jwks_url) or, with identity.accept_hs256 on, an identity key file")
+
+    def verify(self, token: str | None, *, now: float | None = None) -> Identity:
+        parts, header = _split(token)
+        alg = header.get("alg")
+        moment = time.time() if now is None else now
+        if alg == "HS256" and self.hs256_key is not None:
+            return verify_token(token, self.hs256_key, now=moment)
+        if alg == "EdDSA" and self.jwks is not None:
+            kid = header.get("kid")
+            if not isinstance(kid, str) or not kid or len(kid) > 128:
+                raise IdentityError("the token names no key")
+            try:
+                public = self.jwks.public_key(kid)
+            except JwksError as exc:
+                raise IdentityError(str(exc)) from exc
+            if not ed25519_verify(public, f"{parts[0]}.{parts[1]}".encode("ascii", "replace"), _b64(parts[2])):
+                raise IdentityError("the token signature is not valid")
+            return _claims_identity(_json_part(parts[1]), moment)
+        allowed = [name for name, on in (("EdDSA", self.jwks is not None), ("HS256", self.hs256_key is not None)) if on]
+        raise IdentityError(f"the token algorithm is not accepted (only {' or '.join(allowed)})")
 
 
 def require_role(identity: Identity, allowed: frozenset[str]) -> None:

@@ -132,7 +132,8 @@ def _cmd_collect(args: argparse.Namespace) -> int:
 
 
 def _gate_settings(path: str | None) -> dict:
-    """The settings file of `serve-gate` (JSON object: `identityKeyFile`, `allowLoopbackNoIdentity`); the command line wins over it."""
+    """The settings file of `serve-gate` (JSON object: `identityKeyFile`, `allowLoopbackNoIdentity` and the block `identity`: `jwks_url`, `accept_hs256`,
+    `jwks_ttl_s`, `jwks_min_refetch_s`, `jwks_timeout_s`); the command line wins over it."""
     if not path:
         return {}
     from pathlib import Path
@@ -144,6 +145,36 @@ def _gate_settings(path: str | None) -> dict:
     if not isinstance(data, dict):
         raise ValueError("the settings file must hold a JSON object")
     return data
+
+
+def _build_token_verifier(settings: dict, identity_key: bytes | None):
+    """The verifier from the `identity` block of the settings: None when no key set address is given (the plain HS256 key is used as always)."""
+    from .identity import TokenVerifier
+    from .jwks import JwksClient
+
+    block = settings.get("identity")
+    if block is None:
+        return None
+    if not isinstance(block, dict):
+        raise ValueError("the `identity` block of the settings must be a JSON object")
+    unknown = set(block) - {"jwks_url", "accept_hs256", "jwks_ttl_s", "jwks_min_refetch_s", "jwks_timeout_s"}
+    if unknown:
+        raise ValueError(f"unknown settings in `identity`: {', '.join(sorted(unknown))}")
+    accept = block.get("accept_hs256", True)
+    if not isinstance(accept, bool):
+        raise ValueError("identity.accept_hs256 must be true or false")
+    url = block.get("jwks_url")
+    jwks = None
+    if url is not None:
+        options = {name[len("jwks_"):]: block[name] for name in ("jwks_ttl_s", "jwks_min_refetch_s", "jwks_timeout_s") if name in block}
+        jwks = JwksClient(url, **options)
+    elif any(name in block for name in ("jwks_ttl_s", "jwks_min_refetch_s", "jwks_timeout_s")):
+        raise ValueError("identity.jwks_ttl_s and the other key set options need identity.jwks_url")
+    if jwks is None and not accept and identity_key is not None:
+        raise ValueError("identity.accept_hs256 is off and no identity.jwks_url is given: nothing would verify a token")
+    if jwks is None and identity_key is None:
+        return None   # nothing to build: the loopback switch or the missing key is decided by GateServiceConfig as before
+    return TokenVerifier(hs256_key=identity_key, jwks=jwks, accept_hs256=accept)
 
 
 def _cmd_serve_gate(args: argparse.Namespace) -> int:
@@ -158,6 +189,7 @@ def _cmd_serve_gate(args: argparse.Namespace) -> int:
         key_file = args.identity_key_file or settings.get("identityKeyFile")
         allow_loopback = bool(args.allow_loopback_no_identity or settings.get("allowLoopbackNoIdentity") is True)
         identity_key = load_identity_key(key_file) if key_file else None
+        verifier = _build_token_verifier(settings, identity_key)
         key = load_key(args.audit_key_file) if args.audit_key_file else None
         audit = GateAudit(args.audit_file, key)
         lake_token = Path(args.datalake_token_file).read_text(encoding="utf-8").strip() if args.datalake_token_file else None
@@ -166,7 +198,7 @@ def _cmd_serve_gate(args: argparse.Namespace) -> int:
             http_cell_state_provider(args.cell_state_url, cell_token, max_age_s=args.cell_state_max_age_s) if args.cell_state_url else None
         )
         config = GateServiceConfig(
-            args.registry_dir, audit, identity_key=identity_key, allow_loopback_no_identity=allow_loopback,
+            args.registry_dir, audit, identity_key=identity_key, token_verifier=verifier, allow_loopback_no_identity=allow_loopback,
             cell_state=cell_state, datalake_url=args.datalake_url, datalake_token=lake_token,
         )
     except (OSError, ValueError, GateAuditError) as exc:
