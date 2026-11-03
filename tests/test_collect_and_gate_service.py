@@ -17,7 +17,28 @@ from hydra_umc_connector_hub.gate_audit import GateAudit, GateAuditError, load_k
 from hydra_umc_connector_hub.gate_server import CellStateError, GateServiceConfig, serve_gate
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
-TOKEN = "t" * 24
+KEY = b"identity-key-of-the-server-0123456789"
+
+
+def make_token(role="operator", key=KEY, *, alg="HS256", exp_in=300, username="ana", **extra) -> str:
+    """A token shaped like the one HYDRA-UMC-SERVER issues (HS256, claims username, role, exp)."""
+    import base64
+    import hashlib
+    import hmac
+    import time
+
+    def part(value):
+        return base64.urlsafe_b64encode(json.dumps(value).encode()).rstrip(b"=").decode()
+
+    claims = {"username": username, "role": role, "exp": int(time.time()) + exp_in, "id": "u1", "tokenVersion": 1}
+    claims.update(extra)
+    claims = {k: v for k, v in claims.items() if v is not None}
+    signing = f"{part({'alg': alg, 'typ': 'JWT'})}.{part(claims)}"
+    signature = base64.urlsafe_b64encode(hmac.new(key, signing.encode(), hashlib.sha256).digest()).rstrip(b"=").decode()
+    return f"{signing}.{signature}"
+
+
+TOKEN = make_token("operator")
 
 
 def _sdk_available() -> bool:
@@ -148,7 +169,7 @@ class GateServiceTests(unittest.TestCase):
         self.audit = GateAudit(str(self.dir / "audit.jsonl"), b"k" * 20)
 
     def _serve(self, **kwargs):
-        config = GateServiceConfig(str(self.registry), TOKEN, kwargs.pop("audit", self.audit), **kwargs)
+        config = GateServiceConfig(str(self.registry), kwargs.pop("audit", self.audit), **{"identity_key": KEY, **kwargs})
         server = serve_gate(config, port=0)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -180,9 +201,11 @@ class GateServiceTests(unittest.TestCase):
         "satisfiedSafetyGates": ["cell.estop.clear"],
     }
 
-    def test_it_needs_a_long_token_and_answers_only_a_caller_that_holds_it(self):
+    def test_it_needs_a_signed_token_and_answers_only_a_caller_that_holds_one(self):
         with self.assertRaises(ValueError):
-            GateServiceConfig(str(self.registry), "short", self.audit)
+            GateServiceConfig(str(self.registry), self.audit, identity_key=b"short")
+        with self.assertRaises(ValueError):  # no key and no explicit loopback switch: it cannot answer anybody
+            GateServiceConfig(str(self.registry), self.audit)
         _, base = self._serve()
         self.assertEqual(self._call(base, "GET", "/health", token=None)[0], 200)
         self.assertEqual(self._call(base, "POST", "/gate/evaluate", self.GOOD, token=None)[0], 401)

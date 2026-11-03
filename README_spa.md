@@ -233,7 +233,7 @@ El comando `hydra-umc-connector-hub` (o `./run.sh`); la referencia completa es `
 
 No tiene variables de entorno propias: la carpeta del registro, el host y el puerto del catálogo (`--registry-dir`, `--host`, `--port`) y la clave de la cadena de certificación (16 caracteres como mínimo) son argumentos de la línea de órdenes. Las credenciales de un adaptador nunca se escriben en su manifiesto, solo una referencia a dónde viven.
 
-Tres adiciones, ninguna activada por defecto. `probe` (y `serve-catalog --endpoints-file`, que añade `GET /probe/<adapterId>`) ejecuta el `healthCheck` que declara un manifiesto contra el lugar que un operador indica en un perfil: se ejecutan HTTP, TCP, un MQTT CONNECT y el Hello de OPC UA; lo que necesita hardware se notifica como no soportado. `collect` reúne en el registro los manifiestos que los bridges publican en `docs/adapter-manifest.json` de sus propios repositorios, solo cuando el propietario es quien dice la carpeta. `serve-gate` sirve la puerta de capacidades por HTTP (`POST /gate/evaluate`) tras un token Bearer obligatorio, escribe cada decisión en un fichero de auditoría encadenado por hash, opcionalmente sellado, antes de responder, y lee el estado de la celda por sí mismo cuando se da `--cell-state-url`.
+Tres adiciones, ninguna activada por defecto. `probe` (y `serve-catalog --endpoints-file`, que añade `GET /probe/<adapterId>`) ejecuta el `healthCheck` que declara un manifiesto contra el lugar que un operador indica en un perfil: se ejecutan HTTP, TCP, un MQTT CONNECT y el Hello de OPC UA; lo que necesita hardware se notifica como no soportado. `collect` reúne en el registro los manifiestos que los bridges publican en `docs/adapter-manifest.json` de sus propios repositorios, solo cuando el propietario es quien dice la carpeta. `serve-gate` sirve la puerta de capacidades por HTTP (`POST /gate/evaluate`) tras un token firmado obligatorio de HYDRA-UMC-SERVER (rechaza la petición sin uno válido; responder sin token a un llamante de esta máquina exige un interruptor explícito, apagado por defecto), escribe cada decisión en un fichero de auditoría encadenado por hash, opcionalmente sellado, antes de responder, y lee el estado de la celda por sí mismo cuando se da `--cell-state-url`.
 
 ## 🚀 Inicio rápido
 
@@ -320,6 +320,7 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── registry.py                              registra los bridges reales como adaptadores
 │   ├── catalog_server.py                        el endpoint de catálogo solo GET
 │   ├── sdk_gate.py                              llama al evaluate_job() propio del SDK
+│   ├── identity.py                              quién llama: el token firmado del SERVER
 │   ├── certification.py ledger.py               registros de certificación en una cadena de hash sellada
 │   └── cli.py                                   validate, catalog, serve-catalog, gate, certify
 ├── tests/                                       188 pruebas

@@ -131,14 +131,33 @@ def _cmd_collect(args: argparse.Namespace) -> int:
     return 0 if not report.skipped else 1
 
 
+def _gate_settings(path: str | None) -> dict:
+    """The settings file of `serve-gate` (JSON object: `identityKeyFile`, `allowLoopbackNoIdentity`); the command line wins over it."""
+    if not path:
+        return {}
+    from pathlib import Path
+
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"the settings file cannot be read: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ValueError("the settings file must hold a JSON object")
+    return data
+
+
 def _cmd_serve_gate(args: argparse.Namespace) -> int:
     from pathlib import Path
 
     from .gate_audit import GateAudit, GateAuditError, load_key
     from .gate_server import GateServiceConfig, http_cell_state_provider, serve_gate
+    from .identity import load_identity_key
 
     try:
-        token = Path(args.token_file).read_text(encoding="utf-8").strip()
+        settings = _gate_settings(args.config_file)
+        key_file = args.identity_key_file or settings.get("identityKeyFile")
+        allow_loopback = bool(args.allow_loopback_no_identity or settings.get("allowLoopbackNoIdentity") is True)
+        identity_key = load_identity_key(key_file) if key_file else None
         key = load_key(args.audit_key_file) if args.audit_key_file else None
         audit = GateAudit(args.audit_file, key)
         lake_token = Path(args.datalake_token_file).read_text(encoding="utf-8").strip() if args.datalake_token_file else None
@@ -146,15 +165,24 @@ def _cmd_serve_gate(args: argparse.Namespace) -> int:
         cell_state = (
             http_cell_state_provider(args.cell_state_url, cell_token, max_age_s=args.cell_state_max_age_s) if args.cell_state_url else None
         )
-        config = GateServiceConfig(args.registry_dir, token, audit, cell_state, args.datalake_url, lake_token)
+        config = GateServiceConfig(
+            args.registry_dir, audit, identity_key=identity_key, allow_loopback_no_identity=allow_loopback,
+            cell_state=cell_state, datalake_url=args.datalake_url, datalake_token=lake_token,
+        )
     except (OSError, ValueError, GateAuditError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
+    if allow_loopback:
+        print("WARNING: allowLoopbackNoIdentity is ON: a caller on this machine is answered without a signed token", file=sys.stderr)
     if key is None:
         print("WARNING: no --audit-key-file: the audit chain is tamper-evident but not sealed", file=sys.stderr)
     if cell_state is None:
         print("WARNING: no --cell-state-url: the cell state is whatever the caller says it is (attested)", file=sys.stderr)
-    server = serve_gate(config, host=args.host, port=args.port)
+    try:
+        server = serve_gate(config, host=args.host, port=args.port)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     print(f"serving the capability gate for {args.registry_dir!r} on http://{server.server_address[0]}:{server.server_port} (Ctrl+C to stop)")  # type: ignore[str-bytes-safe]
     try:
         server.serve_forever()
@@ -336,7 +364,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     serve_gate_cmd = subparsers.add_parser("serve-gate", help="Serve the capability gate over HTTP (POST /gate/evaluate), every decision recorded.")
     serve_gate_cmd.add_argument("--registry-dir", required=True)
-    serve_gate_cmd.add_argument("--token-file", required=True, help="File with the bearer token (16+ characters) every request but /health must carry.")
+    serve_gate_cmd.add_argument("--identity-key-file", help="File with the key that verifies the signed tokens of HYDRA-UMC-SERVER (its JWT_SECRET, 32+ characters). Required unless the loopback switch is on.")
+    serve_gate_cmd.add_argument("--allow-loopback-no-identity", action="store_true", help="OFF by default. Answer a caller on this machine that has no token; only with a loopback --host.")
+    serve_gate_cmd.add_argument("--config-file", help="JSON settings: identityKeyFile, allowLoopbackNoIdentity (the command line wins).")
     serve_gate_cmd.add_argument("--audit-file", required=True, help="JSON-lines file of the decisions (hash chain).")
     serve_gate_cmd.add_argument("--audit-key-file", help="Optional: a secret (16+ characters) that seals each line of the audit chain.")
     serve_gate_cmd.add_argument("--cell-state-url", help="Optional: GET URL that answers the safety state of the cell; the service then reads it itself and ignores the caller's claim.")

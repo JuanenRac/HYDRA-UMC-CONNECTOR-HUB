@@ -238,7 +238,7 @@ Der Befehl `hydra-umc-connector-hub` (oder `./run.sh`); die vollständige Refere
 
 Es gibt keine eigenen Umgebungsvariablen: Registry-Ordner, Host und Port des Katalogs (`--registry-dir`, `--host`, `--port`) und der Schlüssel der Zertifizierungskette (mindestens 16 Zeichen) sind Kommandozeilenargumente. Die Zugangsdaten eines Adapters stehen nie in seinem Manifest, nur ein Verweis darauf, wo sie liegen.
 
-Drei Ergänzungen, keine standardmäßig aktiv. `probe` (und `serve-catalog --endpoints-file`, das `GET /probe/<adapterId>` hinzufügt) führt den `healthCheck` eines Manifests gegen den Ort aus, den ein Betreiber in einem Profil nennt: HTTP, TCP, ein MQTT CONNECT und das OPC-UA-Hello werden ausgeführt, alles, was Hardware braucht, wird als nicht unterstützt gemeldet. `collect` sammelt die Manifeste, die die Bridges in `docs/adapter-manifest.json` ihrer eigenen Repositories veröffentlichen, in die Registry, nur wenn der Eigentümer der ist, den der Ordner nennt. `serve-gate` stellt das Capability-Gate über HTTP bereit (`POST /gate/evaluate`), hinter einem verpflichtenden Bearer-Token, schreibt jede Entscheidung vor der Antwort in eine hashverkettete, optional versiegelte Audit-Datei und liest den Zellenzustand selbst, wenn `--cell-state-url` angegeben ist.
+Drei Ergänzungen, keine standardmäßig aktiv. `probe` (und `serve-catalog --endpoints-file`, das `GET /probe/<adapterId>` hinzufügt) führt den `healthCheck` eines Manifests gegen den Ort aus, den ein Betreiber in einem Profil nennt: HTTP, TCP, ein MQTT CONNECT und das OPC-UA-Hello werden ausgeführt, alles, was Hardware braucht, wird als nicht unterstützt gemeldet. `collect` sammelt die Manifeste, die die Bridges in `docs/adapter-manifest.json` ihrer eigenen Repositories veröffentlichen, in die Registry, nur wenn der Eigentümer der ist, den der Ordner nennt. `serve-gate` stellt das Capability-Gate über HTTP bereit (`POST /gate/evaluate`), hinter einem verpflichtenden signierten Token von HYDRA-UMC-SERVER (ohne gültiges Token wird die Anfrage abgelehnt; einen Aufrufer dieses Rechners ohne Token zu bedienen verlangt einen ausdrücklichen Schalter, standardmäßig aus), schreibt jede Entscheidung vor der Antwort in eine hashverkettete, optional versiegelte Audit-Datei und liest den Zellenzustand selbst, wenn `--cell-state-url` angegeben ist.
 
 ## 🚀 Schnellstart
 
@@ -327,6 +327,7 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── registry.py                              meldet die echten Bridges als Adapter an
 │   ├── catalog_server.py                        der Katalog-Endpunkt nur mit GET
 │   ├── sdk_gate.py                              ruft das eigene evaluate_job() des SDK auf
+│   ├── identity.py                              wer ruft auf: das signierte SERVER-Token
 │   ├── certification.py ledger.py               Zertifizierungsprotokolle in einer versiegelten Hash-Kette
 │   └── cli.py                                   validate, catalog, serve-catalog, gate, certify
 ├── tests/                                       188 Tests

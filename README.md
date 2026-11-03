@@ -219,7 +219,7 @@ The command `hydra-umc-connector-hub` (or `./run.sh`); the full reference is `do
 
 There are no environment variables of its own: the registry folder, the host and port of the catalogue (`--registry-dir`, `--host`, `--port`) and the key of the certification chain (at least 16 characters) are command-line arguments. The credentials of an adapter are never written in its manifest, only a reference to where they live.
 
-Three additions, none on by default. `probe` (and `serve-catalog --endpoints-file`, which adds `GET /probe/<adapterId>`) runs the `healthCheck` a manifest declares against the place an operator lists in a profile: HTTP, TCP, an MQTT CONNECT and the OPC UA Hello are run, anything that needs hardware is reported as unsupported. `collect` gathers the manifests that the bridges publish in `docs/adapter-manifest.json` of their own repositories into the registry, only when the owner is who the folder says. `serve-gate` serves the capability gate over HTTP (`POST /gate/evaluate`) behind a required bearer token, writes every decision to a hash-chained, optionally sealed audit file before it answers, and reads the cell state itself when `--cell-state-url` is given.
+Three additions, none on by default. `probe` (and `serve-catalog --endpoints-file`, which adds `GET /probe/<adapterId>`) runs the `healthCheck` a manifest declares against the place an operator lists in a profile: HTTP, TCP, an MQTT CONNECT and the OPC UA Hello are run, anything that needs hardware is reported as unsupported. `collect` gathers the manifests that the bridges publish in `docs/adapter-manifest.json` of their own repositories into the registry, only when the owner is who the folder says. `serve-gate` serves the capability gate over HTTP (`POST /gate/evaluate`) behind a required signed token of HYDRA-UMC-SERVER (it refuses a request without a valid one; answering a caller on this machine with no token needs an explicit switch, off by default), writes every decision to a hash-chained, optionally sealed audit file before it answers, and reads the cell state itself when `--cell-state-url` is given.
 
 ## 🚀 Quick start
 
@@ -304,6 +304,7 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── registry.py                              registers the real bridges as adapters
 │   ├── catalog_server.py                        the GET-only catalogue endpoint
 │   ├── sdk_gate.py                              calls the SDK's own evaluate_job()
+│   ├── identity.py                              who is calling: the SERVER's signed token
 │   ├── certification.py ledger.py               certification records in a sealed hash chain
 │   └── cli.py                                   validate, catalog, serve-catalog, gate, certify
 ├── tests/                                       188 tests

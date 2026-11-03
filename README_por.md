@@ -219,7 +219,7 @@ O comando `hydra-umc-connector-hub` (ou `./run.sh`); a referência completa é `
 
 Não tem variáveis de ambiente próprias: a pasta do registo, o anfitrião e a porta do catálogo (`--registry-dir`, `--host`, `--port`) e a chave da cadeia de certificação (pelo menos 16 carateres) são argumentos da linha de comandos. As credenciais de um adaptador nunca se escrevem no seu manifesto, apenas uma referência a onde estão.
 
-Três acrescentos, nenhum ativo por defeito. `probe` (e `serve-catalog --endpoints-file`, que acrescenta `GET /probe/<adapterId>`) executa o `healthCheck` que um manifesto declara contra o lugar que um operador indica num perfil: executam-se HTTP, TCP, um MQTT CONNECT e o Hello OPC UA, o que precisa de hardware é indicado como não suportado. `collect` reúne no registo os manifestos que os bridges publicam em `docs/adapter-manifest.json` dos seus próprios repositórios, só quando o proprietário é quem a pasta diz. `serve-gate` serve a porta de capacidades por HTTP (`POST /gate/evaluate`) atrás de um token Bearer obrigatório, escreve cada decisão num ficheiro de auditoria encadeado por hash, opcionalmente selado, antes de responder, e lê ele próprio o estado da célula quando se indica `--cell-state-url`.
+Três acrescentos, nenhum ativo por defeito. `probe` (e `serve-catalog --endpoints-file`, que acrescenta `GET /probe/<adapterId>`) executa o `healthCheck` que um manifesto declara contra o lugar que um operador indica num perfil: executam-se HTTP, TCP, um MQTT CONNECT e o Hello OPC UA, o que precisa de hardware é indicado como não suportado. `collect` reúne no registo os manifestos que os bridges publicam em `docs/adapter-manifest.json` dos seus próprios repositórios, só quando o proprietário é quem a pasta diz. `serve-gate` serve a porta de capacidades por HTTP (`POST /gate/evaluate`) atrás de um token assinado obrigatório do HYDRA-UMC-SERVER (recusa o pedido sem um token válido; responder sem token a um chamador desta máquina exige um interruptor explícito, desligado por defeito), escreve cada decisão num ficheiro de auditoria encadeado por hash, opcionalmente selado, antes de responder, e lê ele próprio o estado da célula quando se indica `--cell-state-url`.
 
 ## 🚀 Início rápido
 
@@ -303,6 +303,7 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── registry.py                              regista os bridges reais como adaptadores
 │   ├── catalog_server.py                        o endpoint do catálogo só GET
 │   ├── sdk_gate.py                              chama o próprio evaluate_job() do SDK
+│   ├── identity.py                              quem chama: o token assinado do SERVER
 │   ├── certification.py ledger.py               registos de certificação numa cadeia de hash selada
 │   └── cli.py                                   validate, catalog, serve-catalog, gate, certify
 ├── tests/                                       188 testes

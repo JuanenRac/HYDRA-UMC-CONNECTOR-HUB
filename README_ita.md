@@ -234,7 +234,7 @@ Il comando `hydra-umc-connector-hub` (o `./run.sh`); il riferimento completo è 
 
 Non ci sono variabili d'ambiente proprie: la cartella del registro, host e porta del catalogo (`--registry-dir`, `--host`, `--port`) e la chiave della catena di certificazione (almeno 16 caratteri) sono argomenti della riga di comando. Le credenziali di un adattatore non si scrivono mai nel suo manifesto, solo un riferimento a dove si trovano.
 
-Tre aggiunte, nessuna attiva per impostazione predefinita. `probe` (e `serve-catalog --endpoints-file`, che aggiunge `GET /probe/<adapterId>`) esegue l'`healthCheck` dichiarato da un manifesto contro il luogo che un operatore indica in un profilo: vengono eseguiti HTTP, TCP, un MQTT CONNECT e l'Hello OPC UA, ciò che richiede hardware è segnalato come non supportato. `collect` raccoglie nel registro i manifesti che i bridge pubblicano in `docs/adapter-manifest.json` dei propri repository, solo quando il proprietario è quello che dice la cartella. `serve-gate` serve la porta delle capacità via HTTP (`POST /gate/evaluate`) dietro un token Bearer obbligatorio, scrive ogni decisione in un file di audit concatenato per hash, facoltativamente sigillato, prima di rispondere, e legge da sé lo stato della cella quando viene dato `--cell-state-url`.
+Tre aggiunte, nessuna attiva per impostazione predefinita. `probe` (e `serve-catalog --endpoints-file`, che aggiunge `GET /probe/<adapterId>`) esegue l'`healthCheck` dichiarato da un manifesto contro il luogo che un operatore indica in un profilo: vengono eseguiti HTTP, TCP, un MQTT CONNECT e l'Hello OPC UA, ciò che richiede hardware è segnalato come non supportato. `collect` raccoglie nel registro i manifesti che i bridge pubblicano in `docs/adapter-manifest.json` dei propri repository, solo quando il proprietario è quello che dice la cartella. `serve-gate` serve la porta delle capacità via HTTP (`POST /gate/evaluate`) dietro un token firmato obbligatorio di HYDRA-UMC-SERVER (rifiuta la richiesta senza un token valido; rispondere senza token a un chiamante di questa macchina richiede un interruttore esplicito, spento per impostazione predefinita), scrive ogni decisione in un file di audit concatenato per hash, facoltativamente sigillato, prima di rispondere, e legge da sé lo stato della cella quando viene dato `--cell-state-url`.
 
 ## 🚀 Avvio rapido
 
@@ -320,6 +320,7 @@ HYDRA-UMC-CONNECTOR-HUB/
 │   ├── registry.py                              registra i veri bridge come adattatori
 │   ├── catalog_server.py                        l'endpoint del catalogo solo GET
 │   ├── sdk_gate.py                              chiama l'evaluate_job() proprio dell'SDK
+│   ├── identity.py                              chi chiama: il token firmato del SERVER
 │   ├── certification.py ledger.py               registri di certificazione in una catena di hash sigillata
 │   └── cli.py                                   validate, catalog, serve-catalog, gate, certify
 ├── tests/                                       188 test

@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The gate service asks who is calling, and by default refuses anybody without a signed token of HYDRA-UMC-SERVER.** `serve-gate` verifies the token that the SERVER issues at login (HS256 JWT, claims `username`, `role`, `exp`, key from `--identity-key-file`) and does not evaluate a request without a valid one (absent, expired, tampered, foreign key or another algorithm), answering with the reason. The role travels in the token: `admin` and `operator` may ask for a decision, `viewer` may only read the audit. Each audited decision records `caller`. **Breaking:** `--token-file` (a shared static bearer token) is gone.
+- **Switch `--allow-loopback-no-identity` (or `allowLoopbackNoIdentity` in `--config-file`), off by default,** answers a caller on this machine that has no token; it is accepted only when the service listens on a loopback address, and the service does not start without a key or the switch.
 - **Bench test script:** `docs/BENCH_TESTS.md` lists the probe checks that need real services, all marked not executed.
 
 ## [0.1.7] - Real health checks, a manifest owned by each bridge and the write gate as an HTTP service with a hash chain

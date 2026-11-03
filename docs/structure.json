@@ -71,6 +71,19 @@
           }
         },
         {
+          "name": "identity.py",
+          "desc": {
+            "en": "who is calling: the SERVER's signed token",
+            "es": "quién llama: el token firmado del SERVER",
+            "de": "wer ruft auf: das signierte SERVER-Token",
+            "fr": "qui appelle : le jeton signé du SERVER",
+            "it": "chi chiama: il token firmato del SERVER",
+            "ja": "呼び出し元：SERVER の署名付きトークン",
+            "zh": "调用方：SERVER 的签名令牌",
+            "pt": "quem chama: o token assinado do SERVER"
+          }
+        },
+        {
           "name": "certification.py, ledger.py",
           "desc": {
             "en": "certification records in a sealed hash chain",

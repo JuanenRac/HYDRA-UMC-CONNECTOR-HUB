@@ -8,11 +8,15 @@ write or an abort, and every decision is recorded.
 
     POST /gate/evaluate   body: see below; answer 200 {"allowed": bool, "reason": ..., ...}   (a denial is also a 200: it is the answer)
     GET  /gate/audit      the head of the audit chain and the newest decisions
-    GET  /health          {"status": "ok"}   (the only route without the bearer token)
+    GET  /health          {"status": "ok"}   (the only route without a token)
 
 It is the gate of `sdk_gate.py` (which is the gate of HYDRA-UMC-SDK) with three additions, none of which relaxes it:
 
-  * A bearer token is REQUIRED (`--token-file`, at least 16 characters): the service decides whether a machine may move, so it does not answer anybody.
+  * A SIGNED TOKEN of HYDRA-UMC-SERVER is REQUIRED (`identity.py`: the JWT the SERVER issues at login, verified with a key from `--identity-key-file`): the
+    service decides whether a machine may move, so it does not answer anybody, and a request without a valid token is refused with the reason and not
+    evaluated. The role travels in the token: `admin` and `operator` may ask for a decision, `viewer` may only read the audit. The one way to answer a
+    caller with no identity is the switch `--allow-loopback-no-identity` (off by default), accepted only on a loopback address. Each recorded decision
+    carries who asked (`caller`).
   * Every decision is appended to the audit chain (`gate_audit.py`) BEFORE the answer is given; if the line cannot be written the answer is a denial.
   * With a cell-state provider (`--cell-state-url`, the `GET /state` of HYDRA-UMC-SAFETY-ZONES or any service that answers
     `{"state": ..., "timestamp_utc": ...}`) the SDK cell state is READ by the service and the caller's own claim is ignored; a provider that is down,
@@ -40,12 +44,12 @@ from urllib.parse import urlsplit
 
 from . import __version__
 from .gate_audit import GateAudit, GateAuditError
+from .identity import DECIDE_ROLES, LOOPBACK_ROLE, MIN_KEY_LENGTH, Identity, IdentityError, is_loopback, require_role, verify_token
 from .registry import load_full_manifest
 from .sdk_gate import CapabilityCallRequest, CapabilityGateError, SdkUnavailableError, evaluate_capability_call
 from .service_metrics import MetricsHandlerMixin
 
 MAX_BODY_BYTES = 64 * 1024
-MIN_TOKEN_LENGTH = 16
 DEFAULT_CELL_STATE_MAX_AGE_S = 5.0
 
 CellStateProvider = Callable[[], "tuple[str, float]"]
@@ -95,7 +99,7 @@ def _string_list(value: Any, name: str) -> frozenset[str]:
     return frozenset(value)
 
 
-def _decide(config: "GateServiceConfig", body: dict[str, Any]) -> dict[str, Any]:
+def _decide(config: "GateServiceConfig", body: dict[str, Any], caller: Identity | None = None) -> dict[str, Any]:
     """The decision for one request body, as the dict that is audited and answered. Never raises."""
     adapter_id = body.get("adapterId")
     capability = body.get("capability")
@@ -109,6 +113,7 @@ def _decide(config: "GateServiceConfig", body: dict[str, Any]) -> dict[str, Any]
         "evidenceErrors": [],
         "observed": False,
         "cellStateSource": None,
+        "caller": caller.as_audit() if caller is not None else None,
     }
     if not isinstance(adapter_id, str) or not isinstance(capability, str) or not adapter_id or not capability:
         decision["reason"] = "adapterId and capability are required strings"
@@ -158,19 +163,27 @@ def _decide(config: "GateServiceConfig", body: dict[str, Any]) -> dict[str, Any]
 
 
 class GateServiceConfig:
+    """`identity_key`: the key that verifies the tokens of the SERVER (at least 32 characters). `allow_loopback_no_identity`: the explicit switch, off by
+    default, that lets a caller on a loopback address be answered without a token. With neither the service cannot answer anybody, so it does not start."""
+
     def __init__(
         self,
         registry_dir: str,
-        token: str,
         audit: GateAudit,
+        *,
+        identity_key: bytes | None = None,
+        allow_loopback_no_identity: bool = False,
         cell_state: CellStateProvider | None = None,
         datalake_url: str | None = None,
         datalake_token: str | None = None,
     ) -> None:
-        if len(token) < MIN_TOKEN_LENGTH:
-            raise ValueError(f"the token must have at least {MIN_TOKEN_LENGTH} characters")
+        if identity_key is not None and len(identity_key) < MIN_KEY_LENGTH:
+            raise ValueError(f"the identity key must have at least {MIN_KEY_LENGTH} characters")
+        if identity_key is None and not allow_loopback_no_identity:
+            raise ValueError("an identity key is required (the key that verifies the tokens of HYDRA-UMC-SERVER); without one the service refuses everybody")
         self.registry_dir = registry_dir
-        self.token = token
+        self.identity_key = identity_key
+        self.allow_loopback_no_identity = bool(allow_loopback_no_identity)
         self.audit = audit
         self.cell_state = cell_state
         self.datalake_url = datalake_url.rstrip("/") if datalake_url else None
@@ -225,11 +238,24 @@ def make_handler(config: GateServiceConfig) -> type[BaseHTTPRequestHandler]:
             self.end_headers()
             self.wfile.write(body)
 
-        def _authorized(self) -> bool:
+        def _identity(self, roles: frozenset[str] | None) -> Identity | None:
+            """The verified caller, or None after answering 401 (no valid identity) or 403 (a role that may not do this). Fail-closed."""
             header = self.headers.get("Authorization", "")
-            import hmac
-
-            return header.startswith("Bearer ") and hmac.compare_digest(header[len("Bearer "):].strip().encode("utf-8"), config.token.encode("utf-8"))
+            token = header[len("Bearer "):].strip() if header.startswith("Bearer ") else None
+            try:
+                if token and config.identity_key is not None:
+                    identity = verify_token(token, config.identity_key)
+                elif config.allow_loopback_no_identity and is_loopback(self.client_address[0]):
+                    identity = Identity(None, LOOPBACK_ROLE, "loopback")
+                else:
+                    raise IdentityError("a signed token of HYDRA-UMC-SERVER is required")
+                if roles is not None and identity.source == "token":
+                    require_role(identity, roles)
+            except IdentityError as exc:
+                forbidden = "may not do this" in str(exc)
+                self._send_json(403 if forbidden else 401, {"error": str(exc), "code": "ROLE_FORBIDDEN" if forbidden else "IDENTITY_REQUIRED"})
+                return None
+            return identity
 
         def metrics_checks(self) -> dict[str, bool]:
             return {"audit_chain": True}
@@ -239,8 +265,7 @@ def make_handler(config: GateServiceConfig) -> type[BaseHTTPRequestHandler]:
             if route == "/health":
                 self._send_json(200, {"status": "ok", "signed": config.audit.signed})
                 return
-            if not self._authorized():
-                self._send_json(401, {"error": "a valid bearer token is required"})
+            if self._identity(None) is None:
                 return
             if self.serve_metrics(authorized=True):
                 return
@@ -251,11 +276,13 @@ def make_handler(config: GateServiceConfig) -> type[BaseHTTPRequestHandler]:
 
         def do_POST(self) -> None:  # noqa: N802
             route = urlsplit(self.path).path.rstrip("/")
-            if not self._authorized():
-                self._send_json(401, {"error": "a valid bearer token is required"})
-                return
             if route != "/gate/evaluate":
+                if self._identity(None) is None:
+                    return
                 self._send_json(404, {"error": "unknown route"})
+                return
+            caller = self._identity(DECIDE_ROLES)
+            if caller is None:
                 return
             if "application/json" not in self.headers.get("Content-Type", ""):
                 self._send_json(415, {"error": "the body must be application/json"})
@@ -275,7 +302,7 @@ def make_handler(config: GateServiceConfig) -> type[BaseHTTPRequestHandler]:
             if not isinstance(body, dict):
                 self._send_json(400, {"error": "the body must be a JSON object"})
                 return
-            decision = _decide(config, body)
+            decision = _decide(config, body, caller)
             try:
                 record = config.audit.append(decision)
             except GateAuditError as exc:
@@ -297,5 +324,8 @@ def make_handler(config: GateServiceConfig) -> type[BaseHTTPRequestHandler]:
 
 
 def serve_gate(config: GateServiceConfig, host: str = "127.0.0.1", port: int = 0) -> ThreadingHTTPServer:
-    """A bound server; the caller runs `serve_forever()`. Loopback unless told otherwise: the token is the only door, and a plain-HTTP token should not cross a network."""
+    """A bound server; the caller runs `serve_forever()`. Loopback unless told otherwise: the token is the only door, and a plain-HTTP token should not cross a network.
+    With the loopback switch on, any other address is refused here."""
+    if config.allow_loopback_no_identity and not is_loopback(host):
+        raise ValueError("the switch that answers a caller without identity is accepted only on a loopback address (127.0.0.1)")
     return ThreadingHTTPServer((host, port), make_handler(config))
