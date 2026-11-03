@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Language">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
-  <img src="https://img.shields.io/badge/Tests-214%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-238%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.1.8-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -52,7 +52,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | Version | `0.1.8` |
 | Maturity | Functional |
-| Tests | 214 (`python -m pytest -q tests`) |
+| Tests | 238 (`python -m pytest -q tests`) |
 | Stack | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | Target | The PC of the person using it |
 | On real hardware | Not applicable: nothing here runs on hardware |
@@ -68,7 +68,7 @@ Each line is one part of this repository and the light says how far it is today.
 | Area | State | What it means here |
 |---|---|---|
 | Software | 🟡 | Works for its main purpose; the honesty check above lists what is still missing |
-| Tests | 🟢 | 214 automated tests, run on every change |
+| Tests | 🟢 | 238 automated tests, run on every change |
 | Real hardware | 🟢 | Not applicable: nothing here runs on hardware |
 | Deployment | 🟠 | Published as a release; installing it on a clean machine is documented but not recorded |
 | Documentation | 🟢 | README in eight languages, checked against the manifest on every change |
@@ -272,7 +272,7 @@ version or CHANGELOG - it does NOT run the test suite itself; CI runs
 
 ## 🧪 Testing
 
-214 automated tests run with `python -m pytest -q tests` (39 of them need the `sdk` extra and are skipped without it): the schema and the published JSON Schema, the catalogue, the SDK gate, the certification chain, the command line and hostile inputs. No hardware and no outside network.
+238 automated tests run with `python -m pytest -q tests` (39 of them need the `sdk` extra and are skipped without it): the schema and the published JSON Schema, the catalogue, the SDK gate, the certification chain, the command line and hostile inputs. No hardware and no outside network.
 
 The CI runs `HYDRA_UMC_CI=1 python tools/ci_validate.py`, which checks the manifest, the documents, the eight READMEs and the pictures.
 
