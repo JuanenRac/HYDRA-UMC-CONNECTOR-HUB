@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **Bench test script:** `docs/BENCH_TESTS.md` lists the probe checks that need real services, all marked not executed.
+
 ## [0.1.7] - Real health checks, a manifest owned by each bridge and the write gate as an HTTP service with a hash chain
 
 - **The declared health checks are run (off until a profile of places is given).** `probe --registry-dir DIR --endpoints-file FILE` (and `serve-catalog --endpoints-file FILE`, which adds `GET /probe/<adapterId>`, cached for five seconds) runs the `healthCheck` of a manifest against the place the operator listed for that adapter (`{adapterId: {host, port, scheme}}`; a manifest or a request never names a place). `http-get`, `tcp-connect`, `mqtt-ping` (a CONNECT answered by an accepting CONNACK) and `opcua-read` (an OPC UA Hello answered by an Acknowledge; the node itself is not read, and the result says `checked: opcua-hello`) are run for real, TLS is always verified; every other type (`serial-probe`, `gpio-read`, `rpc-ping`, `ros2-node-alive`, `mavlink-heartbeat`, `mqtt-topic-recent`) is reported as unsupported and never as healthy.
