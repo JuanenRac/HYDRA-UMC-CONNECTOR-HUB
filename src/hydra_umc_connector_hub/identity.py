@@ -22,7 +22,9 @@ from __future__ import annotations
 import base64
 import binascii
 import hmac
+import ipaddress
 import json
+import math
 import time
 from dataclasses import dataclass
 from hashlib import sha256
@@ -94,12 +96,12 @@ def verify_token(token: str | None, key: bytes, *, now: float | None = None) -> 
     claims = _json_part(parts[1])
     moment = time.time() if now is None else now
     exp = claims.get("exp")
-    if isinstance(exp, bool) or not isinstance(exp, (int, float)):
+    if isinstance(exp, bool) or not isinstance(exp, (int, float)) or not math.isfinite(exp):   # NaN compares false with everything: it would never expire
         raise IdentityError("the token has no expiry")
     if exp <= moment:
         raise IdentityError("the token has expired")
     nbf = claims.get("nbf")
-    if nbf is not None and (isinstance(nbf, bool) or not isinstance(nbf, (int, float)) or nbf > moment):
+    if nbf is not None and (isinstance(nbf, bool) or not isinstance(nbf, (int, float)) or not math.isfinite(nbf) or nbf > moment):
         raise IdentityError("the token is not valid yet")
     username, role = claims.get("username"), claims.get("role")
     if not isinstance(username, str) or not username:
@@ -115,4 +117,12 @@ def require_role(identity: Identity, allowed: frozenset[str]) -> None:
 
 
 def is_loopback(address: str) -> bool:
-    return address in LOOPBACK_ADDRESSES or address.startswith("127.") or address == "::ffff:127.0.0.1"
+    if address in LOOPBACK_ADDRESSES:
+        return True
+    try:
+        parsed = ipaddress.ip_address(address)
+    except ValueError:
+        return False   # a name such as "127.example.com" is not an address: only a real loopback address counts
+    if isinstance(parsed, ipaddress.IPv6Address) and parsed.ipv4_mapped is not None:
+        parsed = parsed.ipv4_mapped
+    return parsed.is_loopback
