@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Language">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
-  <img src="https://img.shields.io/badge/Tests-253%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-264%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.1.8-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -52,7 +52,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | バージョン | `0.1.8` |
 | 成熟度 | 機能する |
-| テスト | 253 (`python -m pytest -q tests`) |
+| テスト | 264 (`python -m pytest -q tests`) |
 | 技術 | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | 対象 | 利用者の PC |
 | 実機での確認 | 対象外：ここにあるものはハードウェア上では動きません |
@@ -68,7 +68,7 @@ GPL-3.0-or-later - see LICENSE
 | 領域 | 状態 | ここでの意味 |
 |---|---|---|
 | ソフトウェア | 🟡 | 主な目的では動作します。足りない点は上の正直さの確認に書かれています |
-| テスト | 🟢 | 自動テスト 253 件。変更のたびに実行されます |
+| テスト | 🟢 | 自動テスト 264 件。変更のたびに実行されます |
 | 実機 | 🟢 | 対象外：ここにあるものはハードウェア上では動きません |
 | デプロイ | 🟠 | リリースとして公開されています。新しい環境へのインストールは文書化されていますが記録はありません |
 | ドキュメント | 🟢 | 8 言語の README。変更のたびにマニフェストと照合されます |
@@ -286,7 +286,7 @@ Windows では: 先に `build.bat`、その後 `run.bat`(引数なしの場合�
 
 ## 🧪 テスト
 
-`python -m pytest -q tests` で自動テスト 253 件を実行します（うち 39 件は追加パッケージ `sdk` が必要で、なければスキップされます）。スキーマと公開 JSON スキーマ、カタログ、SDK のゲート、認証チェーン、コマンドライン、悪意ある入力が対象で、ハードウェアも外部ネットワークも不要です。
+`python -m pytest -q tests` で自動テスト 264 件を実行します（うち 39 件は追加パッケージ `sdk` が必要で、なければスキップされます）。スキーマと公開 JSON スキーマ、カタログ、SDK のゲート、認証チェーン、コマンドライン、悪意ある入力が対象で、ハードウェアも外部ネットワークも不要です。
 
 CI は `HYDRA_UMC_CI=1 python tools/ci_validate.py` を実行し、マニフェスト、文書、8 つの README、図を検査します。
 
