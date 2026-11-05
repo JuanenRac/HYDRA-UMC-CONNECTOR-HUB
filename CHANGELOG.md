@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [0.1.9] - The build test of the repository compiles only on CI or when allowed: for the stacks that compile (rust, go, android, flutter, firmware-c), tools/buildtest.py prints BUILDTEST=SKIPPED with exit status 2 on a plain PC, never a... (and 3 more changes)
+
 - **The build test of the repository compiles only on CI or when allowed:** for the stacks that compile (`rust`, `go`, `android`, `flutter`, `firmware-c`), `tools/build_test.py` prints `BUILD_TEST=SKIPPED` with exit status 2 on a plain PC, never a pass; `ALLOW_LOCAL_BUILD=1` allows it and a CI runner always may. The `python` and `node` stacks are not locked.
 
 - **The gate service takes the identity key of the family from the same variable as the other services:** `HYDRA_UMC_CONNECTOR_HUB_IDENTITY_KEY_FILE` names the file with the key (after `--identity-key-file` and before the settings file), so the identity command of the operating system can hand the key to the hub like to every other service. The verifier of the hub is unchanged: it still refuses a caller without a token, still takes the EdDSA key set of the server and now has tests with the short token of the family (HS256, username, role and expiry, no issue time).
