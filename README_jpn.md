@@ -230,7 +230,7 @@ CERTIFIED adapterId='cnc-grbl' certificationId='...' -> certifications/cnc-grbl_
 
 専用の環境変数はありません。レジストリのフォルダー、カタログのホストとポート（`--registry-dir`、`--host`、`--port`）、認証チェーンの鍵（16 文字以上）はコマンドライン引数です。アダプターの認証情報はマニフェストに書かれず、置き場所への参照だけが書かれます。
 
-いずれも初期状態ではオフの追加が三つあります。`probe`（および `GET /probe/<adapterId>` を加える `serve-catalog --endpoints-file`）は、マニフェストが宣言する `healthCheck` を、運用者がプロファイルに挙げた場所に対して実行します。HTTP、TCP、MQTT CONNECT、OPC UA Hello は実行され、ハードウェアが必要なものは未対応と報告されます。`collect` は、各ブリッジが自分のリポジトリの `docs/adapter-manifest.json` に公開したマニフェストを、所有者がフォルダー名どおりの場合に限ってレジストリへ集めます。`serve-gate` はケイパビリティゲートを HTTP（`POST /gate/evaluate`）で提供し、HYDRA-UMC-SERVER の署名付きトークンを必須とし（有効なトークンがない要求は拒否します。このマシン上の呼び出し元にトークンなしで応答するには、明示的なスイッチが必要で、初期状態ではオフです）、応答の前にすべての判断をハッシュ連鎖（任意で封印）の監査ファイルへ書き、`--cell-state-url` を指定するとセル状態を自分で読みます。
+いずれも初期状態ではオフの追加が三つあります。`probe`（および `GET /probe/<adapterId>` を加える `serve-catalog --endpoints-file`）は、マニフェストが宣言する `healthCheck` を、運用者がプロファイルに挙げた場所に対して実行します。HTTP、TCP、MQTT CONNECT、OPC UA Hello は実行され、ハードウェアが必要なものは未対応と報告されます。`collect` は、各ブリッジが自分のリポジトリの `docs/adapter-manifest.json` に公開したマニフェストを、所有者がフォルダー名どおりの場合に限ってレジストリへ集めます。`serve-gate` はケイパビリティゲートを HTTP（`POST /gate/evaluate`）で提供し、HYDRA-UMC-SERVER の署名付きトークンを必須とし（有効なトークンがない要求は拒否します。このマシン上の呼び出し元にトークンなしで応答するには、明示的なスイッチが必要で、初期状態ではオフです）、応答の前にすべての判断をハッシュ連鎖（任意で封印）の監査ファイルへ書き、`--cell-state-url` を指定するとセル状態を自分で読みます。 サインイン済みの管理者は、ゲートの稼働中にそのスイッチを読み取り・変更できます（`GET` と `POST /gate/settings`）。オンにするには確認が必要で、変更は設定ファイルに書き込まれ、監査チェーンに記録されます。ID を持たない呼び出し元はこのルートを使えません。
 
 ## 🚀 クイックスタート
 

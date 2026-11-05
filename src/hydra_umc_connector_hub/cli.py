@@ -199,7 +199,7 @@ def _cmd_serve_gate(args: argparse.Namespace) -> int:
         )
         config = GateServiceConfig(
             args.registry_dir, audit, identity_key=identity_key, token_verifier=verifier, allow_loopback_no_identity=allow_loopback,
-            cell_state=cell_state, datalake_url=args.datalake_url, datalake_token=lake_token,
+            cell_state=cell_state, datalake_url=args.datalake_url, datalake_token=lake_token, settings_file=args.config_file,
         )
     except (OSError, ValueError, GateAuditError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

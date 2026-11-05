@@ -34,6 +34,8 @@ Optionally (`--datalake-url`) each decision is also sent to HYDRA-UMC-DATALAKE a
 from __future__ import annotations
 
 import json
+import os
+import sys
 import threading
 import time
 import urllib.request
@@ -177,6 +179,7 @@ class GateServiceConfig:
         cell_state: CellStateProvider | None = None,
         datalake_url: str | None = None,
         datalake_token: str | None = None,
+        settings_file: str | None = None,
     ) -> None:
         if identity_key is not None and len(identity_key) < MIN_KEY_LENGTH:
             raise ValueError(f"the identity key must have at least {MIN_KEY_LENGTH} characters")
@@ -195,6 +198,51 @@ class GateServiceConfig:
         self.decisions_made = 0
         self.denials_made = 0
         self._lock = threading.Lock()
+        # The settings file of `--config-file`: where a change made through `POST /gate/settings` is written so that it survives a restart (None: memory only).
+        self.settings_file = settings_file
+        # Set by serve_gate: whether the service listens on a loopback address, which is the only place the no-identity switch may be on.
+        self.listens_on_loopback = False
+
+    def set_allow_loopback_no_identity(self, value: bool) -> bool:
+        """Turns the no-identity switch on or off while the service runs; returns whether it changed. Raises ValueError (nothing changes) when the new state is not allowed:
+        on needs a loopback address, off needs something that verifies tokens (else the service would answer nobody), and a settings file that cannot be written."""
+        value = bool(value)
+        with self._lock:
+            if value == self.allow_loopback_no_identity:
+                return False
+            if value and not self.listens_on_loopback:
+                raise ValueError("the switch that answers a caller without identity can be on only while the service listens on a loopback address (127.0.0.1)")
+            if not value and self.token_verifier is None:
+                raise ValueError("the switch cannot be turned off: no key verifies tokens, so the service would answer nobody")
+            if self.settings_file:
+                self._write_setting(value)
+            self.allow_loopback_no_identity = value
+            return True
+
+    def _write_setting(self, value: bool) -> None:
+        try:
+            with open(self.settings_file, encoding="utf-8") as handle:  # type: ignore[arg-type]
+                data = json.load(handle)
+            if not isinstance(data, dict):
+                raise ValueError("the settings file must hold a JSON object")
+            data["allowLoopbackNoIdentity"] = value
+            temporary = f"{self.settings_file}.tmp"
+            with open(temporary, "w", encoding="utf-8") as handle:
+                json.dump(data, handle, indent=2)
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, self.settings_file)  # type: ignore[arg-type]
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"the settings file cannot be written: {exc}") from exc
+
+    def settings_view(self) -> dict[str, Any]:
+        return {
+            "allowLoopbackNoIdentity": self.allow_loopback_no_identity,
+            "loopbackSwitchAllowed": self.listens_on_loopback,
+            "verifiesTokens": self.token_verifier is not None,
+            "persisted": bool(self.settings_file),
+        }
 
     def count(self, allowed: bool) -> None:
         with self._lock:
@@ -261,6 +309,57 @@ def make_handler(config: GateServiceConfig) -> type[BaseHTTPRequestHandler]:
                 return None
             return identity
 
+        def _change_settings(self) -> None:
+            """`POST /gate/settings` with `{"allowLoopbackNoIdentity": true|false, "confirm": true}`: only an administrator with a signed token (never the caller with no identity),
+            turning the switch on needs `confirm: true`, and every change is recorded in the audit chain with who made it."""
+            caller = self._identity(frozenset({"admin"}))
+            if caller is None:
+                return
+            if caller.source != "token":
+                self._send_json(403, {"error": "the settings can be changed only with a signed token of HYDRA-UMC-SERVER", "code": "TOKEN_REQUIRED"})
+                return
+            if "application/json" not in self.headers.get("Content-Type", ""):
+                self._send_json(415, {"error": "the body must be application/json"})
+                return
+            try:
+                length = int(self.headers.get("Content-Length", "-1"))
+            except ValueError:
+                length = -1
+            if length < 0 or length > MAX_BODY_BYTES:
+                self._send_json(413 if length > MAX_BODY_BYTES else 411, {"error": f"a Content-Length of at most {MAX_BODY_BYTES} bytes is required"})
+                return
+            try:
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                self._send_json(400, {"error": "the body is not valid JSON"})
+                return
+            if not isinstance(body, dict) or set(body) - {"allowLoopbackNoIdentity", "confirm"} or not isinstance(body.get("allowLoopbackNoIdentity"), bool):
+                self._send_json(400, {"error": "the body must be an object with allowLoopbackNoIdentity (true or false) and, to turn it on, confirm: true"})
+                return
+            wanted = body["allowLoopbackNoIdentity"]
+            if wanted and body.get("confirm") is not True and not config.allow_loopback_no_identity:
+                self._send_json(400, {"error": "turning on the answer to a caller with no identity needs confirm: true", "code": "CONFIRMATION_REQUIRED"})
+                return
+            before = config.allow_loopback_no_identity
+            try:
+                changed = config.set_allow_loopback_no_identity(wanted)
+            except ValueError as exc:
+                self._send_json(409, {"error": str(exc), "code": "SETTING_REFUSED"})
+                return
+            if changed:
+                try:
+                    config.audit.append({"kind": "settings_change", "setting": "allowLoopbackNoIdentity", "from": before, "to": wanted, "caller": caller.as_audit()})
+                except GateAuditError as exc:
+                    try:
+                        config.set_allow_loopback_no_identity(before)
+                    except ValueError:
+                        pass
+                    self._send_json(503, {"error": f"the change could not be recorded, so it was undone: {exc}"})
+                    return
+                if wanted:
+                    print("WARNING: allowLoopbackNoIdentity was turned ON through the settings route: a caller on this machine is answered without a signed token", file=sys.stderr)
+            self._send_json(200, dict(config.settings_view(), changed=changed))
+
         def metrics_checks(self) -> dict[str, bool]:
             return {"audit_chain": True}
 
@@ -273,6 +372,9 @@ def make_handler(config: GateServiceConfig) -> type[BaseHTTPRequestHandler]:
                 return
             if self.serve_metrics(authorized=True):
                 return
+            if route == "/gate/settings":
+                self._send_json(200, config.settings_view())
+                return
             if route == "/gate/audit":
                 self._send_json(200, {"head": config.audit.head(), "signed": config.audit.signed, "decisions": config.decisions_made, "denials": config.denials_made, "recent": config.audit.recent(50)})
                 return
@@ -280,6 +382,9 @@ def make_handler(config: GateServiceConfig) -> type[BaseHTTPRequestHandler]:
 
         def do_POST(self) -> None:  # noqa: N802
             route = urlsplit(self.path).path.rstrip("/")
+            if route == "/gate/settings":
+                self._change_settings()
+                return
             if route != "/gate/evaluate":
                 if self._identity(None) is None:
                     return
@@ -332,4 +437,5 @@ def serve_gate(config: GateServiceConfig, host: str = "127.0.0.1", port: int = 0
     With the loopback switch on, any other address is refused here."""
     if config.allow_loopback_no_identity and not is_loopback(host):
         raise ValueError("the switch that answers a caller without identity is accepted only on a loopback address (127.0.0.1)")
+    config.listens_on_loopback = is_loopback(host)
     return ThreadingHTTPServer((host, port), make_handler(config))
