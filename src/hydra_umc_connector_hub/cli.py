@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from typing import Any
 
@@ -177,6 +178,9 @@ def _build_token_verifier(settings: dict, identity_key: bytes | None):
     return TokenVerifier(hs256_key=identity_key, jwks=jwks, accept_hs256=accept)
 
 
+IDENTITY_KEY_FILE_VARIABLE = "HYDRA_UMC_CONNECTOR_HUB_IDENTITY_KEY_FILE"
+
+
 def _cmd_serve_gate(args: argparse.Namespace) -> int:
     from pathlib import Path
 
@@ -186,7 +190,8 @@ def _cmd_serve_gate(args: argparse.Namespace) -> int:
 
     try:
         settings = _gate_settings(args.config_file)
-        key_file = args.identity_key_file or settings.get("identityKeyFile")
+        # the command line first, then the variable that the identity command of HYDRA-UMC-OS sets for every service of the family, then the settings file
+        key_file = args.identity_key_file or os.environ.get(IDENTITY_KEY_FILE_VARIABLE, "").strip() or settings.get("identityKeyFile")
         allow_loopback = bool(args.allow_loopback_no_identity or settings.get("allowLoopbackNoIdentity") is True)
         identity_key = load_identity_key(key_file) if key_file else None
         verifier = _build_token_verifier(settings, identity_key)

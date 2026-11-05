@@ -146,5 +146,53 @@ class GateIdentityTests(unittest.TestCase):
         self.assertEqual(main(argv + ["--identity-key-file", str(short)]), 1)
 
 
+class CommonIdentityTests(unittest.TestCase):
+    """The token the family shares (HS256, the claims username, role and exp, no iat, as the probe of the other services signs it) is accepted next to the
+    verifier of the hub, which keeps refusing a caller without a token and still takes the EdDSA key set."""
+
+    def common_token(self, role="viewer", key=KEY, exp_in=60):
+        import base64
+        import hmac
+        import time
+        from hashlib import sha256
+
+        def part(data: bytes) -> str:
+            return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+        head = part(json.dumps({"alg": "HS256", "typ": "JWT"}).encode())
+        body = part(json.dumps({"username": "hydra-umc-server", "role": role, "exp": int(time.time()) + exp_in}).encode())
+        return f"{head}.{body}.{part(hmac.new(key, f'{head}.{body}'.encode('ascii'), sha256).digest())}"
+
+    def test_the_common_token_of_the_server_is_accepted(self):
+        for role in ("viewer", "operator", "admin"):
+            who = verify_token(self.common_token(role), KEY)
+            self.assertEqual((who.username, who.role, who.source), ("hydra-umc-server", role, "token"))
+
+    def test_the_common_token_is_refused_when_it_is_wrong(self):
+        for name, token in {"foreign key": self.common_token(key=b"another-key-of-more-than-32-characters"), "expired": self.common_token(exp_in=-5), "unknown role": self.common_token("root")}.items():
+            with self.subTest(name), self.assertRaises(IdentityError):
+                verify_token(token, KEY)
+
+    def test_the_key_file_of_the_family_variable_starts_the_service_and_no_token_is_still_refused(self):
+        import os
+        from unittest import mock
+
+        with tempfile.TemporaryDirectory() as tmp:
+            key_file = Path(tmp) / "connector-hub-identity.key"
+            key_file.write_bytes(KEY)
+            registry = Path(tmp) / "registry"
+            registry.mkdir()
+            argv = ["serve-gate", "--registry-dir", str(registry), "--audit-file", str(Path(tmp) / "a.jsonl"), "--host", "127.0.0.1", "--port", "0"]
+            # without the variable and without a switch the service does not start; with the variable it gets as far as serving
+            self.assertEqual(main(argv), 1)
+            with mock.patch.dict(os.environ, {"HYDRA_UMC_CONNECTOR_HUB_IDENTITY_KEY_FILE": str(key_file)}), mock.patch("hydra_umc_connector_hub.gate_server.serve_gate", side_effect=RuntimeError("reached")) as served:
+                with self.assertRaises(RuntimeError):
+                    main(argv)
+                config = served.call_args[0][0]
+                self.assertEqual(config.identity_key, KEY)
+                with self.assertRaises(IdentityError):
+                    config.token_verifier.verify(None)
+
+
 if __name__ == "__main__":
     unittest.main()
