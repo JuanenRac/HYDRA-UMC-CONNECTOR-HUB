@@ -22,7 +22,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from . import __version__
-from .health_probe import Place, ProbeCache, ProbeProfileError, run_health_check
+from .health_probe import Place, ProbeCache, ProbeProfileError, active_probes_enabled, run_health_check
 from .registry import build_catalog, catalog_snapshot_version, load_full_manifest, verify_catalog_owners
 from .service_metrics import MetricsHandlerMixin
 
@@ -134,7 +134,7 @@ def _make_handler(
                     self._send_json(404, {"error": f"no probe is configured for {adapter_id!r}"})
                     return
                 try:
-                    result = probe_cache.get_or_run(adapter_id, lambda: run_health_check(manifest, place))
+                    result = probe_cache.get_or_run(adapter_id, lambda: run_health_check(manifest, place, active=active_probes_enabled()))
                 except ProbeProfileError as exc:
                     self._send_json(500, {"error": str(exc)})
                     return

@@ -20,7 +20,9 @@ Every test below is **not executed**. The probe (`probe`, `GET /probe/<id>`) run
 | 3 | Probe a broker with the wrong credentials. | The answer is a refusal, not a success. | not executed |
 | 4 | Probe the OPC UA server. | Healthy means only that it answered the Hello; the report says so. | not executed |
 | 5 | Probe a declared check of a kind that is not built. | `unsupported`. | not executed |
+| 6 | Set `HYDRA_UMC_HUB_ACTIVE_PROBES=1`, add `"active": true` to a real broker and probe it. | The report says `mqtt-pingresp` and `active: true`; with the switch off it says `mqtt-connack`. | not executed |
+| 7 | Add the harmless order of a real serial device to the profile (`sendHex`, `expectHex`) and probe it with the switch on. | The device answers the declared bytes (`device-exchange`); a silent device is reported unhealthy. | not executed |
 
 ## What this bench cannot show
 
-The reading of an OPC UA node and the checks of serial, GPIO, ROS 2, MAVLink, RPC and recent MQTT topics, which are not built.
+The reading of an OPC UA node, the content of a serial port or a GPIO line, a remote call or a ROS 2 node, and recent MQTT topics: the probes reach the place (and, with the active switch, exchange one harmless order), they do not read values.

@@ -93,7 +93,7 @@ def _cmd_serve_catalog(args: argparse.Namespace) -> int:
 
 
 def _cmd_probe(args: argparse.Namespace) -> int:
-    from .health_probe import ProbeProfileError, load_profile, run_health_check
+    from .health_probe import ProbeProfileError, active_probes_enabled, load_profile, run_health_check
     from .registry import load_full_manifest
 
     try:
@@ -110,7 +110,7 @@ def _cmd_probe(args: argparse.Namespace) -> int:
             print(f"ERROR: {adapter_id!r} is not both in the registry and in the endpoints file", file=sys.stderr)
             return 1
         try:
-            results.append(run_health_check(manifest, place, timeout=args.timeout).to_dict())
+            results.append(run_health_check(manifest, place, timeout=args.timeout, active=active_probes_enabled()).to_dict())
         except ProbeProfileError as exc:
             print(f"ERROR: {adapter_id}: {exc}", file=sys.stderr)
             return 1

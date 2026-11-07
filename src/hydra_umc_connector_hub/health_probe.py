@@ -23,6 +23,12 @@ What is run, and what each one proves (nothing more):
   * `rpc-ping` and `ros2-node-alive` the port of the service (the RPC server, or the rosbridge of the ROS 2 graph) accepts a connection. The remote call or the node is NOT asked:
                  the result says `checked: "tcp-reach"`.
   * `mavlink-heartbeat` a MAVLink 1 or 2 HEARTBEAT frame with a valid checksum arrives on the TCP port within the timeout (`checked: "mavlink-heartbeat"`).
+  * ACTIVE probes, off by default: with the switch `HYDRA_UMC_HUB_ACTIVE_PROBES=1` AND an `"active"` entry in the profile of the adapter, the reach checks above
+                 become a harmless exchange, and the result says `active: true` and what was exchanged. `mqtt-ping` sends a PINGREQ after the CONNACK and wants the
+                 PINGRESP (`mqtt-pingresp`); `mavlink-heartbeat` sends the HEARTBEAT of a ground station first (`mavlink-gcs-heartbeat`); `rpc-ping`, `ros2-node-alive`
+                 (TCP) and `serial-probe` (device) send the bytes the OPERATOR wrote in the profile (`"active": {"sendHex": "...", "expectHex": "..."}`, at most 64 bytes
+                 each) and want the expected bytes back (`tcp-exchange`, `device-exchange`). The hub never invents an order: the harmless one is declared by the operator.
+                 Without the switch the profile entry is ignored and the check stays a reach check.
   * every other type (`mqtt-topic-recent`, ...) needs hardware or a library this hub does not carry: the result is `supported: false`, never "healthy".
 
 The check never raises for a network problem (that is an unhealthy result with the reason); it raises only for a profile or a manifest that is not
@@ -46,6 +52,8 @@ from typing import Any
 
 _HOST_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$|^\[[0-9A-Fa-f:.]+\]$")
 _PATH_RE = re.compile(r"^/[A-Za-z0-9._~!$&'()*+,;=:@%/-]{0,255}$")
+ACTIVE_ENV = "HYDRA_UMC_HUB_ACTIVE_PROBES"
+MAX_EXCHANGE_BYTES = 64
 DEFAULT_TIMEOUT_S = 3.0
 MAX_TIMEOUT_S = 30.0
 MAX_ANSWER_BYTES = 4096
@@ -59,12 +67,21 @@ class ProbeProfileError(ValueError):
     """The deployment profile (the places adapters are) cannot be used."""
 
 
+def active_probes_enabled(environ: dict[str, str] | None = None) -> bool:
+    """True only when the host switch is exactly "1"; anything else, or nothing, keeps the probes passive."""
+    return (os.environ if environ is None else environ).get(ACTIVE_ENV, "") == "1"
+
+
 @dataclass(frozen=True)
 class Place:
     host: str
     port: int
     scheme: str = "http"
     device: str = ""
+    # the profile asks for an active probe (it only runs with the host switch on); `send`/`expect` are the bytes the operator declared
+    active: bool = False
+    send: bytes = b""
+    expect: bytes = b""
 
 
 @dataclass(frozen=True)
@@ -77,6 +94,8 @@ class HealthResult:
     latency_ms: float | None = None
     # what the check actually proved, in one word: "http", "tcp", "mqtt-connack", "opcua-hello", "device-open", "tcp-reach", "mavlink-heartbeat"
     checked: str | None = None
+    # True when the check sent something to the adapter (only with the host switch on and the profile asking for it)
+    active: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -90,6 +109,8 @@ class HealthResult:
             out["latencyMs"] = round(self.latency_ms, 1)
         if self.checked is not None:
             out["checked"] = self.checked
+        if self.active:
+            out["active"] = True
         return out
 
 
@@ -108,11 +129,12 @@ def load_profile(path: str) -> dict[str, Place]:
             raise ProbeProfileError(f"{where} must be an object")
         host, port, scheme = entry.get("host"), entry.get("port"), entry.get("scheme", "http")
         device = entry.get("device", "")
+        active, send, expect = _parse_active(entry.get("active", False), where)
         if device != "":
             if not isinstance(device, str) or not _DEVICE_RE.match(device) or ".." in device:
                 raise ProbeProfileError(f"{where}.device must be a path under /dev/")
             if host is None and port is None:  # a device entry needs no network place
-                places[adapter_id] = Place(host="", port=0, device=device)
+                places[adapter_id] = Place(host="", port=0, device=device, active=active, send=send, expect=expect)
                 continue
         if not isinstance(host, str) or not _HOST_RE.match(host):
             raise ProbeProfileError(f"{where}.host must be a host name or an address")
@@ -120,8 +142,28 @@ def load_profile(path: str) -> dict[str, Place]:
             raise ProbeProfileError(f"{where}.port must be a whole number from 1 to 65535")
         if scheme not in ("http", "https"):
             raise ProbeProfileError(f"{where}.scheme must be http or https")
-        places[adapter_id] = Place(host=host, port=port, scheme=scheme, device=device)
+        places[adapter_id] = Place(host=host, port=port, scheme=scheme, device=device, active=active, send=send, expect=expect)
     return places
+
+
+def _parse_active(raw: Any, where: str) -> tuple[bool, bytes, bytes]:
+    """The `active` entry of a profile: false/absent, true, or {"sendHex": ..., "expectHex": ...} (both non-empty, at most 64 bytes)."""
+    if raw is False or raw is None:
+        return False, b"", b""
+    if raw is True:
+        return True, b"", b""
+    if not isinstance(raw, dict) or set(raw) - {"sendHex", "expectHex"}:
+        raise ProbeProfileError(f"{where}.active must be true, false or an object with sendHex and expectHex")
+    decoded = []
+    for key in ("sendHex", "expectHex"):
+        text = raw.get(key)
+        if not isinstance(text, str) or not text or len(text) % 2 or len(text) > 2 * MAX_EXCHANGE_BYTES:
+            raise ProbeProfileError(f"{where}.active.{key} must be 1 to {MAX_EXCHANGE_BYTES} bytes written as hexadecimal")
+        try:
+            decoded.append(bytes.fromhex(text))
+        except ValueError as exc:
+            raise ProbeProfileError(f"{where}.active.{key} is not hexadecimal") from exc
+    return True, decoded[0], decoded[1]
 
 
 def _timeout(manifest: dict[str, Any], override: float | None) -> float:
@@ -162,7 +204,7 @@ def _probe_http(place: Place, path: str, timeout: float) -> tuple[bool, str]:
         return False, f"GET {path} answered {exc.code}"
 
 
-def _probe_mqtt(place: Place, timeout: float) -> tuple[bool, str]:
+def _probe_mqtt(place: Place, timeout: float, active: bool = False) -> tuple[bool, str]:
     client_id = b"hydra-hub-probe"
     variable = b"\x00\x04MQTT" + bytes([4, 0x02]) + struct.pack(">H", 10)
     payload = struct.pack(">H", len(client_id)) + client_id
@@ -172,6 +214,13 @@ def _probe_mqtt(place: Place, timeout: float) -> tuple[bool, str]:
         sock.settimeout(timeout)
         sock.sendall(packet)
         answer = _read_exact(sock, 4)
+        pong = b""
+        if active and len(answer) == 4 and answer[0] == 0x20 and answer[3] == 0:
+            sock.sendall(b"\xc0\x00")  # PINGREQ: the broker only has to say it is alive
+            try:
+                pong = _read_exact(sock, 2)
+            except (TimeoutError, socket.timeout):
+                pong = b""  # a broker that stays silent is an unhealthy answer, not an error
         try:
             sock.sendall(b"\xe0\x00")  # DISCONNECT, politely
         except OSError:
@@ -179,7 +228,11 @@ def _probe_mqtt(place: Place, timeout: float) -> tuple[bool, str]:
     if len(answer) < 4 or answer[0] != 0x20 or answer[1] != 0x02:
         return False, "the peer did not answer the MQTT CONNECT with a CONNACK"
     code = answer[3]
-    return (True, "the broker accepted the connection") if code == 0 else (False, f"the broker refused the connection (return code {code})")
+    if code != 0:
+        return False, f"the broker refused the connection (return code {code})"
+    if active:
+        return (True, "the broker answered the PINGREQ with a PINGRESP") if pong == b"\xd0\x00" else (False, "the broker accepted the connection but did not answer the PINGREQ")
+    return True, "the broker accepted the connection"
 
 
 def _probe_opcua(place: Place, timeout: float) -> tuple[bool, str]:
@@ -256,10 +309,19 @@ def find_mavlink_heartbeat(data: bytes) -> bool:
     return False
 
 
-def _probe_mavlink(place: Place, timeout: float) -> tuple[bool, str]:
+def gcs_heartbeat_frame() -> bytes:
+    """The MAVLink 2 HEARTBEAT of a ground station (system 255, component 190, type GCS, no autopilot): what a ground station says to be heard, never a command."""
+    payload = struct.pack("<IBBBBB", 0, 6, 8, 0, 0, 3)  # custom_mode, type=GCS, autopilot=INVALID, base_mode, system_status, mavlink_version
+    body = bytes([len(payload), 0, 0, 0, 255, 190, 0, 0, 0]) + payload  # len, incompat, compat, seq, system, component, msgid(3)
+    return bytes([0xFD]) + body + struct.pack("<H", _x25(body + bytes([_HEARTBEAT_CRC_EXTRA])))
+
+
+def _probe_mavlink(place: Place, timeout: float, active: bool = False) -> tuple[bool, str]:
     deadline = time.monotonic() + timeout
     received = b""
     with socket.create_connection((place.host.strip("[]"), place.port), timeout=timeout) as sock:
+        if active:
+            sock.sendall(gcs_heartbeat_frame())
         while len(received) < 4096:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
@@ -277,8 +339,77 @@ def _probe_mavlink(place: Place, timeout: float) -> tuple[bool, str]:
     return False, "no MAVLink HEARTBEAT with a valid checksum arrived in time"
 
 
-def run_health_check(manifest: dict[str, Any], place: Place, *, timeout: float | None = None) -> HealthResult:
-    """Runs the check the manifest declares against `place`. Never raises for a network problem."""
+def _contains_after(received: bytes, expect: bytes) -> bool:
+    return expect in received
+
+
+def _probe_tcp_exchange(place: Place, timeout: float) -> tuple[bool, str]:
+    """Sends the bytes the operator declared and wants the declared answer back within the timeout."""
+    deadline = time.monotonic() + timeout
+    received = b""
+    with socket.create_connection((place.host.strip("[]"), place.port), timeout=timeout) as sock:
+        sock.sendall(place.send)
+        while len(received) < MAX_ANSWER_BYTES and not _contains_after(received, place.expect):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            sock.settimeout(remaining)
+            try:
+                chunk = sock.recv(512)
+            except socket.timeout:
+                break
+            if not chunk:
+                break
+            received += chunk
+    if _contains_after(received, place.expect):
+        return True, f"{place.host}:{place.port} answered the declared exchange"
+    return False, f"{place.host}:{place.port} did not give the declared answer in time"
+
+
+def _probe_device_exchange(place: Place, timeout: float) -> tuple[bool, str]:
+    """Writes the bytes the operator declared to the device file and wants the declared answer back within the timeout."""
+    import select
+
+    if not place.device:
+        return False, "the profile names no device for this adapter"
+    try:
+        mode = os.stat(place.device).st_mode
+    except FileNotFoundError:
+        return False, f"{place.device} does not exist"
+    if not stat.S_ISCHR(mode):
+        return False, f"{place.device} is not a character device"
+    try:
+        descriptor = os.open(place.device, os.O_RDWR | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOCTTY", 0))
+    except PermissionError:
+        return False, f"{place.device} exists but this user may not open it for writing"
+    except OSError as exc:
+        return False, f"{place.device} could not be opened ({exc.strerror or type(exc).__name__})"
+    deadline = time.monotonic() + timeout
+    received = b""
+    try:
+        os.write(descriptor, place.send)
+        while len(received) < MAX_ANSWER_BYTES and not _contains_after(received, place.expect):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            ready, _, _ = select.select([descriptor], [], [], remaining)
+            if not ready:
+                break
+            chunk = os.read(descriptor, 512)
+            if not chunk:
+                break
+            received += chunk
+    finally:
+        os.close(descriptor)
+    if _contains_after(received, place.expect):
+        return True, f"{place.device} gave the declared answer"
+    return False, f"{place.device} did not give the declared answer in time"
+
+
+def run_health_check(manifest: dict[str, Any], place: Place, *, timeout: float | None = None, active: bool = False) -> HealthResult:
+    """Runs the check the manifest declares against `place`. Never raises for a network problem.
+
+    `active` is the host switch (see `active_probes_enabled`); it only has an effect for a place whose profile asks for an active probe."""
     adapter_id = str(manifest.get("adapterId", ""))
     check = manifest.get("healthCheck")
     if not isinstance(check, dict) or not isinstance(check.get("type"), str):
@@ -288,8 +419,22 @@ def run_health_check(manifest: dict[str, Any], place: Place, *, timeout: float |
         return HealthResult(adapter_id, check_type, False, False, f"the hub cannot run a {check_type!r} check: it needs hardware or a library it does not carry")
     seconds = _timeout(manifest, timeout)
     started = time.perf_counter()
+    go_active = bool(active and place.active)
+    sent = False
     try:
-        if check_type == "http-get":
+        if check_type == "mqtt-ping" and go_active:
+            healthy, detail = _probe_mqtt(place, seconds, True)
+            checked, sent = "mqtt-pingresp", True
+        elif check_type == "mavlink-heartbeat" and go_active:
+            healthy, detail = _probe_mavlink(place, seconds, True)
+            checked, sent = "mavlink-gcs-heartbeat", True
+        elif check_type in ("rpc-ping", "ros2-node-alive") and go_active and place.send and place.expect:
+            healthy, detail = _probe_tcp_exchange(place, seconds)
+            checked, sent = "tcp-exchange", True
+        elif check_type == "serial-probe" and go_active and place.send and place.expect:
+            healthy, detail = _probe_device_exchange(place, seconds)
+            checked, sent = "device-exchange", True
+        elif check_type == "http-get":
             healthy, detail = _probe_http(place, str(check.get("path", "/")), seconds)
             checked = "http"
         elif check_type == "tcp-connect":
@@ -313,8 +458,10 @@ def run_health_check(manifest: dict[str, Any], place: Place, *, timeout: float |
     except ProbeProfileError:
         raise
     except (OSError, ssl.SSLError, ValueError) as exc:
-        return HealthResult(adapter_id, check_type, True, False, f"the check failed: {type(exc).__name__}: {exc}", (time.perf_counter() - started) * 1000, None)
-    return HealthResult(adapter_id, check_type, True, healthy, detail, (time.perf_counter() - started) * 1000, checked)
+        return HealthResult(adapter_id, check_type, True, False, f"the check failed: {type(exc).__name__}: {exc}", (time.perf_counter() - started) * 1000, None, sent)
+    if place.active and not active:
+        detail += " (the profile asks for an active probe, but the host switch is off)"
+    return HealthResult(adapter_id, check_type, True, healthy, detail, (time.perf_counter() - started) * 1000, checked, sent)
 
 
 class ProbeCache:
