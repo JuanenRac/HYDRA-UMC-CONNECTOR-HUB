@@ -40,7 +40,7 @@ GPL-3.0-or-later - see LICENSE
 > 今日実在する正確なコマンド面については
 > [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) を参照してください。
 
-> **誠実性チェック - 今日実際に動くもの:** マニフェストのスキーマ/バリデータ（`schema.py`）、読み取り専用カタログ（`registry.py`、`catalog_server.py`）、SDK 安全ゲート統合（`sdk_gate.py`。実際にインストールされたチェックアウトに対して `HYDRA-UMC-SDK` 自身の本物の `evaluate_job()` を呼び出しており、モックでは決してない）、認証ログ（`certification.py`）、そして CLI（`cli.py`）は本物であり、264件の通過するテストで検証されている（`pytest tests/`。オプションの `[sdk]` エクストラをインストールした場合で、なければそのうち34件はスキップされる）。`certify` は人間が証言したエビデンスを記録するが、それを実際のハードウェアに対して独立に検証することは明示的に行わない - 10個のフィクスチャのどれの背後にも物理的な機械は存在せず、ここにあるどのアダプタも実際のデバイスと本当に通信するために使われたことは一度もない。`catalog`/`serve-catalog` は構造上 GET のみである（`catalog_server.py` には `do_POST`/`do_PUT` が一切ない）。詳細は上記のステータス欄と、これまでに実際に出荷された内容を記す `CHANGELOG.md` を参照。
+> **誠実性チェック - 今日実際に動くもの:** マニフェストのスキーマ/バリデータ（`schema.py`）、読み取り専用カタログ（`registry.py`、`catalog_server.py`）、SDK 安全ゲート統合（`sdk_gate.py`。実際にインストールされたチェックアウトに対して `HYDRA-UMC-SDK` 自身の本物の `evaluate_job()` を呼び出しており、モックでは決してない）、認証ログ（`certification.py`）、そして CLI（`cli.py`）は本物であり、304件の通過するテストで検証されている（`pytest tests/`。オプションの `[sdk]` エクストラをインストールした場合で、なければそのうち34件はスキップされる）。`certify` は人間が証言したエビデンスを記録するが、それを実際のハードウェアに対して独立に検証することは明示的に行わない - 10個のフィクスチャのどれの背後にも物理的な機械は存在せず、ここにあるどのアダプタも実際のデバイスと本当に通信するために使われたことは一度もない。`catalog`/`serve-catalog` は構造上 GET のみである（`catalog_server.py` には `do_POST`/`do_PUT` が一切ない）。詳細は上記のステータス欄と、これまでに実際に出荷された内容を記す `CHANGELOG.md` を参照。
 
 > **安全性とセキュリティの現状:** このエコシステムは認証された安全システムではありません。ハードウェアの E-STOP 経路、ファームウェアが強制する制限やインターロック、検証済みの動作コマンドはまだありません。ファームウェアイメージは CRC-32 と Ed25519 署名で検査し、リリースビルドは公開済みの開発用鍵を拒否します(リレーの先のツールヘッドと拡張ボードは引き続き URTC のブートローダーを使い、署名ではなく共有鍵の HMAC-SHA256 を使います)。TLS と相互 TLS は任意で、既定では無効です。独自基板はまだ実装も試験もされていません。ここに書かれた内容を人の安全のために頼る前に、[セキュリティベースライン](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md)と[脅威モデル](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md)をお読みください。
 
@@ -230,9 +230,7 @@ CERTIFIED adapterId='cnc-grbl' certificationId='...' -> certifications/cnc-grbl_
 
 専用の環境変数はありません。レジストリのフォルダー、カタログのホストとポート（`--registry-dir`、`--host`、`--port`）、認証チェーンの鍵（16 文字以上）はコマンドライン引数です。アダプターの認証情報はマニフェストに書かれず、置き場所への参照だけが書かれます。
 
-例外が 1 つあり、既定では無効です。`HYDRA_UMC_HUB_ACTIVE_PROBES=1` を設定すると、プローブは到達性の確認だけでなく無害な命令（MQTT の PINGREQ、地上局の HEARTBEAT、またはプロファイルの `active` 項目にオペレーターが書いたバイト列）を送信できます。設定がない場合、または `active` 項目がない場合、すべてのプローブは受動的なままです。
-
-いずれも初期状態ではオフの追加が三つあります。`probe`（および `GET /probe/<adapterId>` を加える `serve-catalog --endpoints-file`）は、マニフェストが宣言する `healthCheck` を、運用者がプロファイルに挙げた場所に対して実行します。HTTP、TCP、MQTT CONNECT、OPC UA Hello は実行され、ハードウェアが必要なものは未対応と報告されます。`collect` は、各ブリッジが自分のリポジトリの `docs/adapter-manifest.json` に公開したマニフェストを、所有者がフォルダー名どおりの場合に限ってレジストリへ集めます。`serve-gate` はケイパビリティゲートを HTTP（`POST /gate/evaluate`）で提供し、HYDRA-UMC-SERVER の署名付きトークンを必須とし（有効なトークンがない要求は拒否します。このマシン上の呼び出し元にトークンなしで応答するには、明示的なスイッチが必要で、初期状態ではオフです）、応答の前にすべての判断をハッシュ連鎖（任意で封印）の監査ファイルへ書き、`--cell-state-url` を指定するとセル状態を自分で読みます。 サインイン済みの管理者は、ゲートの稼働中にそのスイッチを読み取り・変更できます（`GET` と `POST /gate/settings`）。オンにするには確認が必要で、変更は設定ファイルに書き込まれ、監査チェーンに記録されます。ID を持たない呼び出し元はこのルートを使えません。 デバイスファイル（`serial-probe`、`gpio-read`）、RPCサーバーとROS 2ゲートウェイのポート、MAVLinkハートビートも、到達性のみとして確認します。各結果は何を証明したかを示します（`device-open`、`tcp-reach`、`mavlink-heartbeat`）。
+いずれも初期状態ではオフの追加が三つあります。`probe`（および `GET /probe/<adapterId>` を加える `serve-catalog --endpoints-file`）は、マニフェストが宣言する `healthCheck` を、運用者がプロファイルに挙げた場所に対して実行します。HTTP、TCP、MQTT CONNECT、OPC UA Hello は実行され、ハードウェアが必要なものは未対応と報告されます。`collect` は、各ブリッジが自分のリポジトリの `docs/adapter-manifest.json` に公開したマニフェストを、所有者がフォルダー名どおりの場合に限ってレジストリへ集めます。`serve-gate` はケイパビリティゲートを HTTP（`POST /gate/evaluate`）で提供し、HYDRA-UMC-SERVER の署名付きトークンを必須とし（有効なトークンがない要求は拒否します。このマシン上の呼び出し元にトークンなしで応答するには、明示的なスイッチが必要で、初期状態ではオフです）、応答の前にすべての判断をハッシュ連鎖（任意で封印）の監査ファイルへ書き、`--cell-state-url` を指定するとセル状態を自分で読みます。 サインイン済みの管理者は、ゲートの稼働中にそのスイッチを読み取り・変更できます（`GET` と `POST /gate/settings`）。オンにするには確認が必要で、変更は設定ファイルに書き込まれ、監査チェーンに記録されます。ID を持たない呼び出し元はこのルートを使えません。
 
 ## 🚀 クイックスタート
 

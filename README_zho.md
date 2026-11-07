@@ -141,9 +141,7 @@ CERTIFIED adapterId='cnc-grbl' certificationId='...' -> certifications/cnc-grbl_
 
 没有自己的环境变量：注册表文件夹、目录的主机和端口（`--registry-dir`、`--host`、`--port`）以及认证链的密钥（至少 16 个字符）都是命令行参数。适配器的凭据从不写在清单里，只写它们存放位置的引用。
 
-有一个例外，默认关闭：设置 `HYDRA_UMC_HUB_ACTIVE_PROBES=1` 后，探针可以发送无害的指令（MQTT 的 PINGREQ、地面站的 HEARTBEAT，或运维人员写在配置文件 `active` 条目中的字节），而不只是检查目标是否可达；未设置它，或没有 `active` 条目时，所有探针保持被动。
-
-新增三项，默认全部关闭。`probe`（以及增加 `GET /probe/<adapterId>` 的 `serve-catalog --endpoints-file`）针对运维人员在配置文件中列出的位置，运行清单声明的 `healthCheck`：会运行 HTTP、TCP、MQTT CONNECT 和 OPC UA Hello，需要硬件的检查会报告为不支持。`collect` 把各桥接在自己仓库的 `docs/adapter-manifest.json` 中发布的清单收集到注册表，仅当所有者与文件夹所述一致时才收集。`serve-gate` 通过 HTTP 提供能力门（`POST /gate/evaluate`），必须带 HYDRA-UMC-SERVER 签发的签名令牌（没有有效令牌的请求会被拒绝；要在无令牌时回答本机调用方，需要显式开关，默认关闭），在回答之前把每个决定写入哈希链式（可选封印）的审计文件，并在给出 `--cell-state-url` 时自行读取单元状态。 已登录的管理员可以在闸门运行期间读取和更改该开关（`GET` 与 `POST /gate/settings`）：开启时需要确认，更改会写入设置文件并记录在审计链中，无身份的调用者不能使用该路由。 设备文件（`serial-probe`、`gpio-read`）、RPC 服务器和 ROS 2 网关的端口以及 MAVLink 心跳也会被检查，但仅作为可达性检查：每个结果都会说明证明了什么（`device-open`、`tcp-reach`、`mavlink-heartbeat`）。
+新增三项，默认全部关闭。`probe`（以及增加 `GET /probe/<adapterId>` 的 `serve-catalog --endpoints-file`）针对运维人员在配置文件中列出的位置，运行清单声明的 `healthCheck`：会运行 HTTP、TCP、MQTT CONNECT 和 OPC UA Hello，需要硬件的检查会报告为不支持。`collect` 把各桥接在自己仓库的 `docs/adapter-manifest.json` 中发布的清单收集到注册表，仅当所有者与文件夹所述一致时才收集。`serve-gate` 通过 HTTP 提供能力门（`POST /gate/evaluate`），必须带 HYDRA-UMC-SERVER 签发的签名令牌（没有有效令牌的请求会被拒绝；要在无令牌时回答本机调用方，需要显式开关，默认关闭），在回答之前把每个决定写入哈希链式（可选封印）的审计文件，并在给出 `--cell-state-url` 时自行读取单元状态。 已登录的管理员可以在闸门运行期间读取和更改该开关（`GET` 与 `POST /gate/settings`）：开启时需要确认，更改会写入设置文件并记录在审计链中，无身份的调用者不能使用该路由。
 
 ## 🚀 快速开始
 
