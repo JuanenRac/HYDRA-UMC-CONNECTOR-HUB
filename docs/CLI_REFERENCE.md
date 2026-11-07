@@ -189,7 +189,7 @@ hand.
 
 ## `probe`
 
-`hydra-umc-connector-hub probe --registry-dir DIR --endpoints-file FILE [--adapter-id ID] [--timeout SECONDS]` runs the `healthCheck` declared by the manifests against the places of the endpoints file, a JSON object `{"<adapterId>": {"host": "...", "port": 1234, "scheme": "http"}}` (`scheme` is `http` or `https`, only used by `http-get`). Exit code 1 when any result is not healthy. The result of each adapter has `type`, `supported`, `healthy`, `detail`, `latencyMs` and `checked` (`http`, `tcp`, `mqtt-connack` or `opcua-hello`: what the check proved and nothing more). See [`health_probe.py`](../src/hydra_umc_connector_hub/health_probe.py) for what each type does.
+`hydra-umc-connector-hub probe --registry-dir DIR --endpoints-file FILE [--adapter-id ID] [--timeout SECONDS]` runs the `healthCheck` declared by the manifests against the places of the endpoints file, a JSON object `{"<adapterId>": {"host": "...", "port": 1234, "scheme": "http"}}` (`scheme` is `http` or `https`, only used by `http-get`; an entry for `serial-probe` or `gpio-read` may instead be `{"device": "/dev/ttyUSB0"}`, a path under `/dev/`). Exit code 1 when any result is not healthy. The result of each adapter has `type`, `supported`, `healthy`, `detail`, `latencyMs` and `checked` (`http`, `tcp`, `mqtt-connack`, `opcua-hello`, `device-open`, `tcp-reach` or `mavlink-heartbeat`: what the check proved and nothing more). See [`health_probe.py`](../src/hydra_umc_connector_hub/health_probe.py) for what each type does.
 
 `serve-catalog --endpoints-file FILE` adds `GET /probe/<adapterId>` for the adapters of that file (answers cached for five seconds, 404 for any other adapter); without the file the catalog stays read-only and the route answers 404.
 

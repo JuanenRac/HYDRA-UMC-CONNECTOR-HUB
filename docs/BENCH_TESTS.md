@@ -1,6 +1,6 @@
 # Bench tests
 
-Every test below is **not executed**. The probe (`probe`, `GET /probe/<id>`) runs the health checks `http-get`, `tcp-connect`, `mqtt-ping` and `opcua-read` for real, but only against local stand-ins in the tests; the `opcua-read` check sends a Hello and does not read a node. Every other kind of check answers `unsupported` and is never reported as healthy. Write a result only after a person ran the step.
+Every test below is **not executed**. The probe (`probe`, `GET /probe/<id>`) runs the health checks `http-get`, `tcp-connect`, `mqtt-ping`, `opcua-read`, `serial-probe`, `gpio-read`, `rpc-ping`, `ros2-node-alive` and `mavlink-heartbeat` for real, but only against local stand-ins in the tests (sockets, a character device and a streamed MAVLink heartbeat); the `opcua-read` check sends a Hello and does not read a node, the device checks only open the device file, and `rpc-ping` and `ros2-node-alive` only connect to the port. Every other kind of check answers `unsupported` and is never reported as healthy. Write a result only after a person ran the step.
 
 ## What the software already covers (no equipment needed)
 

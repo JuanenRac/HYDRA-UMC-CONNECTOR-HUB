@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Python%203.11%2B-blue.svg" alt="Language">
   <img src="https://img.shields.io/badge/Core-stdlib%20only-brightgreen.svg" alt="Core">
   <img src="https://img.shields.io/badge/Deliveries-4%20of%204-367BF5.svg" alt="Deliveries">
-  <img src="https://img.shields.io/badge/Tests-264%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-269%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.1.9-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -52,7 +52,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | Versão | `0.1.9` |
 | Maturidade | Funcional |
-| Testes | 264 (`python -m pytest -q tests`) |
+| Testes | 269 (`python -m pytest -q tests`) |
 | Tecnologia | Python 3.11+ / JSON Schema (hand-written structural validator, no jsonschema dependency) / http.server (stdlib-only real read-only catalog endpoint) / HYDRA-UMC-SDK (optional, real safety-gate integration via evaluate_job()) |
 | Destino | O PC de quem o usa |
 | Em hardware real | Não aplicável: nada aqui corre em hardware |
@@ -68,7 +68,7 @@ Cada linha é uma parte deste repositório e a luz diz até onde chega hoje. É 
 | Área | Estado | O que significa aqui |
 |---|---|---|
 | Software | 🟡 | Funciona para o seu propósito principal; a verificação de honestidade acima lista o que ainda falta |
-| Testes | 🟢 | 264 testes automáticos, executados a cada alteração |
+| Testes | 🟢 | 269 testes automáticos, executados a cada alteração |
 | Hardware real | 🟢 | Não aplicável: nada aqui corre em hardware |
 | Implantação | 🟠 | Publicado como release; instalá-lo numa máquina limpa está documentado mas não registado |
 | Documentação | 🟢 | README em oito idiomas, verificado contra o manifesto a cada alteração |
@@ -219,7 +219,7 @@ O comando `hydra-umc-connector-hub` (ou `./run.sh`); a referência completa é `
 
 Não tem variáveis de ambiente próprias: a pasta do registo, o anfitrião e a porta do catálogo (`--registry-dir`, `--host`, `--port`) e a chave da cadeia de certificação (pelo menos 16 carateres) são argumentos da linha de comandos. As credenciais de um adaptador nunca se escrevem no seu manifesto, apenas uma referência a onde estão.
 
-Três acrescentos, nenhum ativo por defeito. `probe` (e `serve-catalog --endpoints-file`, que acrescenta `GET /probe/<adapterId>`) executa o `healthCheck` que um manifesto declara contra o lugar que um operador indica num perfil: executam-se HTTP, TCP, um MQTT CONNECT e o Hello OPC UA, o que precisa de hardware é indicado como não suportado. `collect` reúne no registo os manifestos que os bridges publicam em `docs/adapter-manifest.json` dos seus próprios repositórios, só quando o proprietário é quem a pasta diz. `serve-gate` serve a porta de capacidades por HTTP (`POST /gate/evaluate`) atrás de um token assinado obrigatório do HYDRA-UMC-SERVER (recusa o pedido sem um token válido; responder sem token a um chamador desta máquina exige um interruptor explícito, desligado por defeito), escreve cada decisão num ficheiro de auditoria encadeado por hash, opcionalmente selado, antes de responder, e lê ele próprio o estado da célula quando se indica `--cell-state-url`. Um administrador com sessão iniciada pode ler e alterar esse interruptor com a porta em funcionamento (`GET` e `POST /gate/settings`): ligá-lo pede uma confirmação, a alteração é escrita no ficheiro de definições e fica na cadeia de auditoria, e o chamador sem identidade não pode usar a rota.
+Três acrescentos, nenhum ativo por defeito. `probe` (e `serve-catalog --endpoints-file`, que acrescenta `GET /probe/<adapterId>`) executa o `healthCheck` que um manifesto declara contra o lugar que um operador indica num perfil: executam-se HTTP, TCP, um MQTT CONNECT e o Hello OPC UA, o que precisa de hardware é indicado como não suportado. `collect` reúne no registo os manifestos que os bridges publicam em `docs/adapter-manifest.json` dos seus próprios repositórios, só quando o proprietário é quem a pasta diz. `serve-gate` serve a porta de capacidades por HTTP (`POST /gate/evaluate`) atrás de um token assinado obrigatório do HYDRA-UMC-SERVER (recusa o pedido sem um token válido; responder sem token a um chamador desta máquina exige um interruptor explícito, desligado por defeito), escreve cada decisão num ficheiro de auditoria encadeado por hash, opcionalmente selado, antes de responder, e lê ele próprio o estado da célula quando se indica `--cell-state-url`. Um administrador com sessão iniciada pode ler e alterar esse interruptor com a porta em funcionamento (`GET` e `POST /gate/settings`): ligá-lo pede uma confirmação, a alteração é escrita no ficheiro de definições e fica na cadeia de auditoria, e o chamador sem identidade não pode usar a rota. Também se verificam os ficheiros de dispositivo (`serial-probe`, `gpio-read`), as portas de servidores RPC e de gateways ROS 2 e o heartbeat MAVLink, apenas como alcance: cada resultado diz o que foi provado (`device-open`, `tcp-reach`, `mavlink-heartbeat`).
 
 ## 🚀 Início rápido
 
@@ -271,7 +271,7 @@ em si; o CI executa o `pytest` como um passo separado e posterior. Execute `./bu
 
 ## 🧪 Testes
 
-264 testes automáticos correm com `python -m pytest -q tests` (39 precisam do extra `sdk` e são saltados sem ele): o esquema e o JSON Schema publicado, o catálogo, a porta do SDK, a cadeia de certificação, a linha de comandos e entradas hostis. Sem hardware nem rede externa.
+269 testes automáticos correm com `python -m pytest -q tests` (39 precisam do extra `sdk` e são saltados sem ele): o esquema e o JSON Schema publicado, o catálogo, a porta do SDK, a cadeia de certificação, a linha de comandos e entradas hostis. Sem hardware nem rede externa.
 
 A CI executa `HYDRA_UMC_CI=1 python tools/ci_validate.py`, que verifica o manifesto, os documentos, os oito README e as imagens.
 

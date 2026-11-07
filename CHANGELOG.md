@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The probe also runs the checks of device files, RPC, ROS 2 and MAVLink, as reach only:** `serial-probe` and `gpio-read` open the device file the profile names (`{"device": "/dev/ttyUSB0"}`, a path under `/dev/`) without reading from it; `rpc-ping` and `ros2-node-alive` connect to the declared port without asking the call or the node; `mavlink-heartbeat` waits for a MAVLink 1 or 2 HEARTBEAT frame with a valid checksum on a TCP port. Each result says what it proved in `checked` (`device-open`, `tcp-reach`, `mavlink-heartbeat`). Tested with sockets, a faked and a real character device and a streamed heartbeat; no serial port, GPIO line, ROS 2 graph or autopilot was involved.
+
 ## [0.1.9] - The build test of the repository compiles only on CI or when allowed: for the stacks that compile (rust, go, android, flutter, firmware-c), tools/buildtest.py prints BUILDTEST=SKIPPED with exit status 2 on a plain PC, never a... (and 3 more changes)
 
 - **The build test of the repository compiles only on CI or when allowed:** for the stacks that compile (`rust`, `go`, `android`, `flutter`, `firmware-c`), `tools/build_test.py` prints `BUILD_TEST=SKIPPED` with exit status 2 on a plain PC, never a pass; `ALLOW_LOCAL_BUILD=1` allows it and a CI runner always may. The `python` and `node` stacks are not locked.

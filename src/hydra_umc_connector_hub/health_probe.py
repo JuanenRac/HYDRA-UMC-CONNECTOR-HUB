@@ -18,8 +18,12 @@ What is run, and what each one proves (nothing more):
                  accepts a connection is alive, which is what the check can honestly say without credentials.
   * `opcua-read` an OPC UA Hello is answered with an Acknowledge. The declared node is NOT read (that needs a session with a certificate): the
                  result says `checked: "opcua-hello"`, so nobody takes a handshake for a value.
-  * every other type (`serial-probe`, `gpio-read`, `rpc-ping`, `ros2-node-alive`, `mavlink-heartbeat`, `mqtt-topic-recent`, ...) needs hardware or a
-    library this hub does not carry: the result is `supported: false`, never "healthy".
+  * `serial-probe` and `gpio-read` the device file named by the profile (`"device": "/dev/ttyUSB0"`) exists, is a character device and opens for reading. That is
+                 reach, not content: nothing is read from the port or the line, and the result says `checked: "device-open"`.
+  * `rpc-ping` and `ros2-node-alive` the port of the service (the RPC server, or the rosbridge of the ROS 2 graph) accepts a connection. The remote call or the node is NOT asked:
+                 the result says `checked: "tcp-reach"`.
+  * `mavlink-heartbeat` a MAVLink 1 or 2 HEARTBEAT frame with a valid checksum arrives on the TCP port within the timeout (`checked: "mavlink-heartbeat"`).
+  * every other type (`mqtt-topic-recent`, ...) needs hardware or a library this hub does not carry: the result is `supported: false`, never "healthy".
 
 The check never raises for a network problem (that is an unhealthy result with the reason); it raises only for a profile or a manifest that is not
 usable. TLS is certificate-verified; there is no switch to skip that.
@@ -27,9 +31,11 @@ usable. TLS is certificate-verified; there is no switch to skip that.
 from __future__ import annotations
 
 import json
+import os
 import re
 import socket
 import ssl
+import stat
 import struct
 import time
 import urllib.error
@@ -44,7 +50,9 @@ DEFAULT_TIMEOUT_S = 3.0
 MAX_TIMEOUT_S = 30.0
 MAX_ANSWER_BYTES = 4096
 
-SUPPORTED_TYPES = ("http-get", "tcp-connect", "mqtt-ping", "opcua-read")
+SUPPORTED_TYPES = ("http-get", "tcp-connect", "mqtt-ping", "opcua-read", "serial-probe", "gpio-read", "rpc-ping", "ros2-node-alive", "mavlink-heartbeat")
+_DEVICE_RE = re.compile(r"^/dev/[A-Za-z0-9._-]{1,64}(/[A-Za-z0-9._-]{1,64}){0,2}$")
+_DEVICE_TYPES = ("serial-probe", "gpio-read")
 
 
 class ProbeProfileError(ValueError):
@@ -56,6 +64,7 @@ class Place:
     host: str
     port: int
     scheme: str = "http"
+    device: str = ""
 
 
 @dataclass(frozen=True)
@@ -66,7 +75,7 @@ class HealthResult:
     healthy: bool
     detail: str
     latency_ms: float | None = None
-    # what the check actually proved, in one word: "http", "tcp", "mqtt-connack", "opcua-hello"
+    # what the check actually proved, in one word: "http", "tcp", "mqtt-connack", "opcua-hello", "device-open", "tcp-reach", "mavlink-heartbeat"
     checked: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -98,13 +107,20 @@ def load_profile(path: str) -> dict[str, Place]:
         if not isinstance(entry, dict):
             raise ProbeProfileError(f"{where} must be an object")
         host, port, scheme = entry.get("host"), entry.get("port"), entry.get("scheme", "http")
+        device = entry.get("device", "")
+        if device != "":
+            if not isinstance(device, str) or not _DEVICE_RE.match(device) or ".." in device:
+                raise ProbeProfileError(f"{where}.device must be a path under /dev/")
+            if host is None and port is None:  # a device entry needs no network place
+                places[adapter_id] = Place(host="", port=0, device=device)
+                continue
         if not isinstance(host, str) or not _HOST_RE.match(host):
             raise ProbeProfileError(f"{where}.host must be a host name or an address")
         if isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535:
             raise ProbeProfileError(f"{where}.port must be a whole number from 1 to 65535")
         if scheme not in ("http", "https"):
             raise ProbeProfileError(f"{where}.scheme must be http or https")
-        places[adapter_id] = Place(host=host, port=port, scheme=scheme)
+        places[adapter_id] = Place(host=host, port=port, scheme=scheme, device=device)
     return places
 
 
@@ -182,6 +198,85 @@ def _probe_opcua(place: Place, timeout: float) -> tuple[bool, str]:
     return False, "the peer did not answer the OPC UA Hello"
 
 
+def _probe_device(place: Place, timeout: float) -> tuple[bool, str]:
+    """The device file of the profile exists, is a character device and opens for reading without blocking; nothing is read from it."""
+    if not place.device:
+        return False, "the profile names no device for this adapter"
+    try:
+        mode = os.stat(place.device).st_mode
+    except FileNotFoundError:
+        return False, f"{place.device} does not exist"
+    if not stat.S_ISCHR(mode):
+        return False, f"{place.device} is not a character device"
+    try:
+        descriptor = os.open(place.device, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOCTTY", 0))
+    except PermissionError:
+        return False, f"{place.device} exists but this user may not open it"
+    except OSError as exc:
+        return False, f"{place.device} could not be opened ({exc.strerror or type(exc).__name__})"
+    os.close(descriptor)
+    return True, f"{place.device} opens (nothing was read from it)"
+
+
+def _probe_tcp_reach(place: Place, timeout: float) -> tuple[bool, str]:
+    healthy, _ = _probe_tcp(place, timeout)
+    return healthy, f"{place.host}:{place.port} accepts connections (the remote call or the node was not asked)"
+
+
+def _x25(data: bytes, seed: int = 0xFFFF) -> int:
+    crc = seed
+    for byte in data:
+        byte ^= crc & 0xFF
+        byte = (byte ^ (byte << 4)) & 0xFF
+        crc = ((crc >> 8) ^ (byte << 8) ^ (byte << 3) ^ (byte >> 4)) & 0xFFFF
+    return crc
+
+
+_HEARTBEAT_CRC_EXTRA = 50
+
+
+def find_mavlink_heartbeat(data: bytes) -> bool:
+    """True when `data` holds a complete MAVLink 1 or 2 HEARTBEAT frame (message 0) with a valid checksum; unsigned frames only, trailing bytes are ignored."""
+    for start in range(len(data)):
+        if data[start] == 0xFE and len(data) >= start + 6:  # v1: magic, len, seq, sys, comp, msgid, payload, crc(2)
+            length, msgid = data[start + 1], data[start + 5]
+            frame_end = start + 6 + length
+            if msgid == 0 and length == 9 and len(data) >= frame_end + 2:
+                crc = _x25(data[start + 1 : frame_end] + bytes([_HEARTBEAT_CRC_EXTRA]))
+                if struct.unpack("<H", data[frame_end : frame_end + 2])[0] == crc:
+                    return True
+        elif data[start] == 0xFD and len(data) >= start + 10:  # v2: magic, len, incompat, compat, seq, sys, comp, msgid(3), payload, crc(2)
+            length, incompat = data[start + 1], data[start + 2]
+            msgid = data[start + 7] | (data[start + 8] << 8) | (data[start + 9] << 16)
+            frame_end = start + 10 + length
+            if msgid == 0 and incompat == 0 and length <= 9 and len(data) >= frame_end + 2:
+                crc = _x25(data[start + 1 : frame_end] + bytes([_HEARTBEAT_CRC_EXTRA]))
+                if struct.unpack("<H", data[frame_end : frame_end + 2])[0] == crc:
+                    return True
+    return False
+
+
+def _probe_mavlink(place: Place, timeout: float) -> tuple[bool, str]:
+    deadline = time.monotonic() + timeout
+    received = b""
+    with socket.create_connection((place.host.strip("[]"), place.port), timeout=timeout) as sock:
+        while len(received) < 4096:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            sock.settimeout(remaining)
+            try:
+                chunk = sock.recv(512)
+            except socket.timeout:
+                break
+            if not chunk:
+                break
+            received += chunk
+            if find_mavlink_heartbeat(received):
+                return True, "a MAVLink HEARTBEAT with a valid checksum arrived"
+    return False, "no MAVLink HEARTBEAT with a valid checksum arrived in time"
+
+
 def run_health_check(manifest: dict[str, Any], place: Place, *, timeout: float | None = None) -> HealthResult:
     """Runs the check the manifest declares against `place`. Never raises for a network problem."""
     adapter_id = str(manifest.get("adapterId", ""))
@@ -203,6 +298,15 @@ def run_health_check(manifest: dict[str, Any], place: Place, *, timeout: float |
         elif check_type == "mqtt-ping":
             healthy, detail = _probe_mqtt(place, seconds)
             checked = "mqtt-connack"
+        elif check_type in _DEVICE_TYPES:
+            healthy, detail = _probe_device(place, seconds)
+            checked = "device-open"
+        elif check_type in ("rpc-ping", "ros2-node-alive"):
+            healthy, detail = _probe_tcp_reach(place, seconds)
+            checked = "tcp-reach"
+        elif check_type == "mavlink-heartbeat":
+            healthy, detail = _probe_mavlink(place, seconds)
+            checked = "mavlink-heartbeat"
         else:
             healthy, detail = _probe_opcua(place, seconds)
             checked = "opcua-hello"
