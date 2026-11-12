@@ -141,6 +141,8 @@ pour la surface de commandes complète et réelle.
 
 **HYDRA-UMC-CONNECTOR-HUB** décrit comment des machines extérieures se raccordent à l'écosystème, sans se connecter à aucune. Un adaptateur dit dans un manifeste ce qu'il est, ce qu'il sait faire (lire, écrire, abandonner) et comment il s'authentifie ; le hub le valide, le liste, fait passer une capacité demandée par la vraie porte du SDK et garde trace de qui a certifié quoi.
 
+> **Plateforme :** là où ce README dit CM5, il s'agit du banc pilote qui fonctionne aujourd'hui ; la plateforme visée par HYDRA-UMC est un NVIDIA Jetson Orin NX 16 Go, une conception ni construite ni testée.
+
 ## 🏛️ Architecture
 
 <p align="center">

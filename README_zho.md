@@ -97,6 +97,8 @@ CERTIFIED adapterId='cnc-grbl' certificationId='...' -> certifications/cnc-grbl_
 
 **HYDRA-UMC-CONNECTOR-HUB** 描述外部机器如何接入生态系统，却不连接其中任何一台。适配器在清单中说明自己是什么、能做什么（读取、写入、中止）以及如何认证；中心负责校验、列出、让所请求的能力通过 SDK 的真实关口，并记录谁认证了什么。
 
+> **平台：** 本 README 中的 CM5 指的是目前正在运行的试验台；HYDRA-UMC 的目标平台是 NVIDIA Jetson Orin NX 16 GB，这是尚未制造或测试的设计。
+
 ## 🏛️ 架构
 
 <p align="center">
