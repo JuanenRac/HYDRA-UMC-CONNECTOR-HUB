@@ -11,7 +11,7 @@
     },
     "required": ["connectionString"]
   },
-  "authenticationRef": "none:local-radio-link",
+  "authenticationRef": "env:HYDRA_UMC_BRIDGE_UAV_SIGNING_KEY_FILE",
   "capabilities": [
     {
       "name": "telemetry",
