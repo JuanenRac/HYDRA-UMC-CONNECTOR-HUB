@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **More tests of the health probe, and a simulation bench:** the timeout limits, the host switch, the shape of a result, unusable checks, device checks on files that are not devices and the MAVLink frame finder on hostile input (`tests/test_health_probe_edges.py`), plus `tests/test_simulation_bench.py`, which runs the real probes against simulated machines that fail in many ways and classifies a fixed-seed fleet of 40 (`docs/SIMULATION.md`). CI now measures coverage with a floor. The evidence of the project is now `simulator`.
 - **The published schema refuses a name made only of white space, as the validator does:** the seven strings that were `minLength: 1` (`schemaVersion`, `protocol`, the entries of `targetKinds`, and `name`, `risk`, `requiredPermission` and `requiredCellState` of a capability) also need a visible character (`pattern: \S`), so a tool that reads only `schemas/adapter-manifest.v1.schema.json` no longer accepts what the hub rejects. `tests/test_published_schema_blank.py` (3 tests).
 
 ## [0.2.0] - Active probes and more probe checks
