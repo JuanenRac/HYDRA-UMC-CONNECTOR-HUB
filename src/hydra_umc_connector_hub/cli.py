@@ -193,6 +193,7 @@ def _cmd_serve_gate(args: argparse.Namespace) -> int:
         # the command line first, then the variable that the identity command of HYDRA-UMC-OS sets for every service of the family, then the settings file
         key_file = args.identity_key_file or os.environ.get(IDENTITY_KEY_FILE_VARIABLE, "").strip() or settings.get("identityKeyFile")
         allow_loopback = bool(args.allow_loopback_no_identity or settings.get("allowLoopbackNoIdentity") is True)
+        allow_unsigned_confirmation = bool(args.allow_unsigned_human_confirmation or settings.get("allowUnsignedHumanConfirmation") is True)
         identity_key = load_identity_key(key_file) if key_file else None
         verifier = _build_token_verifier(settings, identity_key)
         key = load_key(args.audit_key_file) if args.audit_key_file else None
@@ -205,12 +206,15 @@ def _cmd_serve_gate(args: argparse.Namespace) -> int:
         config = GateServiceConfig(
             args.registry_dir, audit, identity_key=identity_key, token_verifier=verifier, allow_loopback_no_identity=allow_loopback,
             cell_state=cell_state, datalake_url=args.datalake_url, datalake_token=lake_token, settings_file=args.config_file,
+            allow_unsigned_human_confirmation=allow_unsigned_confirmation,
         )
     except (OSError, ValueError, GateAuditError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
     if allow_loopback:
         print("WARNING: allowLoopbackNoIdentity is ON: a caller on this machine is answered without a signed token", file=sys.stderr)
+    if allow_unsigned_confirmation:
+        print("WARNING: allowUnsignedHumanConfirmation is ON: the humanConfirmed of a request is believed without a confirmation signed by HYDRA-UMC-SERVER", file=sys.stderr)
     if key is None:
         print("WARNING: no --audit-key-file: the audit chain is tamper-evident but not sealed", file=sys.stderr)
     if cell_state is None:
@@ -403,7 +407,8 @@ def build_parser() -> argparse.ArgumentParser:
     serve_gate_cmd.add_argument("--registry-dir", required=True)
     serve_gate_cmd.add_argument("--identity-key-file", help="File with the key that verifies the signed tokens of HYDRA-UMC-SERVER (its JWT_SECRET, 32+ characters). Required unless the loopback switch is on.")
     serve_gate_cmd.add_argument("--allow-loopback-no-identity", action="store_true", help="OFF by default. Answer a caller on this machine that has no token; only with a loopback --host.")
-    serve_gate_cmd.add_argument("--config-file", help="JSON settings: identityKeyFile, allowLoopbackNoIdentity (the command line wins).")
+    serve_gate_cmd.add_argument("--allow-unsigned-human-confirmation", action="store_true", help="OFF by default. Believe the humanConfirmed of a request without a confirmationToken signed by HYDRA-UMC-SERVER (the earlier behaviour).")
+    serve_gate_cmd.add_argument("--config-file", help="JSON settings: identityKeyFile, allowLoopbackNoIdentity, allowUnsignedHumanConfirmation (the command line wins).")
     serve_gate_cmd.add_argument("--audit-file", required=True, help="JSON-lines file of the decisions (hash chain).")
     serve_gate_cmd.add_argument("--audit-key-file", help="Optional: a secret (16+ characters) that seals each line of the audit chain.")
     serve_gate_cmd.add_argument("--cell-state-url", help="Optional: GET URL that answers the safety state of the cell; the service then reads it itself and ignores the caller's claim.")

@@ -25,7 +25,7 @@ It is the gate of `sdk_gate.py` (which is the gate of HYDRA-UMC-SDK) with three 
 
 Request body (JSON): `adapterId`, `capability`, `jobId`, `source` (who asks, for the audit), `idempotencyKey` (default: `<jobId>:<capability>`), `machineState`
 (default `IDLE`), `observedMachineState`, `allowUnobserved` (bool), `cellState` (only without a provider), `grantedPermissions` (list), `cellMode`,
-`humanConfirmed` (bool), `satisfiedSafetyGates` (list), `parameters` (object of strings), `evidence` (object). Nothing in a request can name a file, a path or
+`confirmationToken` (the signed confirmation of the SERVER, see `confirmation.py`), `humanConfirmed` (bool, believed only with `--allow-unsigned-human-confirmation`), `satisfiedSafetyGates` (list), `parameters` (object of strings), `evidence` (object). Nothing in a request can name a file, a path or
 a URL: the manifest is looked up by `adapterId` in the registry directory the service was started with.
 
 Optionally (`--datalake-url`) each decision is also sent to HYDRA-UMC-DATALAKE as a sample (`sourceId` `gate:<adapterId>`, `kind` `gate_decision`, fields
@@ -45,6 +45,7 @@ from typing import Any, Callable
 from urllib.parse import urlsplit
 
 from . import __version__
+from .confirmation import Confirmation, ConfirmationError, ConfirmationLedger, verify_confirmation
 from .gate_audit import GateAudit, GateAuditError
 from .identity import DECIDE_ROLES, LOOPBACK_ROLE, MIN_KEY_LENGTH, Identity, IdentityError, TokenVerifier, is_loopback, require_role
 from .registry import load_full_manifest
@@ -116,6 +117,7 @@ def _decide(config: "GateServiceConfig", body: dict[str, Any], caller: Identity 
         "observed": False,
         "cellStateSource": None,
         "caller": caller.as_audit() if caller is not None else None,
+        "confirmation": None,
     }
     if not isinstance(adapter_id, str) or not isinstance(capability, str) or not adapter_id or not capability:
         decision["reason"] = "adapterId and capability are required strings"
@@ -138,8 +140,32 @@ def _decide(config: "GateServiceConfig", body: dict[str, Any], caller: Identity 
     else:
         cell_state = _text(body, "cellState")
         decision["cellStateSource"] = "attested"
+    job_id = body.get("jobId")
+    confirmation: Confirmation | None = None
+    human_confirmed = False
+    if body.get("confirmationToken") is not None or body.get("humanConfirmed") is True:
+        if body.get("confirmationToken") is not None:
+            # a signed confirmation of the SERVER, for exactly this call and usable once; whatever the switch says, a token that is given must be good
+            if config.token_verifier is None or not isinstance(job_id, str):
+                decision["reason"] = "the confirmation cannot be checked: no key verifies the tokens of HYDRA-UMC-SERVER"
+                decision["confirmation"] = {"source": "rejected", "reason": decision["reason"]}
+                return decision
+            try:
+                confirmation = verify_confirmation(
+                    body.get("confirmationToken"), config.token_verifier, job_id=job_id, adapter_id=adapter_id, capability=capability, ledger=config.confirmation_ledger
+                )
+            except ConfirmationError as exc:
+                decision["reason"] = f"human confirmation refused: {exc}"
+                decision["confirmation"] = {"source": "rejected", "reason": str(exc)}
+                return decision
+            human_confirmed = True
+            decision["confirmation"] = confirmation.as_audit("token")
+        elif config.allow_unsigned_human_confirmation:
+            human_confirmed = True
+            decision["confirmation"] = {"source": "unsigned"}
+        else:
+            decision["confirmation"] = {"source": "ignored", "reason": "humanConfirmed is not believed without a signed confirmationToken"}
     try:
-        job_id = body.get("jobId")
         request = CapabilityCallRequest(
             job_id=job_id if isinstance(job_id, str) else "",
             idempotency_key=_text(body, "idempotencyKey", f"{job_id}:{capability}"),
@@ -151,15 +177,19 @@ def _decide(config: "GateServiceConfig", body: dict[str, Any], caller: Identity 
             evidence=body["evidence"] if isinstance(body.get("evidence"), dict) else None,
             granted_permissions=_string_list(body.get("grantedPermissions"), "grantedPermissions"),
             cell_mode=body.get("cellMode") if isinstance(body.get("cellMode"), str) else None,
-            human_confirmed=body.get("humanConfirmed") is True,
+            human_confirmed=human_confirmed,
             satisfied_safety_gates=_string_list(body.get("satisfiedSafetyGates"), "satisfiedSafetyGates"),
             observed_machine_state=body.get("observedMachineState") if isinstance(body.get("observedMachineState"), str) else None,
             allow_unobserved=body.get("allowUnobserved") is True,
         )
         result = evaluate_capability_call(manifest, request)
     except (CapabilityGateError, SdkUnavailableError) as exc:
+        if confirmation is not None:
+            config.confirmation_ledger.release(confirmation.jti)
         decision["reason"] = f"{type(exc).__name__}: {exc}"
         return decision
+    if confirmation is not None and not result.allowed:
+        config.confirmation_ledger.release(confirmation.jti)  # nothing went on, so the confirmation is not spent
     decision.update(allowed=result.allowed, reason=result.reason, evidenceErrors=list(result.evidence_errors), observed=result.observed)
     return decision
 
@@ -180,6 +210,7 @@ class GateServiceConfig:
         datalake_url: str | None = None,
         datalake_token: str | None = None,
         settings_file: str | None = None,
+        allow_unsigned_human_confirmation: bool = False,
     ) -> None:
         if identity_key is not None and len(identity_key) < MIN_KEY_LENGTH:
             raise ValueError(f"the identity key must have at least {MIN_KEY_LENGTH} characters")
@@ -191,6 +222,9 @@ class GateServiceConfig:
         self.registry_dir = registry_dir
         self.identity_key = identity_key
         self.allow_loopback_no_identity = bool(allow_loopback_no_identity)
+        # OFF by default: the `humanConfirmed` boolean of a request is not believed, only a `confirmationToken` signed by the SERVER (confirmation.py)
+        self.allow_unsigned_human_confirmation = bool(allow_unsigned_human_confirmation)
+        self.confirmation_ledger = ConfirmationLedger()
         self.audit = audit
         self.cell_state = cell_state
         self.datalake_url = datalake_url.rstrip("/") if datalake_url else None
@@ -420,7 +454,7 @@ def make_handler(config: GateServiceConfig) -> type[BaseHTTPRequestHandler]:
                 return
             config.count(bool(decision["allowed"]))
             _forward_to_lake(config, decision, int(time.time() * 1000))
-            answer = {k: decision[k] for k in ("allowed", "reason", "evidenceErrors", "observed", "cellStateSource")}
+            answer = {k: decision[k] for k in ("allowed", "reason", "evidenceErrors", "observed", "cellStateSource", "confirmation")}
             answer["auditSeq"] = record["seq"]
             self._send_json(200, answer)
 
