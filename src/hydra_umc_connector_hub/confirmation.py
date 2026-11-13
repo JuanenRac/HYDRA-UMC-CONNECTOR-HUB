@@ -107,7 +107,9 @@ def verify_confirmation(
     exp = claims.get("exp")
     if isinstance(iat, bool) or not isinstance(iat, (int, float)):
         raise ConfirmationError("the confirmation says when it was issued (iat) in no readable way")
-    if exp - iat > MAX_LIFETIME_S:  # exp was checked as a finite number by the identity checks
+    if isinstance(exp, bool) or not isinstance(exp, (int, float)):  # the identity checks already made sure of it
+        raise ConfirmationError("the confirmation has no expiry")
+    if float(exp) - float(iat) > MAX_LIFETIME_S:
         raise ConfirmationError(f"the confirmation lives longer than {MAX_LIFETIME_S:g} seconds")
     for name, wanted in (("jobId", job_id), ("adapterId", adapter_id), ("capability", capability)):
         if not wanted or claims.get(name) != wanted:
