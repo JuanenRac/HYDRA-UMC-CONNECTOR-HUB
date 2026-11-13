@@ -26,8 +26,8 @@
       "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$",
       "description": "Letters, digits, '-' and '_' only, so it can never escape the directory a certification record is stored under."
     },
-    "schemaVersion": { "type": "string", "minLength": 1 },
-    "protocol": { "type": "string", "minLength": 1 },
+    "schemaVersion": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "protocol": { "type": "string", "minLength": 1, "pattern": "\\S" },
     "authenticationRef": {
       "type": "string",
       "pattern": "^(env:[A-Z_][A-Z0-9_]*|(secret-store|vault|none):[A-Za-z0-9_./@-]+)$",
@@ -40,7 +40,7 @@
     },
     "ownerProject": { "type": "string", "pattern": "^(HYDRA-UMC|URTC)(-[A-Z0-9-]+)?$" },
     "idempotency": { "enum": ["none", "idempotent", "at-least-once", "exactly-once"] },
-    "targetKinds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "targetKinds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "pattern": "\\S" } },
     "endpointSchema": { "type": "object", "minProperties": 1 },
     "healthCheck": { "type": "object", "minProperties": 1 },
     "evidenceSchema": { "type": "object", "minProperties": 1 },
@@ -59,11 +59,11 @@
       "type": "object",
       "required": ["name", "mode"],
       "properties": {
-        "name": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "mode": { "enum": ["read", "write", "abort"] },
-        "risk": { "type": "string", "minLength": 1 },
-        "requiredPermission": { "type": "string", "minLength": 1 },
-        "requiredCellState": { "type": "string", "minLength": 1 },
+        "risk": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "requiredPermission": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "requiredCellState": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "requiresHumanConfirmation": { "type": "boolean" },
         "timeoutMs": { "type": "integer", "exclusiveMinimum": 0 }
       },

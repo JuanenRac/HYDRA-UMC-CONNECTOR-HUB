@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **The published schema refuses a name made only of white space, as the validator does:** the seven strings that were `minLength: 1` (`schemaVersion`, `protocol`, the entries of `targetKinds`, and `name`, `risk`, `requiredPermission` and `requiredCellState` of a capability) also need a visible character (`pattern: \S`), so a tool that reads only `schemas/adapter-manifest.v1.schema.json` no longer accepts what the hub rejects. `tests/test_published_schema_blank.py` (3 tests).
+
 ## [0.2.0] - Active probes and more probe checks
 
 - **Tests of the refusal paths of the CLI:** 9 new tests (a missing or damaged endpoints file, an adapter that is not in the registry, an ecosystem root that is not a directory, the settings file of the gate); no behaviour changes.
