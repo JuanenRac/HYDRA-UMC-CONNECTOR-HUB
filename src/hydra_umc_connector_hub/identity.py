@@ -116,15 +116,21 @@ def _split(token: str | None) -> tuple[list[str], dict]:
     return parts, _json_part(parts[0])
 
 
-def verify_token(token: str | None, key: bytes, *, now: float | None = None) -> Identity:
-    """The identity in an HS256 token signed with `key`, or IdentityError saying why there is none."""
+def verify_token_claims(token: str | None, key: bytes, *, now: float | None = None) -> "tuple[Identity, dict]":
+    """Like `verify_token`, and the claims of the token as well (for the callers that read more than the identity, such as the confirmation)."""
     parts, header = _split(token)
     if header.get("alg") != "HS256":
         raise IdentityError("the token algorithm is not accepted (only HS256)")
     expected = hmac.new(key, f"{parts[0]}.{parts[1]}".encode("ascii", "replace"), sha256).digest()
     if not hmac.compare_digest(expected, _b64(parts[2])):
         raise IdentityError("the token signature is not valid")
-    return _claims_identity(_json_part(parts[1]), time.time() if now is None else now)
+    claims = _json_part(parts[1])
+    return _claims_identity(claims, time.time() if now is None else now), claims
+
+
+def verify_token(token: str | None, key: bytes, *, now: float | None = None) -> Identity:
+    """The identity in an HS256 token signed with `key`, or IdentityError saying why there is none."""
+    return verify_token_claims(token, key, now=now)[0]
 
 
 class TokenVerifier:
@@ -144,11 +150,15 @@ class TokenVerifier:
             raise ValueError("a token verifier needs a key set address (identity.jwks_url) or, with identity.accept_hs256 on, an identity key file")
 
     def verify(self, token: str | None, *, now: float | None = None) -> Identity:
+        return self.verify_claims(token, now=now)[0]
+
+    def verify_claims(self, token: str | None, *, now: float | None = None) -> "tuple[Identity, dict]":
+        """The identity and the claims of a token that passes the same checks as `verify`."""
         parts, header = _split(token)
         alg = header.get("alg")
         moment = time.time() if now is None else now
         if alg == "HS256" and self.hs256_key is not None:
-            return verify_token(token, self.hs256_key, now=moment)
+            return verify_token_claims(token, self.hs256_key, now=moment)
         if alg == "EdDSA" and self.jwks is not None:
             kid = header.get("kid")
             if not isinstance(kid, str) or not kid or len(kid) > 128:
@@ -159,7 +169,8 @@ class TokenVerifier:
                 raise IdentityError(str(exc)) from exc
             if not ed25519_verify(public, f"{parts[0]}.{parts[1]}".encode("ascii", "replace"), _b64(parts[2])):
                 raise IdentityError("the token signature is not valid")
-            return _claims_identity(_json_part(parts[1]), moment)
+            claims = _json_part(parts[1])
+            return _claims_identity(claims, moment), claims
         allowed = [name for name, on in (("EdDSA", self.jwks is not None), ("HS256", self.hs256_key is not None)) if on]
         raise IdentityError(f"the token algorithm is not accepted (only {' or '.join(allowed)})")
 
