@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.2.0] - Active probes and more probe checks
 
 - **Tests of the refusal paths of the CLI:** 9 new tests (a missing or damaged endpoints file, an adapter that is not in the registry, an ecosystem root that is not a directory, the settings file of the gate); no behaviour changes.
 - **README: the platform statement:** a note says that where the README speaks of the CM5 it means the pilot bench that runs today, and that the target platform of HYDRA-UMC, an NVIDIA Jetson Orin NX 16 GB, is a design that has not been built or tested.
