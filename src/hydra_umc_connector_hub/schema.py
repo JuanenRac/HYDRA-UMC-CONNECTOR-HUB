@@ -23,6 +23,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from .pattern_guard import DEFAULT_LIMITS, check_pattern
+
 # The real capability modes the contract names explicitly.
 CAPABILITY_MODES = ("read", "write", "abort")
 
@@ -387,6 +389,8 @@ def _validate_schema_shape(schema: Any, path: str) -> list[str]:
                 re.compile(pattern)
             except re.error as exc:
                 errors.append(f"{path}.pattern {pattern!r} is not a valid regular expression: {exc}")
+            else:
+                errors.extend(f"{path}.pattern {pattern!r} {reason}" for reason in check_pattern(pattern))
 
     required = schema.get("required")
     if required is not None and (not isinstance(required, list) or not all(isinstance(k, str) for k in required)):
@@ -448,8 +452,17 @@ def validate_against_json_schema_subset(schema: Any, instance: Any, *, path: str
         # now refuses a schema this bad before it is ever accepted onto a
         # manifest, but this stays defence-in-depth for whatever reaches
         # here anyway (a schema saved to disk before that gate existed).
+        if len(instance) > DEFAULT_LIMITS.max_subject_chars:
+            errors.append(f"{path}: a value longer than {DEFAULT_LIMITS.max_subject_chars} characters is not matched against a pattern")
+            matched = True  # the length is the finding; saying "no match" as well would only repeat it
+        elif check_pattern(schema["pattern"]):
+            errors.append(f"{path}: schema 'pattern' {schema['pattern']!r} is refused ({'; '.join(check_pattern(schema['pattern']))}), so the value was not matched")
+            matched = True
+        else:
+            matched = None
         try:
-            matched = re.search(schema["pattern"], instance) is not None
+            if matched is None:
+                matched = re.search(schema["pattern"], instance) is not None
         except re.error as exc:
             errors.append(f"{path}: schema 'pattern' {schema['pattern']!r} is not a valid regular expression: {exc}")
         else:
