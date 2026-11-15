@@ -368,13 +368,17 @@ class FleetScenarios(BenchCase):
 
     FAULTS = ("ok", "refused", "silent", "reset", "half", "noise")
 
+    def refused_port(self) -> int:
+        """A port nothing listens on. The socket stays bound (not listening) until the test ends, so that no other simulated machine of the fleet can be given the same port and answer."""
+        held = socket.socket()
+        self.addCleanup(held.close)
+        held.bind(("127.0.0.1", 0))
+        return held.getsockname()[1]
+
     def build(self, kind: str, fault: str) -> tuple[dict, Place, bool]:
         if kind == "tcp":
             if fault == "refused":
-                closed = socket.socket()
-                closed.bind(("127.0.0.1", 0))
-                port = closed.getsockname()[1]
-                closed.close()
+                port = self.refused_port()
                 return {"type": "tcp-connect"}, Place("127.0.0.1", port), False
             return {"type": "tcp-connect"}, self.machine(lambda c: None).place(), True  # reach is all a tcp check proves
         scripts = {
@@ -385,10 +389,7 @@ class FleetScenarios(BenchCase):
             "noise": (after_request(lambda _: b"\x13\x37" * 4), False),
         }
         if fault == "refused":
-            closed = socket.socket()
-            closed.bind(("127.0.0.1", 0))
-            port = closed.getsockname()[1]
-            closed.close()
+            port = self.refused_port()
             return {"type": "mqtt-ping"}, Place("127.0.0.1", port), False
         script, healthy = scripts[fault]
         return {"type": "mqtt-ping"}, self.machine(script).place(), healthy

@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The simulated fleet no longer fails by chance:** a port meant to refuse connections stays held until the test ends, so another simulated machine cannot be given the same port and answer.
 - **Comments describe what the code does, not what it used to do:** the docstrings of `confirmation.py` and `sdk_gate.py` and four notes in the tests say the present behaviour and the reason for it. Comments only: no behaviour changes.
 - **The SDK pin and the shared tools are up to date:** the SDK dependency names the newest release tag, and the shared tools are the canonical copies again.
 - **The patterns that adapter authors write are checked for dialect and for catastrophic backtracking:** a `pattern` in `evidenceSchema` or `endpointSchema` is refused when it uses something that only Python's `re` has (named groups, inline flags, `\A`/`\Z`, back references, conditionals, possessive quantifiers), when it is longer than 256 characters, or when it can take exponential time (an unbounded repeat inside an unbounded repeat, or alternatives inside one). A pattern that was saved before this check is not run, and a value longer than 4096 characters is not matched against a pattern. `pattern_guard.py` (limits in `PatternLimits`), `tests/test_pattern_guard.py` (13 tests).
