@@ -5,8 +5,8 @@
 # =============================================================================
 """The human confirmation of a call, as a short signed token of HYDRA-UMC-SERVER that can be used once.
 
-A capability that declares `requiresHumanConfirmation` used to be satisfied by the caller writing `humanConfirmed: true`: the caller vouched for itself.
-Now the hub believes a confirmation only when it comes with `confirmationToken`, a token that the SERVER signs (the same key or key set that verifies the
+A capability that declares `requiresHumanConfirmation` is not satisfied by the caller writing `humanConfirmed: true`: the caller would vouch for itself.
+The hub believes a confirmation only when it comes with `confirmationToken`, a token that the SERVER signs (the same key or key set that verifies the
 identity of the caller, see `identity.py`) when an operator confirms in person. The token is a JWT with the claims
 
     username, role      the person who confirmed (`admin` or `operator`)

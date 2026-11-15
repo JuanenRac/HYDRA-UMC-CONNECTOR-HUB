@@ -53,9 +53,9 @@ reads:
 a write/abort
 capability's own declared `requiredPermission`/`requiredCellState`/
 `requiresHumanConfirmation`, and the manifest's own top-level
-`requiredSafetyGates`, used to be pure documentation - this module
-forwarded straight to HYDRA-UMC-SDK's generic READY/IDLE motion gate
-and never checked any of them. `evaluate_job()` stays exactly what its
+`requiredSafetyGates`, are not pure documentation - forwarding straight
+to HYDRA-UMC-SDK's generic READY/IDLE motion gate would never check any
+of them. `evaluate_job()` stays exactly what its
 own docstring says it is (a motion/state gate), never turned into a
 full authorisation engine; instead, `evaluate_capability_call()` now
 also checks, for every write/abort capability, that the CALLER'S OWN

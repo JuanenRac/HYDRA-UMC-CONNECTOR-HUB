@@ -168,9 +168,9 @@ class CapabilityGateEnforcesDeclaredPolicyTests(unittest.TestCase):
     """a write/
     abort capability's own declared requiredPermission/requiredCellState/
     requiresHumanConfirmation, and the manifest's own top-level
-    requiredSafetyGates, used to be pure documentation -
-    evaluate_capability_call() forwarded straight to HYDRA-UMC-SDK's
-    generic READY/IDLE motion gate and ignored all four. Each test below
+    requiredSafetyGates, are not pure documentation -
+    forwarding straight to HYDRA-UMC-SDK's generic READY/IDLE motion
+    gate would ignore all four. Each test below
     starts from a fully-authorised baseline (_authorized_request) and
     removes exactly ONE requirement, proving that ONE requirement alone
     is enough to deny the call - fixing "any one dropped -> denied" is
@@ -329,7 +329,7 @@ class RequestFreshnessGateTests(unittest.TestCase):
 
     # regression: NaN compares False against everything, so
     # `age > max_age` was never True for a non-finite age - a NaN/inf
-    # `requested_at` used to silently pass this freshness check instead
+    # `requested_at` would silently pass this freshness check instead
     # of being rejected, defeating the fail-closed guarantee "gate
     # caducado" exists for.
     def test_a_nan_requested_at_is_denied_not_silently_treated_as_fresh(self):
