@@ -4,6 +4,9 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+
+## [0.2.1]
+
 - **The simulated fleet no longer fails by chance:** a port meant to refuse connections stays held until the test ends, so another simulated machine cannot be given the same port and answer.
 - **Comments describe what the code does, not what it used to do:** the docstrings of `confirmation.py` and `sdk_gate.py` and four notes in the tests say the present behaviour and the reason for it. Comments only: no behaviour changes.
 - **The SDK pin and the shared tools are up to date:** the SDK dependency names the newest release tag, and the shared tools are the canonical copies again.
@@ -11,6 +14,8 @@ All notable changes to this project are documented here.
 - **More tests of the health probe, and a simulation bench:** the timeout limits, the host switch, the shape of a result, unusable checks, device checks on files that are not devices and the MAVLink frame finder on hostile input (`tests/test_health_probe_edges.py`), plus `tests/test_simulation_bench.py`, which runs the real probes against simulated machines that fail in many ways and classifies a fixed-seed fleet of 40 (`docs/SIMULATION.md`). CI now measures coverage with a floor. The evidence of the project is now `simulator`.
 - **A call that needs a human confirmation needs one that the SERVER signed, usable once (switch `--allow-unsigned-human-confirmation`, default off):** `POST /gate/evaluate` no longer believes the `humanConfirmed` boolean of the caller. The confirmation is the new `confirmationToken`, a short JWT that HYDRA-UMC-SERVER signs when an operator confirms in person (the same key or key set that verifies the identity of the caller): it must carry `purpose` `human-confirmation`, a unique `jti`, `iat` and `exp` at most 120 seconds apart, the `jobId`, `adapterId` and `capability` of exactly this call, and the role `admin` or `operator`. It is accepted once (a replay, a token for another call, an ordinary login token and a viewer are refused with the reason); when the call is denied for another reason the confirmation is given back, and a token that is sent is checked even with the switch on. Every decision records who confirmed and the `jti` (`confirmation`), never the token. The switch (`--allow-unsigned-human-confirmation`, or `allowUnsignedHumanConfirmation` in the settings file) brings the earlier behaviour back and is announced as a warning at start. `confirmation.py`, `TokenVerifier.verify_claims`, `tests/test_confirmation.py`.
 - **The published schema refuses a name made only of white space, as the validator does:** the seven strings that were `minLength: 1` (`schemaVersion`, `protocol`, the entries of `targetKinds`, and `name`, `risk`, `requiredPermission` and `requiredCellState` of a capability) also need a visible character (`pattern: \S`), so a tool that reads only `schemas/adapter-manifest.v1.schema.json` no longer accepts what the hub rejects. `tests/test_published_schema_blank.py` (3 tests).
+
+- Build version synchronized with `hydra-umc.project.json` and the repository-native version source.
 
 ## [0.2.0] - Active probes and more probe checks
 
