@@ -126,8 +126,8 @@ class ValidateAdapterManifestUnitTests(unittest.TestCase):
         })
         self.assertEqual(errors, [])
 
-    # ownerProject used to be accepted as any non-empty
-    # string - a typo or a made-up value passed just as cleanly as a
+    # ownerProject must not be accepted as any non-empty
+    # string - a typo or a made-up value would pass just as cleanly as a
     # real HYDRA-UMC-*/URTC-* project name.
     def test_an_owner_project_not_shaped_like_a_real_project_name_is_rejected(self):
         errors = validate_adapter_manifest({

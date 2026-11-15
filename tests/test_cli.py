@@ -181,7 +181,7 @@ class CliGateTests(unittest.TestCase):
     def test_gate_on_a_write_capability_with_no_policy_context_is_denied_on_policy_grounds(self):
         # this project's own reproduction: the exact command line that
         # reproduced it (no --permission/--cell-mode/--human-confirmed/
-        # --safety-gate at all) used to print allowed=true.
+        # --safety-gate at all) must not print allowed=true.
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             exit_code = main([
