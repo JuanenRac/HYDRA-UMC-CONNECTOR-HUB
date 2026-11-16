@@ -190,14 +190,25 @@ def _probe_tcp(place: Place, timeout: float) -> tuple[bool, str]:
         return True, f"{place.host}:{place.port} accepts connections"
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """A redirect is an answer like any other (not healthy), never a second request to a host the operator did not list."""
+
+    def redirect_request(self, *args, **kwargs):  # noqa: D401
+        return None
+
+
 def _probe_http(place: Place, path: str, timeout: float) -> tuple[bool, str]:
     if not _PATH_RE.match(path) or ".." in path:
         raise ProbeProfileError(f"the healthCheck path {path!r} is not a usable path")
     url = f"{place.scheme}://{place.host}:{place.port}{path}"
     request = urllib.request.Request(url, method="GET", headers={"User-Agent": "hydra-umc-connector-hub-probe"})
     context = ssl.create_default_context() if place.scheme == "https" else None
+    handlers: list[Any] = [_NoRedirect]
+    if context is not None:
+        handlers.append(urllib.request.HTTPSHandler(context=context))
+    opener = urllib.request.build_opener(*handlers)
     try:
-        with urllib.request.urlopen(request, timeout=timeout, context=context) as response:  # noqa: S310 - scheme is http/https by construction
+        with opener.open(request, timeout=timeout) as response:  # noqa: S310 - scheme is http/https by construction
             response.read(MAX_ANSWER_BYTES)
             return 200 <= response.status < 300, f"GET {path} answered {response.status}"
     except urllib.error.HTTPError as exc:
