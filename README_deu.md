@@ -68,7 +68,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 | Bereich | Stand | Was das hier bedeutet |
 |---|---|---|
 | Software | 🟡 | Funktioniert für seinen Hauptzweck; die Ehrlichkeitsprüfung in diesem README nennt, was noch fehlt |
-| Tests | 🟢 | 378 automatische Tests, bei jeder Änderung ausgeführt |
+| Tests | 🟡 | 378 automatische Tests vermerkt; die genaue Anzahl oder ein Workflow, der sie bei jeder Änderung ausführt, ist noch nicht bestätigt |
 | Echte Hardware | ⚪ | Nicht zutreffend: nichts hiervon läuft auf Hardware |
 | Bereitstellung | 🟠 | Als Release veröffentlicht; die Installation auf einem frischen Rechner ist dokumentiert, aber nicht vermerkt |
 | Dokumentation | 🟢 | README in acht Sprachen, bei jeder Änderung gegen das Manifest geprüft |
