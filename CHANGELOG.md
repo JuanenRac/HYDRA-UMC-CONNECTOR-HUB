@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.2.2] - A stricter clear of the emergency stop and safer reads
 
 - **The clear emergency stop is no longer only the caller's word:** when the service reads the cell (`--cell-state-url`), a cell in `SAFE_STOP` or `FAULT` never satisfies `cell.estop.clear`, and `--derive-safety-gates` (off by default) takes that gate from the reading alone. The decision and the audit say `safetyGatesSource`.
 - **A human confirmation can be required to be signed with the key set of the SERVER:** `identity.confirmation_require_eddsa` (off by default) refuses HS256 confirmations.
