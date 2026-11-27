@@ -33,6 +33,7 @@ Optionally (`--datalake-url`) each decision is also sent to HYDRA-UMC-DATALAKE a
 """
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import sys
@@ -70,7 +71,7 @@ def http_cell_state_provider(url: str, token: str | None = None, *, timeout: flo
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - the operator chose this URL at start
                 body = json.loads(response.read(64 * 1024).decode("utf-8"))
-        except (OSError, ValueError) as exc:
+        except (OSError, ValueError, http.client.HTTPException) as exc:
             raise CellStateError(f"the cell state cannot be read: {exc}") from exc
         sdk = body.get("sdkSafetyState") if isinstance(body, dict) and isinstance(body.get("sdkSafetyState"), dict) else body
         state = sdk.get("state") if isinstance(sdk, dict) else None
