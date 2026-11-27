@@ -198,8 +198,8 @@ def _cmd_serve_gate(args: argparse.Namespace) -> int:
         verifier = _build_token_verifier(settings, identity_key)
         key = load_key(args.audit_key_file) if args.audit_key_file else None
         audit = GateAudit(args.audit_file, key)
-        lake_token = Path(args.datalake_token_file).read_text(encoding="utf-8").strip() if args.datalake_token_file else None
-        cell_token = Path(args.cell_state_token_file).read_text(encoding="utf-8").strip() if args.cell_state_token_file else None
+        lake_token = Path(args.datalake_token_file).read_text(encoding="utf-8-sig").strip() if args.datalake_token_file else None
+        cell_token = Path(args.cell_state_token_file).read_text(encoding="utf-8-sig").strip() if args.cell_state_token_file else None
         cell_state = (
             http_cell_state_provider(args.cell_state_url, cell_token, max_age_s=args.cell_state_max_age_s) if args.cell_state_url else None
         )
