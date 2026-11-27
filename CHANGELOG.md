@@ -4,6 +4,9 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The clear emergency stop is no longer only the caller's word:** when the service reads the cell (`--cell-state-url`), a cell in `SAFE_STOP` or `FAULT` never satisfies `cell.estop.clear`, and `--derive-safety-gates` (off by default) takes that gate from the reading alone. The decision and the audit say `safetyGatesSource`.
+- **A human confirmation can be required to be signed with the key set of the SERVER:** `identity.confirmation_require_eddsa` (off by default) refuses HS256 confirmations.
+
 - **Key and token files saved with a byte order mark are read:** the identity key and the data lake and cell state tokens kept the mark of a file saved as "UTF-8 with BOM", so the tokens of the server were refused. The mark is dropped now; a file in another encoding is refused with a clear message.
 - **One owner manifest in another encoding is one failure, not the end of the check:** the verification of the registry stopped with an unhandled error.
 

@@ -158,13 +158,18 @@ def _build_token_verifier(settings: dict, identity_key: bytes | None):
         return None
     if not isinstance(block, dict):
         raise ValueError("the `identity` block of the settings must be a JSON object")
-    unknown = set(block) - {"jwks_url", "accept_hs256", "jwks_ttl_s", "jwks_min_refetch_s", "jwks_timeout_s"}
+    unknown = set(block) - {"jwks_url", "accept_hs256", "jwks_ttl_s", "jwks_min_refetch_s", "jwks_timeout_s", "confirmation_require_eddsa"}
     if unknown:
         raise ValueError(f"unknown settings in `identity`: {', '.join(sorted(unknown))}")
     accept = block.get("accept_hs256", True)
     if not isinstance(accept, bool):
         raise ValueError("identity.accept_hs256 must be true or false")
     url = block.get("jwks_url")
+    require_eddsa = block.get("confirmation_require_eddsa", False)
+    if not isinstance(require_eddsa, bool):
+        raise ValueError("identity.confirmation_require_eddsa must be true or false")
+    if require_eddsa and url is None:
+        raise ValueError("identity.confirmation_require_eddsa needs identity.jwks_url")
     jwks = None
     if url is not None:
         options = {name[len("jwks_"):]: block[name] for name in ("jwks_ttl_s", "jwks_min_refetch_s", "jwks_timeout_s") if name in block}
@@ -203,8 +208,10 @@ def _cmd_serve_gate(args: argparse.Namespace) -> int:
         cell_state = (
             http_cell_state_provider(args.cell_state_url, cell_token, max_age_s=args.cell_state_max_age_s) if args.cell_state_url else None
         )
+        derive_gates = bool(args.derive_safety_gates or settings.get("deriveSafetyGates") is True)
+        require_eddsa = bool(isinstance(settings.get("identity"), dict) and settings["identity"].get("confirmation_require_eddsa") is True)
         config = GateServiceConfig(
-            args.registry_dir, audit, identity_key=identity_key, token_verifier=verifier, allow_loopback_no_identity=allow_loopback,
+            args.registry_dir, audit, derive_safety_gates=derive_gates, confirmation_require_eddsa=require_eddsa, identity_key=identity_key, token_verifier=verifier, allow_loopback_no_identity=allow_loopback,
             cell_state=cell_state, datalake_url=args.datalake_url, datalake_token=lake_token, settings_file=args.config_file,
             allow_unsigned_human_confirmation=allow_unsigned_confirmation,
         )
@@ -215,6 +222,10 @@ def _cmd_serve_gate(args: argparse.Namespace) -> int:
         print("WARNING: allowLoopbackNoIdentity is ON: a caller on this machine is answered without a signed token", file=sys.stderr)
     if allow_unsigned_confirmation:
         print("WARNING: allowUnsignedHumanConfirmation is ON: the humanConfirmed of a request is believed without a confirmation signed by HYDRA-UMC-SERVER", file=sys.stderr)
+    if derive_gates and cell_state is None:
+        print("WARNING: --derive-safety-gates without --cell-state-url: cell.estop.clear is never satisfied", file=sys.stderr)
+    if verifier is not None and verifier.jwks is not None and not require_eddsa:
+        print("WARNING: identity.confirmation_require_eddsa is off: a confirmation signed with the shared HS256 key is still accepted", file=sys.stderr)
     if key is None:
         print("WARNING: no --audit-key-file: the audit chain is tamper-evident but not sealed", file=sys.stderr)
     if cell_state is None:
@@ -409,6 +420,7 @@ def build_parser() -> argparse.ArgumentParser:
     serve_gate_cmd.add_argument("--allow-loopback-no-identity", action="store_true", help="OFF by default. Answer a caller on this machine that has no token; only with a loopback --host.")
     serve_gate_cmd.add_argument("--allow-unsigned-human-confirmation", action="store_true", help="OFF by default. Believe the humanConfirmed of a request without a confirmationToken signed by HYDRA-UMC-SERVER (the earlier behaviour).")
     serve_gate_cmd.add_argument("--config-file", help="JSON settings: identityKeyFile, allowLoopbackNoIdentity, allowUnsignedHumanConfirmation (the command line wins).")
+    serve_gate_cmd.add_argument("--derive-safety-gates", action="store_true", help="OFF by default. Take cell.estop.clear from the state this service reads (--cell-state-url), not from the caller; or deriveSafetyGates in the settings file. A cell read as SAFE_STOP or FAULT is never clear, with or without it.")
     serve_gate_cmd.add_argument("--audit-file", required=True, help="JSON-lines file of the decisions (hash chain).")
     serve_gate_cmd.add_argument("--audit-key-file", help="Optional: a secret (16+ characters) that seals each line of the audit chain.")
     serve_gate_cmd.add_argument("--cell-state-url", help="Optional: GET URL that answers the safety state of the cell; the service then reads it itself and ignores the caller's claim.")

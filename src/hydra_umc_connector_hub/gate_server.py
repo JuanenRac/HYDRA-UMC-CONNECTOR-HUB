@@ -55,6 +55,9 @@ from .service_metrics import MetricsHandlerMixin
 
 MAX_BODY_BYTES = 64 * 1024
 DEFAULT_CELL_STATE_MAX_AGE_S = 5.0
+# The safety gate that the state of the cell answers by itself, and the states that say the emergency stop is not clear.
+ESTOP_CLEAR_GATE = "cell.estop.clear"
+ESTOP_NOT_CLEAR_STATES = frozenset({"SAFE_STOP", "FAULT"})
 
 CellStateProvider = Callable[[], "tuple[str, float]"]
 
@@ -103,6 +106,23 @@ def _string_list(value: Any, name: str) -> frozenset[str]:
     return frozenset(value)
 
 
+def _safety_gates(config: "GateServiceConfig", claimed: object, observed_cell: str | None, decision: dict[str, Any]) -> frozenset[str]:
+    """The safety gates held as satisfied. A cell that this service reads as stopped or in fault never has a clear emergency stop, whatever the caller says;
+    with `derive_safety_gates` the gate is taken from the reading alone."""
+    gates = _string_list(claimed, "satisfiedSafetyGates")
+    source = "attested"
+    if observed_cell is not None:
+        if observed_cell in ESTOP_NOT_CLEAR_STATES:
+            gates, source = gates - {ESTOP_CLEAR_GATE}, "observed"
+        elif config.derive_safety_gates:
+            gates, source = gates | {ESTOP_CLEAR_GATE}, "observed"
+    elif config.derive_safety_gates:
+        gates = gates - {ESTOP_CLEAR_GATE}  # asked to observe it and there is nothing to read: not clear
+        source = "observed"
+    decision["safetyGatesSource"] = {ESTOP_CLEAR_GATE: source}
+    return gates
+
+
 def _decide(config: "GateServiceConfig", body: dict[str, Any], caller: Identity | None = None) -> dict[str, Any]:
     """The decision for one request body, as the dict that is audited and answered. Never raises."""
     adapter_id = body.get("adapterId")
@@ -141,6 +161,8 @@ def _decide(config: "GateServiceConfig", body: dict[str, Any], caller: Identity 
     else:
         cell_state = _text(body, "cellState")
         decision["cellStateSource"] = "attested"
+    gates = body.get("satisfiedSafetyGates")
+    observed_cell = cell_state if config.cell_state is not None else None
     job_id = body.get("jobId")
     confirmation: Confirmation | None = None
     human_confirmed = False
@@ -153,7 +175,8 @@ def _decide(config: "GateServiceConfig", body: dict[str, Any], caller: Identity 
                 return decision
             try:
                 confirmation = verify_confirmation(
-                    body.get("confirmationToken"), config.token_verifier, job_id=job_id, adapter_id=adapter_id, capability=capability, ledger=config.confirmation_ledger
+                    body.get("confirmationToken"), config.token_verifier, job_id=job_id, adapter_id=adapter_id, capability=capability, ledger=config.confirmation_ledger,
+                    require_eddsa=config.confirmation_require_eddsa,
                 )
             except ConfirmationError as exc:
                 decision["reason"] = f"human confirmation refused: {exc}"
@@ -179,7 +202,7 @@ def _decide(config: "GateServiceConfig", body: dict[str, Any], caller: Identity 
             granted_permissions=_string_list(body.get("grantedPermissions"), "grantedPermissions"),
             cell_mode=body.get("cellMode") if isinstance(body.get("cellMode"), str) else None,
             human_confirmed=human_confirmed,
-            satisfied_safety_gates=_string_list(body.get("satisfiedSafetyGates"), "satisfiedSafetyGates"),
+            satisfied_safety_gates=_safety_gates(config, gates, observed_cell, decision),
             observed_machine_state=body.get("observedMachineState") if isinstance(body.get("observedMachineState"), str) else None,
             allow_unobserved=body.get("allowUnobserved") is True,
         )
@@ -212,6 +235,8 @@ class GateServiceConfig:
         datalake_token: str | None = None,
         settings_file: str | None = None,
         allow_unsigned_human_confirmation: bool = False,
+        derive_safety_gates: bool = False,
+        confirmation_require_eddsa: bool = False,
     ) -> None:
         if identity_key is not None and len(identity_key) < MIN_KEY_LENGTH:
             raise ValueError(f"the identity key must have at least {MIN_KEY_LENGTH} characters")
@@ -226,6 +251,9 @@ class GateServiceConfig:
         # OFF by default: the `humanConfirmed` boolean of a request is not believed, only a `confirmationToken` signed by the SERVER (confirmation.py)
         self.allow_unsigned_human_confirmation = bool(allow_unsigned_human_confirmation)
         self.confirmation_ledger = ConfirmationLedger()
+        # OFF by default: the clear emergency stop is then still the caller's claim, unless the reading of the cell says it is stopped
+        self.derive_safety_gates = bool(derive_safety_gates)
+        self.confirmation_require_eddsa = bool(confirmation_require_eddsa)
         self.audit = audit
         self.cell_state = cell_state
         self.datalake_url = datalake_url.rstrip("/") if datalake_url else None

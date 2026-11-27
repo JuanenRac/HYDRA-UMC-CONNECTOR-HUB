@@ -24,6 +24,8 @@ boolean `humanConfirmed` of the request is believed again, as before, and every 
 """
 from __future__ import annotations
 
+import base64
+import json
 import threading
 import time
 from dataclasses import dataclass
@@ -78,6 +80,17 @@ class ConfirmationLedger:
             self._used.pop(jti, None)
 
 
+def token_algorithm(token: str) -> str | None:
+    """The `alg` of the header of a token that was already verified."""
+    try:
+        head = token.split(".", 1)[0]
+        header = json.loads(base64.urlsafe_b64decode(head + "=" * (-len(head) % 4)))
+    except (ValueError, TypeError):
+        return None
+    alg = header.get("alg") if isinstance(header, dict) else None
+    return alg if isinstance(alg, str) else None
+
+
 def verify_confirmation(
     token: object,
     verifier: TokenVerifier,
@@ -87,6 +100,7 @@ def verify_confirmation(
     capability: str,
     ledger: ConfirmationLedger,
     now: float | None = None,
+    require_eddsa: bool = False,
 ) -> Confirmation:
     """The confirmation in `token` for exactly this call, claimed in the ledger, or ConfirmationError saying why there is none."""
     moment = time.time() if now is None else now
@@ -96,6 +110,8 @@ def verify_confirmation(
         identity, claims = verifier.verify_claims(token, now=moment)
     except IdentityError as exc:
         raise ConfirmationError(f"the confirmation is not valid: {exc}") from exc
+    if require_eddsa and token_algorithm(token) != "EdDSA":
+        raise ConfirmationError("the confirmation must be signed with the key set of the SERVER (EdDSA)")
     if claims.get("purpose") != PURPOSE:
         raise ConfirmationError("the token is not a human confirmation (purpose)")
     if identity.role not in DECIDE_ROLES:
