@@ -192,7 +192,7 @@ def verify_catalog_owners(entries: list[CatalogEntry], ecosystem_root: str) -> d
             continue
         try:
             owner_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             failures[entry.adapter_id] = f"ownerProject {owner!r}'s own manifest at {manifest_path} could not be read: {exc}"
             continue
         if not isinstance(owner_manifest, dict) or owner_manifest.get("name") != owner:
