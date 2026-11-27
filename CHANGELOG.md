@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **One owner manifest in another encoding is one failure, not the end of the check:** the verification of the registry stopped with an unhandled error.
+
 - **A cut cell state answer is an unreadable cell state:** an answer cut in the middle, or one that is not HTTP, escaped the gate as an unhandled error instead of being refused like any other cell state that cannot be read.
 
 - **The `http-get` health probe no longer follows redirects:** the module promises a connection only to a host the operator listed, but the probe used the default opener, which follows a 301, 302 or 307 to any host; a service on a listed host and port could make the hub read an internal address (the result only says healthy or not, so it was a blind request). A redirect is now an unhealthy answer, as the key-set client already did. Test added with a second server that must receive no request.
